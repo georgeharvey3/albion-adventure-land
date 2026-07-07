@@ -11,7 +11,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // build base with BASE_PATH if the repo (and therefore the Pages URL) is renamed.
 // Note: the path is case-sensitive and must match the repo name exactly.
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? process.env.BASE_PATH ?? '/Albion-Adventure-Land/' : '/',
+  base: command === 'build' ? process.env.BASE_PATH ?? '/albion-adventure-land/' : '/',
   plugins: [
     react(),
     VitePWA({
