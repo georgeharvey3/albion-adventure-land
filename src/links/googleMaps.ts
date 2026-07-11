@@ -28,8 +28,9 @@ export function placeLink(site: Site & { postcode: string }): string {
 
 const MAX_WAYPOINTS = 9; // consumer URL cap (verify before relying on it — spec §8)
 
-/** Multi-stop route. `ordered` is [start, ...vias, end]. Throws if too many vias. */
-export function multiStopRoute(ordered: Site[]): string {
+/** Multi-stop route. `ordered` is [start, ...vias, end] — any lat/lng points,
+ *  so the outing anchor (not a Site) can be the origin. Throws if too many vias. */
+export function multiStopRoute(ordered: { lat: number; lng: number }[]): string {
   if (ordered.length < 2) throw new Error('need at least an origin and destination');
   const origin = ordered[0];
   const destination = ordered[ordered.length - 1];

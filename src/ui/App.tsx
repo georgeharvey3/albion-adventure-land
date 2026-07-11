@@ -5,8 +5,17 @@ import { MapView } from '../map/MapView';
 import { NearMeList } from './NearMeList';
 import { Filters } from './Filters';
 import { SiteDetail } from './SiteDetail';
+import { Outing } from './Outing';
+import { Stats } from './Stats';
 
-type Tab = 'near' | 'filters';
+type Tab = 'near' | 'filters' | 'outing' | 'stats';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'near', label: 'Near me' },
+  { id: 'filters', label: 'Filters' },
+  { id: 'outing', label: 'Outing' },
+  { id: 'stats', label: 'Stats' },
+];
 
 export function App() {
   const init = useStore((s) => s.init);
@@ -50,18 +59,15 @@ export function App() {
 
       <div className={collapsed ? 'sheet collapsed' : 'sheet'}>
         <nav className="tabs">
-          <button
-            className={!collapsed && tab === 'near' ? 'tab active' : 'tab'}
-            onClick={() => selectTab('near')}
-          >
-            Near me
-          </button>
-          <button
-            className={!collapsed && tab === 'filters' ? 'tab active' : 'tab'}
-            onClick={() => selectTab('filters')}
-          >
-            Filters
-          </button>
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              className={!collapsed && tab === id ? 'tab active' : 'tab'}
+              onClick={() => selectTab(id)}
+            >
+              {label}
+            </button>
+          ))}
           <button
             className="tab collapse-toggle"
             onClick={() => setCollapsed((c) => !c)}
@@ -76,6 +82,8 @@ export function App() {
           <div className="sheet-body">
             {tab === 'near' && <NearMeList />}
             {tab === 'filters' && <Filters />}
+            {tab === 'outing' && <Outing />}
+            {tab === 'stats' && <Stats />}
           </div>
         )}
       </div>

@@ -31,29 +31,38 @@ If a feature doesn't serve "visit more, and more varied, sites," it's a candidat
 
 ## Tech stack
 
-Vite + TypeScript · React (Svelte acceptable — decide once, §11) · Leaflet ·
-Papa Parse (CSV) · IndexedDB via `idb` · Workbox (service worker) · Zustand
-(state). Geometry/routing is **hand-rolled and dependency-free** (haversine, NN +
-2-opt, DBSCAN, orienteering) so it runs fully offline. See spec §4 and §7.
+Vite + TypeScript · React (settled — do not revisit) · Leaflet (direct, no
+react-leaflet) · Papa Parse (CSV) · IndexedDB via `idb` · Workbox via
+`vite-plugin-pwa` · Zustand (state). Geometry/routing is **hand-rolled and
+dependency-free** (haversine; outing seed scan + NN/2-opt next) so it runs
+fully offline. See spec §4 and §7.
 
 ## Data model — the critical invariant
 
 **Site data is replaceable; user state is precious. Keep them strictly separated.**
 
 - `Site` is read-only, derived from CSV → normalized JSON. Its `id` is **stable
-  and derived** (`slug(name) + rounded(lat,lng)`). Never key user state on
-  anything that changes when a CSV is re-imported.
+  and derived**: `slug(name) + rounded(lat,lng)` for coordinate sources, and
+  `slug(name) + slug(postcode)` for geocoded sources (pubs) — deliberately not
+  coordinate-based there, so re-geocoding never changes the id. Never key user
+  state on anything that changes when a CSV is re-imported.
 - `UserState` (visited, wishlist, notes, photos, cached matrices) lives in
   IndexedDB, keyed by the stable site `id`. This is the data we must never lose.
-- `rarity` is **not stored** — it is derived at load time from `type` frequency
-  across the dataset (spec §7.4).
-- `SiteType` is a controlled vocabulary mapped at ingest, *not* a raw CSV value.
+- `rarity` is **not stored** — it is derived at load time from category
+  frequency across the dataset (spec §7.4). Same rule for the parent category
+  and listing `parentId`: derivable things are derived, never stored as state.
+- `SiteCategory` (leaf) is a controlled vocabulary mapped at ingest, *not* a raw
+  CSV value; the two-level taxonomy (Folklore → leaves; Historic pubs) lives in
+  `src/data/types.ts`.
 
 ## CSV ingest — read before touching `data/`
 
 - CSVs are heterogeneous (different guidebooks, column names, some with OS grid
   refs instead of lat/lng). Handle this with a **per-source `SourceMapping`
-  config**, not bespoke parsers. One mapping file per CSV under `data/mappings/`.
+  config**, not bespoke parsers. One mapping file per CSV under
+  `src/data/mappings/`. Postcode-only sources (CAMRA) are geocoded at build time
+  (`scripts/geocode.ts`, cached in `data/geocode-cache.json`) — runtime never
+  geocodes.
 - **Use Papa Parse, never naive splitting.** The real data has multi-line
   description fields with embedded commas and newlines — `cut`/`split(',')` will
   corrupt rows. (You can see this in `magical_britain_master.csv`.)
@@ -70,16 +79,24 @@ Papa Parse (CSV) · IndexedDB via `idb` · Workbox (service worker) · Zustand
 
 ## Build order (each phase independently shippable)
 
-- **Phase 1 (MVP):** ingest → map view (pins by type) → type filter → near-me
-  (haversine) → visited/wishlist → completion stats → single-site Google Maps
-  deep link → PWA/offline.
-- **Phase 2:** travel-time sort (cached road-time matrix) → condition filters →
-  site detail + log (note + photo as IndexedDB blob). Add user-state export/import.
-- **Phase 3:** anchor/density grouping (DBSCAN) → route within group (NN + 2-opt)
-  → orienteering subset selection (rarity-weighted) → multi-stop Maps handoff.
+- **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter
+  → near-me (haversine) → visited/wishlist → directions handoff → PWA/offline.
+  Completion stats (F6) was *not* built with it and moved to Phase 2.
+- **Phase 2: built** — completion stats (F6, consumes the rarity index) +
+  **outing mode v1** — pick ≥1 site types in a picker *independent of the map
+  filter*; find the nearest cluster of **exactly one site per selected type**
+  (scored anchor-outward seed scan, spec §7.2; raw haversine only; **no
+  proximity cap and no padding** — the cost function balances nearness vs
+  tightness and the spread is displayed; unvisited by default with an
+  include-visited toggle) → order it with NN + 2-opt → multi-stop Maps
+  handoff (hidden when the selection exceeds the waypoint cap).
+- **Phase 3:** condition filters → site log (note + photo as IndexedDB blob) →
+  user-state export/import.
+- **Phase 4:** travel-time sort (cached road-time matrix) → orienteering subset
+  selection (rarity-weighted) → DBSCAN density discovery.
 
-Build in order; each phase has explicit acceptance criteria in spec §6. Don't
-pull Phase 3 work forward before the MVP loop is usable on a real outing.
+Build in order; each phase has explicit acceptance criteria in spec §6. Travel
+time is deliberately deferred — outing mode v1 ships on raw distance.
 
 ## Conventions
 
@@ -96,5 +113,6 @@ pull Phase 3 work forward before the MVP loop is usable on a real outing.
 - Keep dependencies minimal — the offline/bundle-size story is a feature.
 - Don't introduce a backend, SSR, or a state-management framework heavier than
   Zustand without raising it first.
-- When the spec lists an open decision (§11: sync, routing engine, photo storage,
-  React vs Svelte), surface it rather than silently picking.
+- When the spec lists an open decision (§11: outing cost function, tile
+  provider, photo storage, routing engine, sync), surface it rather than
+  silently picking.
