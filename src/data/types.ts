@@ -3,11 +3,12 @@
 
 // `SiteCategory` is the *leaf* type — what drives pin colour, filter chips,
 // rarity and stats. Folklore leaves come from the source CSV's `category` column
-// (slugified). `historic_pubs` is a leaf that has no finer subdivision: for pubs
-// the leaf and its parent are one and the same. Keep this union in sync with the
-// categories the data carries.
+// (slugified). `historic_pubs` and `wild_swims` are leaves that have no finer
+// subdivision: for them the leaf and its parent are one and the same. Keep this
+// union in sync with the categories the data carries.
 export type SiteCategory =
   | 'historic_pubs'
+  | 'wild_swims'
   | 'wells'
   | 'natural_water_features'
   | 'wild_places'
@@ -24,6 +25,7 @@ export type SiteCategory =
 
 export const SITE_TYPES: SiteCategory[] = [
   'historic_pubs',
+  'wild_swims',
   'wells',
   'natural_water_features',
   'wild_places',
@@ -43,12 +45,13 @@ export const SITE_TYPES: SiteCategory[] = [
 // UI groups leaves by parent — Folklore expands to its 13 subcategories; Historic
 // pubs is a single leaf shown on its own. Parent is DERIVED from category (like
 // rarity), never stored on a Site, so user state can't depend on it.
-export type ParentCategory = 'folklore' | 'historic_pubs';
+export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims';
 
-export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'folklore'];
+export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'folklore'];
 
 export const PARENT_CATEGORY_LABELS: Record<ParentCategory, string> = {
   historic_pubs: 'Historic pubs',
+  wild_swims: 'Wild swims',
   folklore: 'Folklore',
 };
 
@@ -67,6 +70,7 @@ export const CATEGORY_PARENT: Record<SiteCategory, ParentCategory> = {
   caves: 'folklore',
   other: 'folklore',
   historic_pubs: 'historic_pubs',
+  wild_swims: 'wild_swims',
 };
 
 export function parentOf(category: SiteCategory): ParentCategory {
@@ -88,6 +92,7 @@ export const SITE_TYPE_LABELS: Record<SiteCategory, string> = {
   caves: 'Caves',
   other: 'Other',
   historic_pubs: 'Historic pubs',
+  wild_swims: 'Wild swims',
 };
 
 // Distinct, colour-blind-friendly-ish palette for map pins and list dots.
@@ -106,6 +111,7 @@ export const SITE_TYPE_COLORS: Record<SiteCategory, string> = {
   caves: '#3d405b',
   other: '#6c757d',
   historic_pubs: '#d4a017', // amber — distinct from every folklore hue
+  wild_swims: '#00b4d8', // bright cyan — distinct from the navy natural_water_features blue
 };
 
 const SITE_TYPE_SET: ReadonlySet<string> = new Set(SITE_TYPES);
@@ -143,6 +149,11 @@ export interface Site {
   listingId?: string;
   listingTitle?: string; // the curated listing label (CSV `listing_title`)
   parentId?: string; // stable id of the listing's `main` point
+
+  // Walk-in time from parking to the site, verbatim from the source guidebook
+  // (e.g. "15 mins"). A fixed editorial figure — NOT travel time from the user's
+  // live location. Currently only wild-swim sites carry it.
+  walkTime?: string;
 
   // Condition / access metadata (optional, sparse in practice).
   access?: string;

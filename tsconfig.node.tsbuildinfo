@@ -1,1 +1,1 @@
-{"root":["./vite.config.ts","./scripts/geocode.ts","./scripts/ingest.ts","./scripts/scrape-camra.ts","./src/data/ingest.ts","./src/data/types.ts","./src/data/mappings/camra.ts","./src/data/mappings/magical_britain.ts"],"version":"5.9.3"}
+{"root":["./vite.config.ts","./scripts/geocode.ts","./scripts/ingest.ts","./scripts/scrape-camra.ts","./src/data/ingest.ts","./src/data/types.ts","./src/data/mappings/camra.ts","./src/data/mappings/magical_britain.ts","./src/data/mappings/wild_swims.ts"],"version":"5.9.3"}

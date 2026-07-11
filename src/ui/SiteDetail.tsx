@@ -50,6 +50,7 @@ export function SiteDetail() {
           </button>
         </p>
       )}
+      {site.walkTime && <p className="card-meta">🚶 Walk in: {site.walkTime}</p>}
       {site.access && <p className="card-meta">Access: {site.access}</p>}
       {site.description && <p className="card-desc">{site.description}</p>}
       {site.sourceUrl && (

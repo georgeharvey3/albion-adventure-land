@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import { ingest, ingestPubs, type Geocoder, type RawRow, type PubEnrichment } from '../src/data/ingest.ts';
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
 import { camraMapping } from '../src/data/mappings/camra.ts';
+import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
 import { geocodePostcodes, normalizePostcode } from './geocode.ts';
 import { SITE_TYPE_LABELS, type Site } from '../src/data/types.ts';
 
@@ -21,8 +22,9 @@ interface SourceSpec {
 }
 
 const SOURCES: SourceSpec[] = [
-  { csv: 'magical_britain_master.csv', mapping: magicalBritainMapping },
-  { csv: 'CAMRA.csv', mapping: camraMapping },
+  { csv: 'data/magical_britain_master.csv', mapping: magicalBritainMapping },
+  { csv: 'data/CAMRA.csv', mapping: camraMapping },
+  { csv: 'data/swims.csv', mapping: wildSwimsMapping },
 ];
 
 function parseCsv(text: string): RawRow[] {

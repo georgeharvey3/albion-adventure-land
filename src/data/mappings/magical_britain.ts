@@ -15,9 +15,11 @@ export interface SourceMapping {
     name: string;
     lat?: string;
     lng?: string;
+    location?: string; // single "lat, lng" column (split at ingest) — alternative to lat/lng
     gridRef?: string;
     postcode?: string; // for geocode_postcode sources
     category?: string; // controlled-vocabulary column → SiteType
+    walkTime?: string; // editorial walk-in time (e.g. "15 mins"), stored verbatim
     description?: string;
     county?: string;
     access?: string;
@@ -26,6 +28,12 @@ export interface SourceMapping {
     listingTitle?: string; // curated label for the listing
     [k: string]: string | undefined;
   };
+  // When the source has no category column, every row takes this fixed leaf type
+  // (e.g. wild_swims). Takes precedence over the `category` column.
+  fixedCategory?: import('../types').SiteCategory;
+  // Title-case the name at ingest (for ALL-CAPS source titles). Doesn't affect
+  // the stable id, which is slugified.
+  titleCaseName?: boolean;
   // Structural roles that represent a collectible destination. Other roles
   // (trailheads, parking) are navigation aids — logged and excluded from sites.
   collectibleRoles: string[];

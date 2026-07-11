@@ -31,6 +31,18 @@ export function slug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+// Convert an ALL-CAPS source title to normal title case (some guidebooks shout
+// their names). Capitalises the first letter of each word — where a "word" starts
+// at the string start or after whitespace/brackets/slash/dash/opening-quote — and
+// lowercases the rest. Apostrophes are deliberately NOT word separators, so
+// possessives stay lowercase ("BAKER'S" → "Baker's", not "Baker'S"). Single-letter
+// tokens (e.g. "R" for River) simply become a lone capital, which is correct.
+export function toTitleCase(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/(^|[\s(\[/\-–—‘“"])(\p{L})/gu, (_, pre: string, ch: string) => pre + ch.toUpperCase());
+}
+
 // Stable, derived id. Coordinates rounded to ~11 m so tiny CSV jitter on
 // re-import doesn't break user state, while distinct nearby sites stay distinct.
 export function makeId(name: string, lat: number, lng: number): string {
@@ -67,13 +79,26 @@ function isExcluded(row: RawRow, mapping: SourceMapping): boolean {
 }
 
 export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow {
-  const name = col(row, mapping.columns.name);
-  if (!name) {
+  const rawName = col(row, mapping.columns.name);
+  if (!rawName) {
     return { row, reason: 'missing name' };
   }
+  // Title-case ALL-CAPS source titles when the mapping asks. Safe for the stable
+  // id: makeId slugifies (lowercases) the name, so casing never affects it.
+  const name = mapping.titleCaseName ? toTitleCase(rawName) : rawName;
 
-  const latRaw = col(row, mapping.columns.lat);
-  const lngRaw = col(row, mapping.columns.lng);
+  // Coordinates come either from separate lat/lng columns or a single combined
+  // "lat, lng" column (split here), depending on the source.
+  let latRaw: string;
+  let lngRaw: string;
+  if (mapping.columns.location) {
+    const [a, b] = col(row, mapping.columns.location).split(',');
+    latRaw = (a ?? '').trim();
+    lngRaw = (b ?? '').trim();
+  } else {
+    latRaw = col(row, mapping.columns.lat);
+    lngRaw = col(row, mapping.columns.lng);
+  }
   if (!latRaw || !lngRaw) {
     return { row, reason: 'missing lat/lng (OSGB conversion not enabled for this source)' };
   }
@@ -90,7 +115,8 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
   const description = col(row, mapping.columns.description) || undefined;
   const county = col(row, mapping.columns.county) || undefined;
   const access = col(row, mapping.columns.access) || undefined;
-  const category = normalizeCategory(col(row, mapping.columns.category));
+  const walkTime = col(row, mapping.columns.walkTime) || undefined;
+  const category = mapping.fixedCategory ?? normalizeCategory(col(row, mapping.columns.category));
 
   // Listing grouping (derived). `listingId` keys every collectible point in the
   // listing; built from region + listing number so it's stable across re-imports.
@@ -110,6 +136,7 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
     source: mapping.source,
     access,
     category,
+    ...(walkTime ? { walkTime } : {}),
     ...(listingId ? { listingId, listingTitle } : {}),
   };
 }

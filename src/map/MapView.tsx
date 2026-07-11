@@ -28,6 +28,24 @@ function squareIcon(color: string, visited: boolean, wishlisted: boolean, select
   });
 }
 
+// Upward triangle for wild swims (distinct shape from folklore circles and pub
+// squares). SVG so it takes fill + stroke, mirroring the circleMarker state
+// styling: greyed when visited, orange ring when wishlisted, larger when selected.
+function triangleIcon(color: string, visited: boolean, wishlisted: boolean, selected: boolean): L.DivIcon {
+  const size = selected ? 20 : 15;
+  const fill = visited ? '#bbb' : color;
+  const stroke = visited ? '#888' : wishlisted ? '#f4a261' : '#fff';
+  const strokeWidth = visited ? 1 : wishlisted ? 3 : 1.5;
+  const opacity = visited ? 0.6 : 0.95;
+  const pts = `${size / 2},1 ${size - 1},${size - 1} 1,${size - 1}`;
+  return L.divIcon({
+    className: 'swim-marker',
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="opacity:${opacity};overflow:visible"><polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/></svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -100,12 +118,16 @@ export function MapView() {
     for (const { site, visited, wishlisted } of views) {
       const color = SITE_TYPE_COLORS[site.category];
       const selected = site.id === selectedSiteId;
-      // Pubs render as a square so the category is distinguishable by shape, not
-      // just colour; folklore sites stay as circles.
+      // Shape encodes the top-level category: pubs are squares, wild swims are
+      // triangles, folklore sites stay as circles — distinguishable without colour.
       const marker =
         site.category === 'historic_pubs'
           ? L.marker([site.lat, site.lng], {
               icon: squareIcon(color, visited, wishlisted, selected),
+            })
+          : site.category === 'wild_swims'
+          ? L.marker([site.lat, site.lng], {
+              icon: triangleIcon(color, visited, wishlisted, selected),
             })
           : L.circleMarker([site.lat, site.lng], {
               radius: selected ? 9 : 6,
