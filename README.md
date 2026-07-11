@@ -20,21 +20,23 @@ The collection lives as curated CSVs. This app layers the engagement loop on top
 - **Visited / wishlist + completion stats** — turn a pile of pins into a
   collection with a shape and a finish line, including a nudge toward the rarer
   types you haven't seen yet.
-- **Outing planner** *(later phase)* — group nearby sites and order them into an
-  efficient day-out route, exported to Google Maps in one tap.
+- **Outing mode** — pick the kinds of day you want (a historic pub, a holy
+  well, a stone circle…) and the app finds the nearest cluster containing one
+  of each, orders it into a route, and exports it to Google Maps in one tap.
 
 Built to work in **airplane mode** in no-signal rural Britain: after one online
 session covering a region, the whole app keeps working offline for that region.
 
 ## Status
 
-Early / pre-implementation. The design is settled; code is being built in phases.
+MVP shipped and deployed; outing mode is the current focus.
 
 | Phase | Scope | State |
 |---|---|---|
-| 1 — MVP | Ingest · map · type filter · near-me (haversine) · visited/wishlist · stats · directions handoff · offline | Built |
-| 2 — Accurate & personal | Road travel-time sort · condition filters · site detail with note + photo | Not started |
-| 3 — Outing mode | Clustering (DBSCAN) · routing (NN + 2-opt) · rarity-weighted subset selection · multi-stop handoff | Not started |
+| 1 — MVP | Ingest (2 sources) · map · two-level type filter · near-me (haversine) · visited/wishlist · directions handoff · PWA/offline | Built |
+| 2 — Stats + Outing mode v1 | Completion stats · nearest "full house" cluster of selected types (raw distance, no proximity cap) · route (NN + 2-opt) · multi-stop Maps handoff | Built |
+| 3 — Personal record | Condition filters · visit note + photo · user-state export/import | Not started |
+| 4 — Travel time | Cached road-time matrix · time-budgeted (orienteering) outings · rarity weighting · DBSCAN discovery | Not started |
 
 ## Tech stack
 
@@ -51,9 +53,12 @@ navigation is delegated to Google Maps via deep links. No backend.
 
 ## Data
 
-- `magical_britain_master.csv` — the first real source dataset (West Penwith /
-  North Wales sites). CSVs are heterogeneous and messy (multi-line descriptions,
-  per-source columns), so ingest uses a per-source mapping config and Papa Parse.
+- `magical_britain_master.csv` — folklore/magical sites (West Penwith / North
+  Wales). CSVs are heterogeneous and messy (multi-line descriptions, per-source
+  columns), so ingest uses a per-source mapping config and Papa Parse.
+- `CAMRA.csv` — heritage pubs, postcode-only; geocoded at build time (cached in
+  `data/geocode-cache.json`) with optional scraped descriptions
+  (`npm run scrape:camra`).
 - User state is kept strictly separate from site data and keyed on a stable,
   derived site `id`, so re-importing a CSV never loses your visit history.
 
@@ -73,10 +78,11 @@ npm run build    # ingest + typecheck + production PWA build
 npm run preview  # serve the production build
 ```
 
-`npm run dev` opens the app: a Leaflet map of all sites coloured by type, a
-bottom sheet with **Near me** (haversine-sorted), **Filters** (type toggles), and
-**Stats** (completion %, per-type/county breakdown, rarest-unvisited nudge). Tap a
-pin or list row for the site card — mark visited/wishlist or hand off to Google
+`npm run dev` opens the app: a Leaflet map of all sites coloured by type and a
+bottom sheet with **Near me** (haversine-sorted), **Filters** (two-level type
+toggles), **Outing** (nearest cluster with one of each selected type, routed
+and exportable to Google Maps), and **Stats** (completion counts + rarest-
+unvisited nudge). Tap a pin or list row for the site card — mark visited/wishlist or hand off to Google
 Maps directions. If GPS is denied, use the 📍 button on the map to drop a manual
 "I am here" pin. Visited/wishlist state persists in IndexedDB and survives
 offline and reload.

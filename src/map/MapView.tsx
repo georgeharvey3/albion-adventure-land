@@ -51,15 +51,19 @@ export function MapView() {
   const mapRef = useRef<L.Map | null>(null);
   const siteLayerRef = useRef<L.LayerGroup | null>(null);
   const meLayerRef = useRef<L.LayerGroup | null>(null);
+  const outingLayerRef = useRef<L.LayerGroup | null>(null);
   const droppingRef = useRef(false);
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
+  const outingFitKeyRef = useRef<string | null>(null);
 
   const views = useVisibleSites();
   const position = useStore((s) => s.position);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
   const setPosition = useStore((s) => s.setPosition);
+  const sites = useStore((s) => s.sites);
+  const outing = useStore((s) => s.outing);
 
   // One-time map init.
   useEffect(() => {
@@ -72,6 +76,7 @@ export function MapView() {
     }).addTo(map);
 
     siteLayerRef.current = L.layerGroup().addTo(map);
+    outingLayerRef.current = L.layerGroup().addTo(map);
     meLayerRef.current = L.layerGroup().addTo(map);
 
     // "Drop my location" control — fallback when GPS is denied/unavailable.
@@ -147,6 +152,54 @@ export function MapView() {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
   }, [views, selectedSiteId, setSelected]);
+
+  // Outing route overlay (spec §6 F12/F14): dashed polyline from the anchor
+  // through the route-ordered stops, with numbered markers on top of the
+  // regular pins. Cleared when the outing is cleared.
+  useEffect(() => {
+    const layer = outingLayerRef.current;
+    const map = mapRef.current;
+    if (!layer || !map) return;
+    layer.clearLayers();
+    if (!outing) {
+      outingFitKeyRef.current = null;
+      return;
+    }
+
+    const byId = new Map(sites.map((s) => [s.id, s]));
+    const stops = outing.stopIds.map((id) => byId.get(id)).filter((s) => !!s);
+    if (!stops.length) return;
+
+    const points: L.LatLngTuple[] = stops.map((s) => [s.lat, s.lng]);
+    if (position) points.unshift([position.lat, position.lng]);
+    L.polyline(points, {
+      color: '#1f6b4f',
+      weight: 3,
+      opacity: 0.75,
+      dashArray: '6 6',
+    }).addTo(layer);
+
+    stops.forEach((site, i) => {
+      L.marker([site.lat, site.lng], {
+        icon: L.divIcon({
+          className: 'outing-stop-marker',
+          html: `<span>${i + 1}</span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        }),
+      })
+        .on('click', () => setSelected(site.id))
+        .addTo(layer);
+    });
+
+    // Fit only when the outing itself changes — the effect also refires on
+    // every live-GPS tick, and refitting then would hijack the map.
+    const fitKey = outing.stopIds.join(',');
+    if (outingFitKeyRef.current !== fitKey) {
+      outingFitKeyRef.current = fitKey;
+      map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
+    }
+  }, [outing, sites, position, setSelected]);
 
   // Live / manual location dot + accuracy ring.
   useEffect(() => {
