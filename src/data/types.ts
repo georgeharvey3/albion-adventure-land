@@ -83,34 +83,101 @@ export function parentOf(category: SiteCategory): ParentCategory {
 
 // --- Outing slots ---------------------------------------------------------
 // The outing picker (spec §7.2) matches "one site per selected slot". A slot is
-// usually a leaf `SiteCategory`, but a parent with more than one leaf can also
-// be picked as a whole — then ANY of its leaves satisfies that one slot. In the
-// current taxonomy Folklore is the only multi-leaf parent, so `'folklore'` is
-// the only genuinely new slot value; the single-leaf parents (`historic_pubs`,
-// `wild_swims`) are their own leaf and add nothing. Because `'folklore'` is not
-// a `SiteCategory`, `SiteCategory | ParentCategory` has no real collision.
-export type OutingSlot = SiteCategory | ParentCategory;
+// one of three shapes:
+//   • a leaf `SiteCategory` — one site of exactly that type ("one of each");
+//   • a `ParentCategory` — one site of ANY of the parent's leaves (e.g. "any
+//     folklore"). Only Folklore has more than one leaf today, so it is the only
+//     parent slot that widens anything;
+//   • a `UnionSlot` — one site of any of a CHOSEN subset of one parent's leaves
+//     (e.g. "a holy well OR a standing stone, one stop"). Encoded as
+//     `any:<sorted leaf slugs joined by +>` — an opaque string that can't
+//     collide with a leaf or parent name, so the search treats it like any
+//     other slot.
+// Because none of the three encodings overlap, a single string type is safe.
+export type UnionSlot = `any:${string}`;
+export type OutingSlot = SiteCategory | ParentCategory | UnionSlot;
 
-const SITE_CATEGORY_SET: ReadonlySet<string> = new Set(SITE_TYPES);
+const PARENT_CATEGORY_SET: ReadonlySet<string> = new Set(PARENT_CATEGORIES);
 
-/** Is this slot a parent group standing in for several leaves? (Only Folklore
- *  today — the single-leaf parents are indistinguishable from their leaf.) */
+/** Is this slot a whole-parent group standing in for several leaves? (Only
+ *  Folklore today — the single-leaf parents are indistinguishable from their
+ *  leaf.) A union slot is NOT a parent slot. */
 export function isParentSlot(slot: OutingSlot): slot is ParentCategory {
-  return !SITE_CATEGORY_SET.has(slot);
+  return PARENT_CATEGORY_SET.has(slot);
 }
 
-/** The slot a site fills, given the current selection: its parent when that
- *  parent is picked as a whole, otherwise its leaf category. */
-export function outingSlotOf(category: SiteCategory, selection: ReadonlySet<OutingSlot>): OutingSlot {
-  const parent = parentOf(category);
-  return selection.has(parent) ? parent : category;
+export function isUnionSlot(slot: OutingSlot): slot is UnionSlot {
+  return slot.startsWith('any:');
+}
+
+/** Build the union slot for a subset of a parent's leaves. Sorted so the id is
+ *  stable regardless of the order the user picked the chips. */
+export function unionSlot(leaves: readonly SiteCategory[]): UnionSlot {
+  return `any:${[...leaves].sort().join('+')}`;
+}
+
+/** The leaf categories a union slot covers. */
+export function unionMembers(slot: UnionSlot): SiteCategory[] {
+  return slot.slice('any:'.length).split('+') as SiteCategory[];
+}
+
+/**
+ * Turn the picker's raw selection into the set of slots the search matches:
+ * for each parent, either one union/whole-parent slot ("any of these") or one
+ * slot per picked leaf ("one of each"). A parent in `anyParents` with no picked
+ * leaves means "any of the whole category" (the whole-parent slot); with picked
+ * leaves it means "any of just those" (a union slot).
+ */
+export function resolveOutingSlots(
+  leaves: ReadonlySet<SiteCategory>,
+  anyParents: ReadonlySet<ParentCategory>,
+): Set<OutingSlot> {
+  const slots = new Set<OutingSlot>();
+  for (const parent of PARENT_CATEGORIES) {
+    const picked = SITE_TYPES.filter((t) => parentOf(t) === parent && leaves.has(t));
+    if (anyParents.has(parent)) {
+      slots.add(picked.length ? unionSlot(picked) : parent);
+    } else {
+      for (const t of picked) slots.add(t);
+    }
+  }
+  return slots;
+}
+
+/**
+ * Given the resolved slot set, map a site's leaf category to the slot it fills
+ * (or `undefined` when no selected slot covers it). Precomputes a lookup so the
+ * search buckets sites in O(1) each.
+ */
+export function outingSlotResolver(
+  slots: ReadonlySet<OutingSlot>,
+): (category: SiteCategory) => OutingSlot | undefined {
+  const byCategory = new Map<SiteCategory, OutingSlot>();
+  for (const slot of slots) {
+    if (isUnionSlot(slot)) {
+      for (const m of unionMembers(slot)) byCategory.set(m, slot);
+    } else if (isParentSlot(slot)) {
+      for (const t of SITE_TYPES) if (parentOf(t) === slot) byCategory.set(t, slot);
+    } else {
+      byCategory.set(slot, slot);
+    }
+  }
+  return (category) => byCategory.get(category);
 }
 
 export function outingSlotLabel(slot: OutingSlot): string {
+  if (isUnionSlot(slot)) {
+    const labels = unionMembers(slot).map((m) => SITE_TYPE_LABELS[m]);
+    // "A or B" reads naturally for the small subsets this is used on; keep the
+    // first two and summarise a longer tail so the failure line stays short.
+    if (labels.length <= 2) return labels.join(' or ');
+    return `${labels[0]}, ${labels[1]} or ${labels.length - 2} more`;
+  }
   return isParentSlot(slot) ? PARENT_CATEGORY_LABELS[slot] : SITE_TYPE_LABELS[slot];
 }
 
 export function outingSlotColor(slot: OutingSlot): string {
+  if (isUnionSlot(slot)) return PARENT_CATEGORY_COLORS[parentOf(unionMembers(slot)[0])];
   return isParentSlot(slot) ? PARENT_CATEGORY_COLORS[slot] : SITE_TYPE_COLORS[slot];
 }
 

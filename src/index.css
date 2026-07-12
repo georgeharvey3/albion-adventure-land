@@ -651,6 +651,47 @@ body,
   content: '▾ ';
 }
 
+/* Multi-leaf layer header in the outing finder: name + Each/Any mode control
+   (replaces the on/off switch, which single-leaf layers still use). */
+.outing-finder .layer-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.outing-finder .layer-head.off .layer-name {
+  color: var(--muted);
+}
+.mode-toggle {
+  display: inline-flex;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mode-opt {
+  border: none;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.mode-opt + .mode-opt {
+  border-left: 1px solid var(--line);
+}
+.mode-opt.on {
+  background: var(--accent);
+  color: #fff;
+}
+.layer-hint {
+  margin: 0;
+  padding: 0 14px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* Overlays */
 .overlay {
   position: absolute;

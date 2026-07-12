@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Site, SiteCategory, OutingSlot } from '../data/types';
-import { SITE_TYPES, isParentSlot, outingSlotOf, parentOf } from '../data/types';
+import type { Site, SiteCategory, ParentCategory } from '../data/types';
+import { SITE_TYPES, resolveOutingSlots, outingSlotResolver } from '../data/types';
 import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
 import { findNearestOuting, nearestPerSlot, type SlotNearest } from '../geo/outing';
 import { orderRoute } from '../geo/tsp';
@@ -61,9 +61,17 @@ interface AppState {
   activeTypes: Set<SiteCategory>;
 
   // Outing mode. The slot selection is a QUERY, deliberately independent of
-  // the map filter (a display concern) — spec §6 F12. Slots are leaf types or a
-  // whole-parent group (e.g. "any folklore").
-  outingTypes: Set<OutingSlot>;
+  // the map filter (a display concern) — spec §6 F12.
+  //
+  // The picker is stored as two pieces that `resolveOutingSlots` combines into
+  // the actual slots the search matches:
+  //   • `outingTypes` — the leaf types the user has ticked;
+  //   • `outingAnyParents` — parents switched to "Any of these" mode, where the
+  //     ticked leaves of that parent collapse into ONE stop (a union slot), or
+  //     — with none ticked — mean "any of the whole category". A parent NOT in
+  //     this set keeps "one of each": every ticked leaf is its own stop.
+  outingTypes: Set<SiteCategory>;
+  outingAnyParents: Set<ParentCategory>;
   outingIncludeVisited: boolean;
   outing: OutingResult | null;
   outingFailure: OutingFailure | null;
@@ -84,7 +92,9 @@ interface AppState {
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
-  toggleOutingType: (slot: OutingSlot) => void;
+  toggleOutingType: (category: SiteCategory) => void;
+  setOutingTypesActive: (categories: SiteCategory[], on: boolean) => void;
+  setOutingParentAny: (parent: ParentCategory, any: boolean) => void;
   setOutingIncludeVisited: (on: boolean) => void;
   findOuting: (another?: boolean) => void;
   addToTrip: (siteId: string) => void;
@@ -111,6 +121,7 @@ export const useStore = create<AppState>((set, get) => ({
   activeTypes: new Set(SITE_TYPES),
 
   outingTypes: new Set(),
+  outingAnyParents: new Set(),
   outingIncludeVisited: false,
   outing: null,
   outingFailure: null,
@@ -169,29 +180,33 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // Changing the query invalidates the current result — keeping a cluster on
-  // screen that no longer matches the chips would be misleading.
-  toggleOutingType: (slot) => {
+  // screen that no longer matches the chips would be misleading. Toggling a leaf
+  // is now a plain add/remove; whether the parent's leaves combine into one stop
+  // or stay separate is governed by `outingAnyParents`, not by the leaf set.
+  toggleOutingType: (category) => {
     const next = new Set(get().outingTypes);
-    if (next.has(slot)) {
-      next.delete(slot);
-    } else {
-      next.add(slot);
-      // A whole-parent slot and its leaves are mutually exclusive: the parent
-      // already contributes one stop of any sub-type, so a leaf alongside it
-      // would double-count. Selecting the parent drops its leaves; selecting a
-      // leaf drops the parent.
-      if (isParentSlot(slot)) {
-        for (const leaf of SITE_TYPES) if (parentOf(leaf) === slot) next.delete(leaf);
-      } else {
-        // Guard the single-leaf parents (pubs/swims), whose parent IS this leaf
-        // — deleting it would drop the chip we just added. (TS narrows `slot`
-        // to folklore leaves here and can't see those cases; the cast keeps the
-        // runtime guard honest.)
-        const parent = parentOf(slot);
-        if ((parent as OutingSlot) !== slot) next.delete(parent);
-      }
+    if (next.has(category)) next.delete(category);
+    else next.add(category);
+    set({ outingTypes: next, outing: null, outingFailure: null, outingShownIds: [] });
+  },
+
+  // Bulk-tick a parent's leaves (the Select all / Deselect all controls).
+  setOutingTypesActive: (categories, on) => {
+    const next = new Set(get().outingTypes);
+    for (const c of categories) {
+      if (on) next.add(c);
+      else next.delete(c);
     }
     set({ outingTypes: next, outing: null, outingFailure: null, outingShownIds: [] });
+  },
+
+  // Switch a parent between "Any of these" (its ticked leaves — or the whole
+  // category if none are ticked — become one stop) and "one of each".
+  setOutingParentAny: (parent, any) => {
+    const next = new Set(get().outingAnyParents);
+    if (any) next.add(parent);
+    else next.delete(parent);
+    set({ outingAnyParents: next, outing: null, outingFailure: null, outingShownIds: [] });
   },
 
   setOutingIncludeVisited: (on) => {
@@ -199,15 +214,18 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   findOuting: (another = false) => {
-    const { sites, visited, position, outingTypes, outingIncludeVisited, outingShownIds } = get();
-    if (!position || outingTypes.size === 0) return; // UI disables the button
+    const { sites, visited, position, outingTypes, outingAnyParents, outingIncludeVisited, outingShownIds } =
+      get();
+    const slots = resolveOutingSlots(outingTypes, outingAnyParents);
+    if (!position || slots.size === 0) return; // UI disables the button
 
-    const slotOf = (s: Site) => outingSlotOf(s.category, outingTypes);
+    const resolve = outingSlotResolver(slots);
+    const slotOf = (s: Site) => resolve(s.category) ?? s.category;
     const pool = sites.filter(
-      (s) => outingTypes.has(slotOf(s)) && (outingIncludeVisited || !(s.id in visited)),
+      (s) => resolve(s.category) !== undefined && (outingIncludeVisited || !(s.id in visited)),
     );
     const exclude = new Set(another ? outingShownIds : []);
-    const cluster = findNearestOuting(position, outingTypes, slotOf, pool, exclude);
+    const cluster = findNearestOuting(position, slots, slotOf, pool, exclude);
 
     if (!cluster) {
       // Failure is a first-class outcome (spec §6 F12): keep the current
@@ -221,7 +239,7 @@ export const useStore = create<AppState>((set, get) => ({
               outingShownIds: [],
               outingFailure: {
                 kind: 'missing-types',
-                nearest: nearestPerSlot(position, outingTypes, slotOf, pool),
+                nearest: nearestPerSlot(position, slots, slotOf, pool),
               },
             },
       );

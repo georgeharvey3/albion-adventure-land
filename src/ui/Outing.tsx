@@ -25,10 +25,13 @@ export function Outing() {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
   const outingTypes = useStore((s) => s.outingTypes);
+  const outingAnyParents = useStore((s) => s.outingAnyParents);
   const includeVisited = useStore((s) => s.outingIncludeVisited);
   const outing = useStore((s) => s.outing);
   const failure = useStore((s) => s.outingFailure);
   const toggleOutingType = useStore((s) => s.toggleOutingType);
+  const setOutingTypesActive = useStore((s) => s.setOutingTypesActive);
+  const setOutingParentAny = useStore((s) => s.setOutingParentAny);
   const setIncludeVisited = useStore((s) => s.setOutingIncludeVisited);
   const findOuting = useStore((s) => s.findOuting);
   const clearOuting = useStore((s) => s.clearOuting);
@@ -48,7 +51,9 @@ export function Outing() {
   const byId = new Map(sites.map((s) => [s.id, s]));
   const stops = outing ? outing.stopIds.map((id) => byId.get(id)).filter((s) => !!s) : [];
 
-  const canFind = !!position && outingTypes.size > 0;
+  // A parent in "Any of these" mode contributes a stop even with no leaf ticked
+  // (it means "any of the whole category"), so participation is either.
+  const canFind = !!position && (outingTypes.size > 0 || outingAnyParents.size > 0);
   // One stop per selected type, so a big selection can exceed Google Maps'
   // ~9-waypoint URL cap (multiStopRoute throws above it) — hide the export
   // rather than crash; the per-stop directions still work from the site card.
@@ -144,51 +149,98 @@ export function Outing() {
         </p>
 
         {layers.map(({ parent, leaves }) => {
-          // A single-leaf parent (e.g. Historic pubs) has no finer subcategories.
+          // A single-leaf parent (e.g. Historic pubs) has no finer subcategories:
+          // it stays a plain on/off switch for "include a stop of this kind".
           const hasSubs = !(leaves.length === 1 && (leaves[0] as string) === parent);
-          // The layer switch applies to the WHOLE category: it selects the parent
-          // as one slot (one stop of any sub-type) — for a single-leaf layer that
-          // slot is just its leaf. Individual sub-chips are a finer, mutually
-          // exclusive query (one of each picked type); the store enforces the
-          // exclusivity, so while the switch is on the sub-chips are disabled.
-          const parentOn = outingTypes.has(parent);
-          const activeLeaves = leaves.filter((t) => outingTypes.has(t)).length;
-          const state = parentOn ? 'on' : activeLeaves > 0 ? 'mixed' : 'off';
+
+          if (!hasSubs) {
+            const on = outingTypes.has(leaves[0]);
+            return (
+              <section className="layer" key={parent}>
+                <button
+                  className={`layer-toggle ${on ? 'on' : 'off'}`}
+                  onClick={() => toggleOutingType(leaves[0])}
+                  aria-pressed={on}
+                >
+                  <span className="layer-name">{PARENT_CATEGORY_LABELS[parent]}</span>
+                  <span className="switch" aria-hidden="true" />
+                </button>
+              </section>
+            );
+          }
+
+          // Multi-leaf parent (Folklore). The mode control decides how the ticked
+          // chips combine: "one of each" = a stop per chip; "any of these" = one
+          // stop covering any of them (or the whole category when none are ticked).
+          const anyMode = outingAnyParents.has(parent);
+          const pickedCount = leaves.filter((t) => outingTypes.has(t)).length;
+          const off = !anyMode && pickedCount === 0;
+          const allOn = pickedCount === leaves.length;
+          const noneOn = pickedCount === 0;
 
           return (
             <section className="layer" key={parent}>
-              <button
-                className={`layer-toggle ${state}`}
-                onClick={() => toggleOutingType(parent)}
-                aria-pressed={parentOn}
-              >
+              <div className={`layer-head ${off ? 'off' : ''}`}>
                 <span className="layer-name">{PARENT_CATEGORY_LABELS[parent]}</span>
-                {hasSubs && (
-                  <span className="layer-count">
-                    {parentOn ? 'any sub-type' : activeLeaves > 0 ? `${activeLeaves} selected` : ''}
-                  </span>
-                )}
-                <span className="switch" aria-hidden="true" />
-              </button>
-
-              {hasSubs && (
-                <div className="layer-subs">
-                  {leaves.map((type) => {
-                    const on = outingTypes.has(type);
-                    return (
-                      <button
-                        key={type}
-                        className={`chip ${on ? 'on' : 'off'}`}
-                        onClick={() => toggleOutingType(type)}
-                        aria-pressed={on}
-                        disabled={parentOn}
-                      >
-                        <span className="dot" style={{ background: SITE_TYPE_COLORS[type] }} />
-                        {SITE_TYPE_LABELS[type]}
-                      </button>
-                    );
-                  })}
+                <div className="mode-toggle" role="group" aria-label={`${PARENT_CATEGORY_LABELS[parent]} match mode`}>
+                  <button
+                    className={`mode-opt ${!anyMode ? 'on' : ''}`}
+                    onClick={() => setOutingParentAny(parent, false)}
+                    aria-pressed={!anyMode}
+                  >
+                    One of each
+                  </button>
+                  <button
+                    className={`mode-opt ${anyMode ? 'on' : ''}`}
+                    onClick={() => setOutingParentAny(parent, true)}
+                    aria-pressed={anyMode}
+                  >
+                    Any of these
+                  </button>
                 </div>
+              </div>
+
+              <div className="layer-subs">
+                <div className="subs-controls">
+                  <button
+                    className="link-btn"
+                    onClick={() => setOutingTypesActive(leaves, true)}
+                    disabled={allOn}
+                  >
+                    Select all
+                  </button>
+                  <button
+                    className="link-btn"
+                    onClick={() => setOutingTypesActive(leaves, false)}
+                    disabled={noneOn}
+                  >
+                    Deselect all
+                  </button>
+                </div>
+                {leaves.map((type) => {
+                  const on = outingTypes.has(type);
+                  return (
+                    <button
+                      key={type}
+                      className={`chip ${on ? 'on' : 'off'}`}
+                      onClick={() => toggleOutingType(type)}
+                      aria-pressed={on}
+                    >
+                      <span className="dot" style={{ background: SITE_TYPE_COLORS[type] }} />
+                      {SITE_TYPE_LABELS[type]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {anyMode && (
+                <p className="layer-hint">
+                  {pickedCount === 0
+                    ? 'One stop — any folklore sub-type.'
+                    : pickedCount === 1
+                      ? 'One stop of the selected type.'
+                      : `One stop — any of the ${pickedCount} selected.`}
+                </p>
               )}
             </section>
           );
@@ -222,7 +274,7 @@ export function Outing() {
             "I am here" pin.
           </p>
         )}
-        {position && outingTypes.size === 0 && (
+        {position && !canFind && (
           <p className="hint">Select at least one type above.</p>
         )}
 
