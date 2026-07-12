@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import type { Site, SiteCategory } from '../data/types';
-import { SITE_TYPES } from '../data/types';
+import type { Site, SiteCategory, OutingSlot } from '../data/types';
+import { SITE_TYPES, isParentSlot, outingSlotOf, parentOf } from '../data/types';
 import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
-import { findNearestOuting, nearestPerType, type TypeNearest } from '../geo/outing';
+import { findNearestOuting, nearestPerSlot, type SlotNearest } from '../geo/outing';
 import { orderRoute } from '../geo/tsp';
+import { haversine } from '../geo/haversine';
 import {
   loadUserState,
   putVisit,
@@ -23,18 +24,25 @@ export interface Position {
 // Outing mode v1 (spec §6 F12/F14/F16). The result stores ids, not Site
 // objects — sites are the read-only source of truth and are looked up on
 // render. `stopIds` is already in route order (NN + 2-opt from the anchor).
+//
+// The SAME result is populated two ways: the cluster algorithm ("Find outing")
+// and hand-picking ("Add to trip", spec: trip = today's ordered subset). A
+// hand-built route has no seed/cluster, so `seedId`/`radiusM` are cluster-only
+// (undefined for a trip) and `edited` is true — which gates the "replace your
+// trip?" confirm before a fresh Find overwrites hand-picked stops.
 export interface OutingResult {
-  seedId: string;
+  seedId?: string;
   stopIds: string[];
-  distanceFromAnchor: number; // metres, anchor → seed
-  radiusM: number; // cluster spread (max seed → member), surfaced in the UI
+  distanceFromAnchor: number; // metres, anchor → first stop (≈ seed for a cluster)
+  radiusM?: number; // cluster spread (max seed → member); undefined for a hand-built trip
+  edited: boolean; // true once hand-picked/removed — a trip, not a pristine cluster
 }
 
-// A search can only fail when a selected type has nothing available (all
+// A search can only fail when a selected slot has nothing available (all
 // visited / none in the dataset) or "find another" runs out of disjoint
 // alternatives — there is no proximity cap.
 export type OutingFailure =
-  | { kind: 'missing-types'; nearest: TypeNearest[] }
+  | { kind: 'missing-types'; nearest: SlotNearest[] }
   | { kind: 'no-more' };
 
 interface AppState {
@@ -52,9 +60,10 @@ interface AppState {
   // Filters.
   activeTypes: Set<SiteCategory>;
 
-  // Outing mode. The type selection is a QUERY, deliberately independent of
-  // the map filter (a display concern) — spec §6 F12.
-  outingTypes: Set<SiteCategory>;
+  // Outing mode. The slot selection is a QUERY, deliberately independent of
+  // the map filter (a display concern) — spec §6 F12. Slots are leaf types or a
+  // whole-parent group (e.g. "any folklore").
+  outingTypes: Set<OutingSlot>;
   outingIncludeVisited: boolean;
   outing: OutingResult | null;
   outingFailure: OutingFailure | null;
@@ -75,14 +84,17 @@ interface AppState {
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
-  toggleOutingType: (category: SiteCategory) => void;
+  toggleOutingType: (slot: OutingSlot) => void;
   setOutingIncludeVisited: (on: boolean) => void;
   findOuting: (another?: boolean) => void;
+  addToTrip: (siteId: string) => void;
+  removeFromTrip: (siteId: string) => void;
   clearOuting: () => void;
   markVisited: (siteId: string, note?: string) => Promise<void>;
   unmarkVisited: (siteId: string) => Promise<void>;
   toggleWishlist: (siteId: string) => Promise<void>;
   setPosition: (pos: Position | null) => void;
+  setLivePosition: (pos: Position) => void;
   setGeoError: (msg: string | null) => void;
 }
 
@@ -158,10 +170,27 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Changing the query invalidates the current result — keeping a cluster on
   // screen that no longer matches the chips would be misleading.
-  toggleOutingType: (category) => {
+  toggleOutingType: (slot) => {
     const next = new Set(get().outingTypes);
-    if (next.has(category)) next.delete(category);
-    else next.add(category);
+    if (next.has(slot)) {
+      next.delete(slot);
+    } else {
+      next.add(slot);
+      // A whole-parent slot and its leaves are mutually exclusive: the parent
+      // already contributes one stop of any sub-type, so a leaf alongside it
+      // would double-count. Selecting the parent drops its leaves; selecting a
+      // leaf drops the parent.
+      if (isParentSlot(slot)) {
+        for (const leaf of SITE_TYPES) if (parentOf(leaf) === slot) next.delete(leaf);
+      } else {
+        // Guard the single-leaf parents (pubs/swims), whose parent IS this leaf
+        // — deleting it would drop the chip we just added. (TS narrows `slot`
+        // to folklore leaves here and can't see those cases; the cast keeps the
+        // runtime guard honest.)
+        const parent = parentOf(slot);
+        if ((parent as OutingSlot) !== slot) next.delete(parent);
+      }
+    }
     set({ outingTypes: next, outing: null, outingFailure: null, outingShownIds: [] });
   },
 
@@ -173,11 +202,12 @@ export const useStore = create<AppState>((set, get) => ({
     const { sites, visited, position, outingTypes, outingIncludeVisited, outingShownIds } = get();
     if (!position || outingTypes.size === 0) return; // UI disables the button
 
+    const slotOf = (s: Site) => outingSlotOf(s.category, outingTypes);
     const pool = sites.filter(
-      (s) => outingTypes.has(s.category) && (outingIncludeVisited || !(s.id in visited)),
+      (s) => outingTypes.has(slotOf(s)) && (outingIncludeVisited || !(s.id in visited)),
     );
     const exclude = new Set(another ? outingShownIds : []);
-    const cluster = findNearestOuting(position, outingTypes, pool, exclude);
+    const cluster = findNearestOuting(position, outingTypes, slotOf, pool, exclude);
 
     if (!cluster) {
       // Failure is a first-class outcome (spec §6 F12): keep the current
@@ -191,7 +221,7 @@ export const useStore = create<AppState>((set, get) => ({
               outingShownIds: [],
               outingFailure: {
                 kind: 'missing-types',
-                nearest: nearestPerType(position, outingTypes, pool),
+                nearest: nearestPerSlot(position, outingTypes, slotOf, pool),
               },
             },
       );
@@ -205,12 +235,64 @@ export const useStore = create<AppState>((set, get) => ({
         stopIds: stops.map((s) => s.id),
         distanceFromAnchor: cluster.distanceFromAnchor,
         radiusM: cluster.radiusM,
+        edited: false,
       },
       outingShownIds: [
         ...(another ? outingShownIds : []),
         ...cluster.members.map((s) => s.id),
       ],
       outingFailure: null,
+    });
+  },
+
+  // Hand-pick a stop into the shared outing (spec: trip = today's ordered
+  // subset). No type constraint — unlike the cluster search, a trip can hold any
+  // mix. Re-optimises from the current position on every add (NN + 2-opt), so
+  // the route stays tight as it grows. Position-gated: the UI disables the card
+  // button until there's a location to order from. `edited` flips true, and the
+  // cluster's "find another" history is dropped — it no longer describes this
+  // hand-built route.
+  addToTrip: (siteId) => {
+    const { sites, position, outing } = get();
+    if (!position) return; // UI disables the card button without a position
+    const byId = new Map(sites.map((s) => [s.id, s]));
+    const currentIds = outing?.stopIds ?? [];
+    if (currentIds.includes(siteId) || !byId.has(siteId)) return;
+    const members = [...currentIds, siteId].map((id) => byId.get(id)!).filter(Boolean);
+    const stops = orderRoute(position, members);
+    set({
+      outing: {
+        stopIds: stops.map((s) => s.id),
+        distanceFromAnchor: haversine(position, stops[0]),
+        edited: true,
+      },
+      outingFailure: null,
+      outingShownIds: [],
+    });
+  },
+
+  // Drop a stop; re-optimise the remainder. Emptying the trip clears the outing.
+  removeFromTrip: (siteId) => {
+    const { sites, position, outing } = get();
+    if (!outing) return;
+    const remaining = outing.stopIds.filter((id) => id !== siteId);
+    if (remaining.length === 0) {
+      set({ outing: null, outingFailure: null, outingShownIds: [] });
+      return;
+    }
+    const byId = new Map(sites.map((s) => [s.id, s]));
+    const members = remaining.map((id) => byId.get(id)!).filter(Boolean);
+    // Re-order only if we have an anchor; otherwise keep the current relative
+    // order (position is normally present, since adding required it).
+    const stops = position ? orderRoute(position, members) : members;
+    set({
+      outing: {
+        stopIds: stops.map((s) => s.id),
+        distanceFromAnchor: position ? haversine(position, stops[0]) : 0,
+        edited: true,
+      },
+      outingFailure: null,
+      outingShownIds: [],
     });
   },
 
@@ -253,6 +335,14 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   setPosition: (position) => set({ position, geoError: null }),
+  // Live-location updates from watchPosition. A manual "I am here" pin is an
+  // explicit override (spec §8) — don't let a GPS fix silently clobber it. The
+  // user resumes live location by dropping a new pin (which routes through
+  // setPosition, not here).
+  setLivePosition: (position) => {
+    if (get().position?.manual) return;
+    set({ position, geoError: null });
+  },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => set({ selectedSiteId }),
 }));

@@ -6,6 +6,7 @@ import { ingest, ingestPubs, type Geocoder, type RawRow, type PubEnrichment } fr
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
 import { camraMapping } from '../src/data/mappings/camra.ts';
 import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
+import { ruinsMapping } from '../src/data/mappings/ruins.ts';
 import { geocodePostcodes, normalizePostcode } from './geocode.ts';
 import { SITE_TYPE_LABELS, type Site } from '../src/data/types.ts';
 
@@ -25,6 +26,7 @@ const SOURCES: SourceSpec[] = [
   { csv: 'data/magical_britain_master.csv', mapping: magicalBritainMapping },
   { csv: 'data/CAMRA.csv', mapping: camraMapping },
   { csv: 'data/swims.csv', mapping: wildSwimsMapping },
+  { csv: 'data/ruins.csv', mapping: ruinsMapping },
 ];
 
 function parseCsv(text: string): RawRow[] {

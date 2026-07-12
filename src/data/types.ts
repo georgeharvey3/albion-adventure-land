@@ -9,6 +9,7 @@
 export type SiteCategory =
   | 'historic_pubs'
   | 'wild_swims'
+  | 'ruins'
   | 'wells'
   | 'natural_water_features'
   | 'wild_places'
@@ -26,6 +27,7 @@ export type SiteCategory =
 export const SITE_TYPES: SiteCategory[] = [
   'historic_pubs',
   'wild_swims',
+  'ruins',
   'wells',
   'natural_water_features',
   'wild_places',
@@ -45,13 +47,14 @@ export const SITE_TYPES: SiteCategory[] = [
 // UI groups leaves by parent — Folklore expands to its 13 subcategories; Historic
 // pubs is a single leaf shown on its own. Parent is DERIVED from category (like
 // rarity), never stored on a Site, so user state can't depend on it.
-export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims';
+export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims' | 'ruins';
 
-export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'folklore'];
+export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'ruins', 'folklore'];
 
 export const PARENT_CATEGORY_LABELS: Record<ParentCategory, string> = {
   historic_pubs: 'Historic pubs',
   wild_swims: 'Wild swims',
+  ruins: 'Ruins',
   folklore: 'Folklore',
 };
 
@@ -71,10 +74,44 @@ export const CATEGORY_PARENT: Record<SiteCategory, ParentCategory> = {
   other: 'folklore',
   historic_pubs: 'historic_pubs',
   wild_swims: 'wild_swims',
+  ruins: 'ruins',
 };
 
 export function parentOf(category: SiteCategory): ParentCategory {
   return CATEGORY_PARENT[category];
+}
+
+// --- Outing slots ---------------------------------------------------------
+// The outing picker (spec §7.2) matches "one site per selected slot". A slot is
+// usually a leaf `SiteCategory`, but a parent with more than one leaf can also
+// be picked as a whole — then ANY of its leaves satisfies that one slot. In the
+// current taxonomy Folklore is the only multi-leaf parent, so `'folklore'` is
+// the only genuinely new slot value; the single-leaf parents (`historic_pubs`,
+// `wild_swims`) are their own leaf and add nothing. Because `'folklore'` is not
+// a `SiteCategory`, `SiteCategory | ParentCategory` has no real collision.
+export type OutingSlot = SiteCategory | ParentCategory;
+
+const SITE_CATEGORY_SET: ReadonlySet<string> = new Set(SITE_TYPES);
+
+/** Is this slot a parent group standing in for several leaves? (Only Folklore
+ *  today — the single-leaf parents are indistinguishable from their leaf.) */
+export function isParentSlot(slot: OutingSlot): slot is ParentCategory {
+  return !SITE_CATEGORY_SET.has(slot);
+}
+
+/** The slot a site fills, given the current selection: its parent when that
+ *  parent is picked as a whole, otherwise its leaf category. */
+export function outingSlotOf(category: SiteCategory, selection: ReadonlySet<OutingSlot>): OutingSlot {
+  const parent = parentOf(category);
+  return selection.has(parent) ? parent : category;
+}
+
+export function outingSlotLabel(slot: OutingSlot): string {
+  return isParentSlot(slot) ? PARENT_CATEGORY_LABELS[slot] : SITE_TYPE_LABELS[slot];
+}
+
+export function outingSlotColor(slot: OutingSlot): string {
+  return isParentSlot(slot) ? PARENT_CATEGORY_COLORS[slot] : SITE_TYPE_COLORS[slot];
 }
 
 export const SITE_TYPE_LABELS: Record<SiteCategory, string> = {
@@ -93,6 +130,7 @@ export const SITE_TYPE_LABELS: Record<SiteCategory, string> = {
   other: 'Other',
   historic_pubs: 'Historic pubs',
   wild_swims: 'Wild swims',
+  ruins: 'Ruins',
 };
 
 // Distinct, colour-blind-friendly-ish palette for map pins and list dots.
@@ -112,6 +150,17 @@ export const SITE_TYPE_COLORS: Record<SiteCategory, string> = {
   other: '#6c757d',
   historic_pubs: '#d4a017', // amber — distinct from every folklore hue
   wild_swims: '#00b4d8', // bright cyan — distinct from the navy natural_water_features blue
+  ruins: '#6b705c', // muted stone/olive — distinct from the browns and greys above
+};
+
+// Colour for a whole-parent outing slot. The single-leaf parents reuse their
+// leaf hue; Folklore (spanning many leaves) gets its own so the "Any folklore"
+// chip and dot read as distinct from any single sub-type.
+export const PARENT_CATEGORY_COLORS: Record<ParentCategory, string> = {
+  historic_pubs: SITE_TYPE_COLORS.historic_pubs,
+  wild_swims: SITE_TYPE_COLORS.wild_swims,
+  ruins: SITE_TYPE_COLORS.ruins,
+  folklore: '#7b4fb0',
 };
 
 const SITE_TYPE_SET: ReadonlySet<string> = new Set(SITE_TYPES);

@@ -42,8 +42,12 @@ body,
 }
 
 .drop-pin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
+  padding: 0;
   font-size: 18px;
   line-height: 1;
   background: #fff;
@@ -186,6 +190,11 @@ body,
 .chip.off {
   opacity: 0.4;
 }
+/* Leaf chips subsumed by an "Any {parent}" selection: dimmed and inert. */
+.chip:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
 .chip-count {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -286,18 +295,6 @@ body,
 }
 
 /* Outing mode */
-.outing-group {
-  margin: 4px 0 8px;
-}
-.outing-group-label {
-  display: block;
-  margin: 2px 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
 .outing-toggle {
   display: flex;
   align-items: center;
@@ -455,7 +452,10 @@ body,
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
-  max-height: 40vh;
+  /* Grow to fill the space above the sheet (anchored at bottom), scrolling only
+     when the description is longer than that. Was a flat 40vh, which forced
+     scrolling even when there was room to show the whole write-up. */
+  max-height: calc(55vh - 16px);
   overflow-y: auto;
 }
 .card-close {
@@ -567,6 +567,89 @@ body,
   border-color: var(--accent);
   color: var(--accent-ink);
 }
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn.small {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+/* "In trip" toggle — an accent-tinted confirmed state, mirroring the wishlist
+   star's filled look without shouting. */
+.btn.trip.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #eef5f1;
+}
+
+/* Outing tab stop-count badge. */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/* Trip/outing result: stop count + Clear on one line, per-stop remove. */
+.outing-result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.outing-result-head .hint {
+  flex: 1 1 auto;
+  margin: 8px 0;
+}
+.stop-remove {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stop-remove:hover {
+  color: var(--ink);
+}
+
+/* Collapsible "Find one for me" — the algorithm demoted below the hand-built
+   trip, which is now the primary content. */
+.outing-finder {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+}
+.outing-finder > summary {
+  padding: 8px 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+}
+.outing-finder > summary::-webkit-details-marker {
+  display: none;
+}
+.outing-finder > summary::before {
+  content: '▸ ';
+}
+.outing-finder[open] > summary::before {
+  content: '▾ ';
+}
 
 /* Overlays */
 .overlay {
@@ -610,5 +693,8 @@ body,
     right: 396px;
     bottom: 16px;
     width: 360px;
+    /* Side panel — the full viewport height is free, so let a long write-up
+       show in full and only scroll if it exceeds the whole screen. */
+    max-height: calc(100vh - 32px);
   }
 }

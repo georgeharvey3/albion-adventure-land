@@ -46,6 +46,25 @@ function triangleIcon(color: string, visited: boolean, wishlisted: boolean, sele
   });
 }
 
+// Diamond (point-up rhombus) for ruins — distinct from the folklore circles, pub
+// squares and swim triangles. SVG so it takes fill + stroke, mirroring the
+// circleMarker state styling: greyed when visited, orange ring when wishlisted,
+// larger when selected.
+function diamondIcon(color: string, visited: boolean, wishlisted: boolean, selected: boolean): L.DivIcon {
+  const size = selected ? 20 : 15;
+  const fill = visited ? '#bbb' : color;
+  const stroke = visited ? '#888' : wishlisted ? '#f4a261' : '#fff';
+  const strokeWidth = visited ? 1 : wishlisted ? 3 : 1.5;
+  const opacity = visited ? 0.6 : 0.95;
+  const pts = `${size / 2},1 ${size - 1},${size / 2} ${size / 2},${size - 1} 1,${size / 2}`;
+  return L.divIcon({
+    className: 'ruin-marker',
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="opacity:${opacity};overflow:visible"><polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/></svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -90,6 +109,16 @@ export function MapView() {
         dropBtnRef.current = btn;
         L.DomEvent.disableClickPropagation(btn);
         L.DomEvent.on(btn, 'click', () => {
+          // With a manual pin active, the button clears it and hands control
+          // back to live GPS (the watcher repopulates position on its next
+          // fix). Otherwise it toggles "drop a pin" mode.
+          if (useStore.getState().position?.manual) {
+            setPosition(null);
+            droppingRef.current = false;
+            btn.classList.remove('active');
+            map.getContainer().style.cursor = '';
+            return;
+          }
           droppingRef.current = !droppingRef.current;
           btn.classList.toggle('active', droppingRef.current);
           map.getContainer().style.cursor = droppingRef.current ? 'crosshair' : '';
@@ -124,7 +153,8 @@ export function MapView() {
       const color = SITE_TYPE_COLORS[site.category];
       const selected = site.id === selectedSiteId;
       // Shape encodes the top-level category: pubs are squares, wild swims are
-      // triangles, folklore sites stay as circles — distinguishable without colour.
+      // triangles, ruins are diamonds, folklore sites stay as circles —
+      // distinguishable without colour.
       const marker =
         site.category === 'historic_pubs'
           ? L.marker([site.lat, site.lng], {
@@ -133,6 +163,10 @@ export function MapView() {
           : site.category === 'wild_swims'
           ? L.marker([site.lat, site.lng], {
               icon: triangleIcon(color, visited, wishlisted, selected),
+            })
+          : site.category === 'ruins'
+          ? L.marker([site.lat, site.lng], {
+              icon: diamondIcon(color, visited, wishlisted, selected),
             })
           : L.circleMarker([site.lat, site.lng], {
               radius: selected ? 9 : 6,
@@ -227,6 +261,18 @@ export function MapView() {
       .bindTooltip(position.manual ? 'Manual location' : 'You are here')
       .addTo(layer);
   }, [position]);
+
+  // Reflect the manual-pin state on the drop-pin button: lit + a "clear" title
+  // so the button doubles as the way to resume live location.
+  useEffect(() => {
+    const btn = dropBtnRef.current;
+    if (!btn) return;
+    const manual = !!position?.manual;
+    btn.classList.toggle('active', manual);
+    btn.title = manual
+      ? 'Clear manual pin (resume live location)'
+      : 'Drop a manual "I am here" pin';
+  }, [position?.manual]);
 
   // Pan to a site selected from the list.
   useEffect(() => {

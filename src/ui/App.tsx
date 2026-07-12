@@ -22,6 +22,7 @@ export function App() {
   const dataLoaded = useStore((s) => s.dataLoaded);
   const dataError = useStore((s) => s.dataError);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
+  const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
   const [tab, setTab] = useState<Tab>('filters');
   const [collapsed, setCollapsed] = useState(false);
 
@@ -66,6 +67,9 @@ export function App() {
               onClick={() => selectTab(id)}
             >
               {label}
+              {id === 'outing' && tripCount > 0 && (
+                <span className="tab-badge">{tripCount}</span>
+              )}
             </button>
           ))}
           <button

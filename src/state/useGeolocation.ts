@@ -6,7 +6,7 @@ import { useStore } from './store';
 // pin (handled in the map / store), so the near-me loop still works.
 
 export function useGeolocation(): void {
-  const setPosition = useStore((s) => s.setPosition);
+  const setLivePosition = useStore((s) => s.setLivePosition);
   const setGeoError = useStore((s) => s.setGeoError);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function useGeolocation(): void {
 
     const id = navigator.geolocation.watchPosition(
       (pos) => {
-        setPosition({
+        setLivePosition({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
@@ -35,5 +35,5 @@ export function useGeolocation(): void {
     );
 
     return () => navigator.geolocation.clearWatch(id);
-  }, [setPosition, setGeoError]);
+  }, [setLivePosition, setGeoError]);
 }

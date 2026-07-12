@@ -18,6 +18,9 @@ export function SiteDetail() {
   const markVisited = useStore((s) => s.markVisited);
   const unmarkVisited = useStore((s) => s.unmarkVisited);
   const toggleWishlist = useStore((s) => s.toggleWishlist);
+  const inTrip = useStore((s) => (selectedSiteId ? !!s.outing?.stopIds.includes(selectedSiteId) : false));
+  const addToTrip = useStore((s) => s.addToTrip);
+  const removeFromTrip = useStore((s) => s.removeFromTrip);
 
   if (!site) return null;
 
@@ -36,7 +39,6 @@ export function SiteDetail() {
       <div className="card-type">
         <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
         {SITE_TYPE_LABELS[site.category]}
-        {site.county ? ` · ${site.county}` : site.postcode ? ` · ${site.postcode}` : ''}
         {distance !== null ? ` · ${formatDistance(distance)} away` : ''}
       </div>
       <h2 className="card-title">{site.name}</h2>
@@ -108,6 +110,24 @@ export function SiteDetail() {
         <button className="btn" onClick={() => toggleWishlist(site.id)}>
           {wishlisted ? '★ On wishlist' : '☆ Wishlist'}
         </button>
+        {/* Trip = today's ordered subset. Adding needs a position to order the
+            route from (spec: require a position); without one the button is
+            disabled rather than silently doing nothing. The button state itself
+            is the "added" confirmation — the Outing tab carries the count. */}
+        {inTrip ? (
+          <button className="btn trip on" onClick={() => removeFromTrip(site.id)}>
+            ✓ In trip
+          </button>
+        ) : (
+          <button
+            className="btn trip"
+            onClick={() => addToTrip(site.id)}
+            disabled={!position}
+            title={position ? undefined : 'Drop a location on the map to start a trip'}
+          >
+            + Add to trip
+          </button>
+        )}
       </div>
     </div>
   );
