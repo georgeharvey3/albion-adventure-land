@@ -39,6 +39,10 @@ export default defineConfig(({ command }) => ({
       workbox: {
         // Precache the app shell and bundled site JSON.
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        // sites.json is the whole dataset and must be precached for offline-first
+        // (see spec §9) — it has already grown past Workbox's 2 MiB default as
+        // sources were added. Raise the ceiling with headroom for dataset growth.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             // OSM raster tiles — cache-first with generous expiry (offline tiles).
