@@ -39,6 +39,11 @@ export default defineConfig(({ command }) => ({
       workbox: {
         // Precache the app shell and bundled site JSON.
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        // sites.json is the offline dataset and must be precached — it's the
+        // whole point of airplane-mode support. It has grown past Workbox's
+        // 2 MiB default precache limit as sources were added, so raise the cap
+        // (5 MiB) to keep bundling it rather than silently dropping it offline.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             // OSM raster tiles — cache-first with generous expiry (offline tiles).
