@@ -1,68 +1,51 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { SITE_TYPE_COLORS } from '../data/types';
+import { SITE_TYPE_COLORS, type SiteCategory } from '../data/types';
 import { useStore } from '../state/store';
-import { useVisibleSites } from '../state/selectors';
+import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
+import { shapeMarker, type MarkerShape } from './shapeMarker';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
 // directly (no react-leaflet) to keep the dependency surface minimal.
+//
+// Performance: ~2,600 pins. All markers are canvas-drawn (preferCanvas + the
+// shapeMarker subclass — no per-marker DOM), the marker set is rebuilt only
+// when the filter or visited/wishlist state changes (never on a GPS tick), and
+// selecting a pin restyles just the two markers involved.
 
 const GB_CENTER: L.LatLngTuple = [53.0, -3.5];
 
-// Square marker for pubs (distinct shape from the folklore circles). Mirrors the
-// circleMarker styling: greyed when visited, orange ring when wishlisted, larger
-// when selected.
-function squareIcon(color: string, visited: boolean, wishlisted: boolean, selected: boolean): L.DivIcon {
-  const size = selected ? 16 : 12;
-  const fill = visited ? '#bbb' : color;
-  const border = visited ? '#888' : wishlisted ? '#f4a261' : '#fff';
-  const borderWidth = visited ? 1 : wishlisted ? 3 : 1.5;
-  const opacity = visited ? 0.6 : 0.95;
-  return L.divIcon({
-    className: 'pub-marker',
-    html: `<span style="display:block;width:${size}px;height:${size}px;background:${fill};opacity:${opacity};border:${borderWidth}px solid ${border};box-sizing:border-box;border-radius:2px;"></span>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
+// Shape encodes the top-level category: pubs are squares, wild swims are
+// triangles, ruins are diamonds, folklore sites stay as circles —
+// distinguishable without colour.
+function shapeFor(category: SiteCategory): MarkerShape {
+  switch (category) {
+    case 'historic_pubs':
+      return 'square';
+    case 'wild_swims':
+      return 'triangle';
+    case 'ruins':
+      return 'diamond';
+    default:
+      return 'circle';
+  }
 }
 
-// Upward triangle for wild swims (distinct shape from folklore circles and pub
-// squares). SVG so it takes fill + stroke, mirroring the circleMarker state
-// styling: greyed when visited, orange ring when wishlisted, larger when selected.
-function triangleIcon(color: string, visited: boolean, wishlisted: boolean, selected: boolean): L.DivIcon {
-  const size = selected ? 20 : 15;
-  const fill = visited ? '#bbb' : color;
-  const stroke = visited ? '#888' : wishlisted ? '#f4a261' : '#fff';
-  const strokeWidth = visited ? 1 : wishlisted ? 3 : 1.5;
-  const opacity = visited ? 0.6 : 0.95;
-  const pts = `${size / 2},1 ${size - 1},${size - 1} 1,${size - 1}`;
-  return L.divIcon({
-    className: 'swim-marker',
-    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="opacity:${opacity};overflow:visible"><polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/></svg>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
-
-// Diamond (point-up rhombus) for ruins — distinct from the folklore circles, pub
-// squares and swim triangles. SVG so it takes fill + stroke, mirroring the
-// circleMarker state styling: greyed when visited, orange ring when wishlisted,
-// larger when selected.
-function diamondIcon(color: string, visited: boolean, wishlisted: boolean, selected: boolean): L.DivIcon {
-  const size = selected ? 20 : 15;
-  const fill = visited ? '#bbb' : color;
-  const stroke = visited ? '#888' : wishlisted ? '#f4a261' : '#fff';
-  const strokeWidth = visited ? 1 : wishlisted ? 3 : 1.5;
-  const opacity = visited ? 0.6 : 0.95;
-  const pts = `${size / 2},1 ${size - 1},${size / 2} ${size / 2},${size - 1} 1,${size / 2}`;
-  return L.divIcon({
-    className: 'ruin-marker',
-    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="opacity:${opacity};overflow:visible"><polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/></svg>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
+// One styling scheme for all shapes: greyed when visited, orange ring when
+// wishlisted, larger when selected.
+function markerStyle(view: FilteredSiteView, selected: boolean): L.CircleMarkerOptions {
+  const { site, visited, wishlisted } = view;
+  const shape = shapeFor(site.category);
+  const base = shape === 'triangle' || shape === 'diamond' ? 7.5 : 6;
+  return {
+    radius: selected ? base + 3 : base,
+    color: visited ? '#888' : wishlisted ? '#f4a261' : '#fff',
+    weight: visited ? 1 : wishlisted ? 3 : 1.5,
+    fillColor: visited ? '#bbb' : SITE_TYPE_COLORS[site.category],
+    fillOpacity: visited ? 0.6 : 0.95,
+  };
 }
 
 export function MapView() {
@@ -75,8 +58,10 @@ export function MapView() {
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
   const outingFitKeyRef = useRef<string | null>(null);
+  const markersRef = useRef(new Map<string, { marker: L.CircleMarker; view: FilteredSiteView }>());
+  const prevSelectedRef = useRef<string | null>(null);
 
-  const views = useVisibleSites();
+  const views = useFilteredSites();
   const position = useStore((s) => s.position);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
@@ -87,7 +72,10 @@ export function MapView() {
   // One-time map init.
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
-    const map = L.map(containerRef.current, { zoomControl: true }).setView(GB_CENTER, 6);
+    const map = L.map(containerRef.current, { zoomControl: true, preferCanvas: true }).setView(
+      GB_CENTER,
+      6,
+    );
     mapRef.current = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
@@ -142,41 +130,26 @@ export function MapView() {
     };
   }, [setPosition]);
 
-  // Render site pins whenever the visible set or their state changes.
+  // Render site pins whenever the filtered set or visited/wishlist state
+  // changes. Deliberately NOT keyed on position or selection: GPS ticks must
+  // never rebuild ~2,600 markers, and selection is handled incrementally below.
   useEffect(() => {
     const layer = siteLayerRef.current;
     const map = mapRef.current;
     if (!layer || !map) return;
     layer.clearLayers();
+    markersRef.current.clear();
 
-    for (const { site, visited, wishlisted } of views) {
-      const color = SITE_TYPE_COLORS[site.category];
-      const selected = site.id === selectedSiteId;
-      // Shape encodes the top-level category: pubs are squares, wild swims are
-      // triangles, ruins are diamonds, folklore sites stay as circles —
-      // distinguishable without colour.
-      const marker =
-        site.category === 'historic_pubs'
-          ? L.marker([site.lat, site.lng], {
-              icon: squareIcon(color, visited, wishlisted, selected),
-            })
-          : site.category === 'wild_swims'
-          ? L.marker([site.lat, site.lng], {
-              icon: triangleIcon(color, visited, wishlisted, selected),
-            })
-          : site.category === 'ruins'
-          ? L.marker([site.lat, site.lng], {
-              icon: diamondIcon(color, visited, wishlisted, selected),
-            })
-          : L.circleMarker([site.lat, site.lng], {
-              radius: selected ? 9 : 6,
-              color: visited ? '#888' : wishlisted ? '#f4a261' : '#fff',
-              weight: visited ? 1 : wishlisted ? 3 : 1.5,
-              fillColor: visited ? '#bbb' : color,
-              fillOpacity: visited ? 0.6 : 0.95,
-            });
+    const selectedId = useStore.getState().selectedSiteId;
+    for (const view of views) {
+      const { site } = view;
+      const marker = shapeMarker([site.lat, site.lng], {
+        shape: shapeFor(site.category),
+        ...markerStyle(view, site.id === selectedId),
+      });
       marker.on('click', () => setSelected(site.id));
       marker.addTo(layer);
+      markersRef.current.set(site.id, { marker, view });
     }
 
     // Fit to all pins on first data render.
@@ -185,7 +158,20 @@ export function MapView() {
       const bounds = L.latLngBounds(views.map((v) => [v.site.lat, v.site.lng]));
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [views, selectedSiteId, setSelected]);
+  }, [views, setSelected]);
+
+  // Selection highlight: restyle only the previously- and newly-selected
+  // markers instead of rebuilding the whole layer on every tap.
+  useEffect(() => {
+    const markers = markersRef.current;
+    const restyle = (id: string | null, selected: boolean) => {
+      const entry = id ? markers.get(id) : undefined;
+      if (entry) entry.marker.setStyle(markerStyle(entry.view, selected));
+    };
+    restyle(prevSelectedRef.current, false);
+    restyle(selectedSiteId, true);
+    prevSelectedRef.current = selectedSiteId;
+  }, [selectedSiteId]);
 
   // Outing route overlay (spec §6 F12/F14): dashed polyline from the anchor
   // through the route-ordered stops, with numbered markers on top of the

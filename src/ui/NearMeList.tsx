@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useStore } from '../state/store';
 import { useVisibleSites } from '../state/selectors';
 import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
@@ -6,9 +7,16 @@ import { formatDistance } from '../geo/haversine';
 // Near me now (spec F4): every visible site sorted by haversine distance from
 // the current position, respecting the active type filter. Tap a row to open it
 // on the map / in the detail card.
+//
+// Only the nearest PAGE_SIZE rows are rendered (with "show more" paging) —
+// mounting all ~2,600 rows was a large chunk of the mobile jank, and the
+// near-me loop only ever needs the top of the list.
+
+const PAGE_SIZE = 150;
 
 export function NearMeList() {
   const views = useVisibleSites();
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const position = useStore((s) => s.position);
   const geoError = useStore((s) => s.geoError);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
@@ -29,7 +37,7 @@ export function NearMeList() {
         </p>
       )}
       <ul>
-        {views.map(({ site, distance, visited, wishlisted }) => (
+        {views.slice(0, limit).map(({ site, distance, visited, wishlisted }) => (
           <li
             key={site.id}
             className={`row ${site.id === selectedSiteId ? 'selected' : ''} ${
@@ -53,6 +61,14 @@ export function NearMeList() {
           </li>
         ))}
       </ul>
+      {views.length > limit && (
+        <p className="hint">
+          <button className="link" onClick={() => setLimit((n) => n + PAGE_SIZE)}>
+            Show {Math.min(PAGE_SIZE, views.length - limit)} more
+          </button>{' '}
+          ({views.length - limit} further away)
+        </p>
+      )}
     </div>
   );
 }

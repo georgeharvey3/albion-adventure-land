@@ -357,8 +357,15 @@ export const useStore = create<AppState>((set, get) => ({
   // explicit override (spec §8) — don't let a GPS fix silently clobber it. The
   // user resumes live location by dropping a new pin (which routes through
   // setPosition, not here).
+  //
+  // Movement gate: high-accuracy watchPosition fires ~every second with metres
+  // of jitter, and every accepted fix re-sorts and re-renders everything
+  // downstream (near-me list, distances). Ignore fixes that moved less than
+  // 25 m — a threshold below anything that changes a displayed distance.
   setLivePosition: (position) => {
-    if (get().position?.manual) return;
+    const current = get().position;
+    if (current?.manual) return;
+    if (current && haversine(current, position) < 25) return;
     set({ position, geoError: null });
   },
   setGeoError: (geoError) => set({ geoError }),
