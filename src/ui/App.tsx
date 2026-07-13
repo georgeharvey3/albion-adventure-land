@@ -47,7 +47,13 @@ export function App() {
 
   return (
     <div className="app">
-      <MapView />
+      {/* The card is positioned inside .map-area so it hugs the bottom of the
+          map — i.e. it sits just above the sheet whether the sheet is expanded
+          or collapsed, and never depends on viewport-height math. */}
+      <div className="map-area">
+        <MapView />
+        {selectedSiteId && <SiteDetail />}
+      </div>
 
       {!dataLoaded && <div className="overlay">Loading sites…</div>}
       {dataError && (
@@ -55,8 +61,6 @@ export function App() {
           Couldn't load site data: {dataError}. Run <code>npm run ingest</code>.
         </div>
       )}
-
-      {selectedSiteId && <SiteDetail />}
 
       <div className={collapsed ? 'sheet collapsed' : 'sheet'}>
         <nav className="tabs">
