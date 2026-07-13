@@ -29,10 +29,16 @@ body,
   flex-direction: column;
 }
 
-/* Map fills the space above the bottom sheet. */
-.map {
+/* Map area fills the space above the bottom sheet; it is also the positioning
+   context for the selected-site card, so the card tracks the top of the sheet
+   in both its expanded and collapsed states. */
+.map-area {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
+}
+.map {
+  height: 100%;
 }
 
 .leaflet-container {
@@ -440,23 +446,26 @@ body,
   color: var(--muted);
 }
 
-/* Selected-site card */
+/* Selected-site card — floats at the bottom of the map area, i.e. directly
+   above the sheet (expanded or collapsed). Anchoring to .map-area rather than
+   the viewport avoids iOS vh quirks that used to push the top of a long
+   write-up off-screen with no way to scroll to it. */
 .card {
   position: absolute;
   left: 8px;
   right: 8px;
-  bottom: calc(45vh + 8px);
+  bottom: 8px;
   z-index: 600;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
-  /* Grow to fill the space above the sheet (anchored at bottom), scrolling only
-     when the description is longer than that. Was a flat 40vh, which forced
-     scrolling even when there was room to show the whole write-up. */
-  max-height: calc(55vh - 16px);
+  /* Leave a strip of map visible above the card; anything longer scrolls. */
+  max-height: calc(100% - 120px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .card-close {
   position: absolute;
@@ -734,8 +743,8 @@ body,
     right: 396px;
     bottom: 16px;
     width: 360px;
-    /* Side panel — the full viewport height is free, so let a long write-up
-       show in full and only scroll if it exceeds the whole screen. */
-    max-height: calc(100vh - 32px);
+    /* Side-panel layout — .map-area is the full viewport height, so let a long
+       write-up show in full and only scroll if it exceeds the whole screen. */
+    max-height: calc(100% - 32px);
   }
 }

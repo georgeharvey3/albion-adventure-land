@@ -124,7 +124,13 @@ export function MapView() {
       map.getContainer().style.cursor = '';
     });
 
+    // The map's height changes when the bottom sheet expands/collapses;
+    // Leaflet only watches window resize, so track the container directly.
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(containerRef.current);
+
     return () => {
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
     };
