@@ -85,10 +85,14 @@ interface AppState {
 
   // UI: the site shown in the detail card (map popup / list tap).
   selectedSiteId: string | null;
+  // UI: description collapsed to a teaser. A session-wide preference — it
+  // sticks while browsing from point to point (in-memory only, not persisted).
+  descCollapsed: boolean;
 
   // Actions.
   init: () => Promise<void>;
   setSelected: (siteId: string | null) => void;
+  setDescCollapsed: (collapsed: boolean) => void;
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
@@ -131,6 +135,7 @@ export const useStore = create<AppState>((set, get) => ({
   geoError: null,
 
   selectedSiteId: null,
+  descCollapsed: false,
 
   init: async () => {
     // Load site data and user state in parallel; they're independent.
@@ -370,4 +375,5 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => set({ selectedSiteId }),
+  setDescCollapsed: (descCollapsed) => set({ descCollapsed }),
 }));

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
@@ -23,10 +22,10 @@ export function SiteDetail() {
   const addToTrip = useStore((s) => s.addToTrip);
   const removeFromTrip = useStore((s) => s.removeFromTrip);
 
-  // Collapsing the write-up shrinks the card and gives the map back. Fresh
-  // selection starts expanded again.
-  const [descCollapsed, setDescCollapsed] = useState(false);
-  useEffect(() => setDescCollapsed(false), [selectedSiteId]);
+  // Collapsing the write-up shrinks the card and gives the map back. The
+  // preference lives in the store so it sticks while hopping between points.
+  const descCollapsed = useStore((s) => s.descCollapsed);
+  const setDescCollapsed = useStore((s) => s.setDescCollapsed);
 
   if (!site) return null;
 
@@ -68,7 +67,7 @@ export function SiteDetail() {
           {site.description.length > 160 && (
             <button
               className="desc-toggle"
-              onClick={() => setDescCollapsed((c) => !c)}
+              onClick={() => setDescCollapsed(!descCollapsed)}
               aria-expanded={!descCollapsed}
             >
               {descCollapsed ? 'Show more ▾' : 'Show less ▴'}
