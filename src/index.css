@@ -501,6 +501,27 @@ body,
   margin: 8px 0;
   white-space: pre-line; /* preserve scraped paragraph breaks (CAMRA write-ups) */
 }
+/* Collapsed write-up: a two-line teaser so the card shrinks back and frees the
+   map. `pre-line` keeps its paragraph breaks in the expanded state only. */
+.card-desc.collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+}
+.desc-toggle {
+  display: block;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
 .card-source {
   font-size: 12px;
   color: var(--muted);

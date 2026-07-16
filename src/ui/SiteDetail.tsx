@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
@@ -21,6 +22,11 @@ export function SiteDetail() {
   const inTrip = useStore((s) => (selectedSiteId ? !!s.outing?.stopIds.includes(selectedSiteId) : false));
   const addToTrip = useStore((s) => s.addToTrip);
   const removeFromTrip = useStore((s) => s.removeFromTrip);
+
+  // Collapsing the write-up shrinks the card and gives the map back. Fresh
+  // selection starts expanded again.
+  const [descCollapsed, setDescCollapsed] = useState(false);
+  useEffect(() => setDescCollapsed(false), [selectedSiteId]);
 
   if (!site) return null;
 
@@ -54,7 +60,22 @@ export function SiteDetail() {
       )}
       {site.walkTime && <p className="card-meta">🚶 Walk in: {site.walkTime}</p>}
       {site.access && <p className="card-meta">Access: {site.access}</p>}
-      {site.description && <p className="card-desc">{site.description}</p>}
+      {site.description && (
+        <>
+          <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
+            {site.description}
+          </p>
+          {site.description.length > 160 && (
+            <button
+              className="desc-toggle"
+              onClick={() => setDescCollapsed((c) => !c)}
+              aria-expanded={!descCollapsed}
+            >
+              {descCollapsed ? 'Show more ▾' : 'Show less ▴'}
+            </button>
+          )}
+        </>
+      )}
       {site.sourceUrl && (
         <p className="card-source">
           Description via{' '}
