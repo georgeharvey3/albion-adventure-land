@@ -10,6 +10,7 @@ export type SiteCategory =
   | 'historic_pubs'
   | 'wild_swims'
   | 'ruins'
+  | 'scrambles'
   | 'wells'
   | 'natural_water_features'
   | 'wild_places'
@@ -28,6 +29,7 @@ export const SITE_TYPES: SiteCategory[] = [
   'historic_pubs',
   'wild_swims',
   'ruins',
+  'scrambles',
   'wells',
   'natural_water_features',
   'wild_places',
@@ -47,14 +49,15 @@ export const SITE_TYPES: SiteCategory[] = [
 // UI groups leaves by parent — Folklore expands to its 13 subcategories; Historic
 // pubs is a single leaf shown on its own. Parent is DERIVED from category (like
 // rarity), never stored on a Site, so user state can't depend on it.
-export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims' | 'ruins';
+export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims' | 'ruins' | 'scrambles';
 
-export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'ruins', 'folklore'];
+export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'ruins', 'scrambles', 'folklore'];
 
 export const PARENT_CATEGORY_LABELS: Record<ParentCategory, string> = {
   historic_pubs: 'Historic pubs',
   wild_swims: 'Wild swims',
   ruins: 'Ruins',
+  scrambles: 'Scrambles',
   folklore: 'Folklore',
 };
 
@@ -75,6 +78,7 @@ export const CATEGORY_PARENT: Record<SiteCategory, ParentCategory> = {
   historic_pubs: 'historic_pubs',
   wild_swims: 'wild_swims',
   ruins: 'ruins',
+  scrambles: 'scrambles',
 };
 
 export function parentOf(category: SiteCategory): ParentCategory {
@@ -198,6 +202,7 @@ export const SITE_TYPE_LABELS: Record<SiteCategory, string> = {
   historic_pubs: 'Historic pubs',
   wild_swims: 'Wild swims',
   ruins: 'Ruins',
+  scrambles: 'Scrambles',
 };
 
 // Distinct, colour-blind-friendly-ish palette for map pins and list dots.
@@ -218,6 +223,7 @@ export const SITE_TYPE_COLORS: Record<SiteCategory, string> = {
   historic_pubs: '#d4a017', // amber — distinct from every folklore hue
   wild_swims: '#00b4d8', // bright cyan — distinct from the navy natural_water_features blue
   ruins: '#6b705c', // muted stone/olive — distinct from the browns and greys above
+  scrambles: '#d00000', // alpine red — the chevron pin makes it unmistakable next to sacred_buildings' crimson
 };
 
 // Colour for a whole-parent outing slot. The single-leaf parents reuse their
@@ -227,6 +233,7 @@ export const PARENT_CATEGORY_COLORS: Record<ParentCategory, string> = {
   historic_pubs: SITE_TYPE_COLORS.historic_pubs,
   wild_swims: SITE_TYPE_COLORS.wild_swims,
   ruins: SITE_TYPE_COLORS.ruins,
+  scrambles: SITE_TYPE_COLORS.scrambles,
   folklore: '#7b4fb0',
 };
 

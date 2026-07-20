@@ -21,6 +21,7 @@ export interface SourceMapping {
     category?: string; // controlled-vocabulary column → SiteType
     walkTime?: string; // editorial walk-in time (e.g. "15 mins"), stored verbatim
     description?: string;
+    sourceUrl?: string; // canonical per-site page (attribution link in the detail card)
     county?: string;
     access?: string;
     role?: string; // structural point_type column

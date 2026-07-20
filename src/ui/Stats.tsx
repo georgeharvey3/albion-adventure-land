@@ -1,126 +1,139 @@
+import { useMemo } from 'react';
 import { useStore } from '../state/store';
-import {
-  SITE_TYPES,
-  SITE_TYPE_COLORS,
-  SITE_TYPE_LABELS,
-  type SiteCategory,
-} from '../data/types';
+import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
+import type { Site } from '../data/types';
 
-// Completion stats (spec §6 F6): the finish line that turns a viewer into a
-// collection. Overall + per-type + per-county visited counts, and the
-// "rarest type you haven't seen" nudge — the first consumer of the rarity
-// index built at load (spec §7.4).
+// The "Saved" tab: the two lists that make this a collection rather than a
+// viewer — places you want to visit (wishlist) and a log of the ones you have,
+// most recent first. Tap a row to open it on the map / in the detail card.
+
+function formatVisitedDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 export function Stats() {
   const sites = useStore((s) => s.sites);
   const visited = useStore((s) => s.visited);
-  const rarity = useStore((s) => s.rarity);
+  const wishlist = useStore((s) => s.wishlist);
+  const hidden = useStore((s) => s.hidden);
+  const selectedSiteId = useStore((s) => s.selectedSiteId);
+  const setSelected = useStore((s) => s.setSelected);
 
-  const total = sites.length;
-  let totalVisited = 0;
-  const byType = new Map<SiteCategory, { total: number; visited: number }>();
-  const byCounty = new Map<string, { total: number; visited: number }>();
+  const byId = useMemo(() => new Map(sites.map((s) => [s.id, s])), [sites]);
 
-  for (const site of sites) {
-    const isVisited = site.id in visited;
-    if (isVisited) totalVisited++;
-
-    const t = byType.get(site.category) ?? { total: 0, visited: 0 };
-    t.total++;
-    if (isVisited) t.visited++;
-    byType.set(site.category, t);
-
-    const countyKey = site.county ?? 'Unspecified';
-    const c = byCounty.get(countyKey) ?? { total: 0, visited: 0 };
-    c.total++;
-    if (isVisited) c.visited++;
-    byCounty.set(countyKey, c);
-  }
-
-  // The nudge: rarest type with no visits at all; if every type has been seen
-  // at least once, fall back to the rarest type with sites still left.
-  let nudge: { type: SiteCategory; unseen: boolean } | null = null;
-  if (rarity) {
-    const pick = (pred: (c: { total: number; visited: number }) => boolean) => {
-      let best: SiteCategory | null = null;
-      for (const [type, c] of byType) {
-        if (!pred(c)) continue;
-        if (best === null || rarity.rarity[type] > rarity.rarity[best]) best = type;
-      }
-      return best;
-    };
-    const unseen = pick((c) => c.visited === 0);
-    if (unseen) nudge = { type: unseen, unseen: true };
-    else {
-      const remaining = pick((c) => c.visited < c.total);
-      if (remaining) nudge = { type: remaining, unseen: false };
+  // Wishlist: sites still on the list to visit, alphabetical.
+  const wishlistSites = useMemo(() => {
+    const rows: Site[] = [];
+    for (const id of wishlist) {
+      const site = byId.get(id);
+      if (site) rows.push(site);
     }
-  }
+    rows.sort((a, b) => a.name.localeCompare(b.name));
+    return rows;
+  }, [wishlist, byId]);
 
-  const typeRows = SITE_TYPES.filter((t) => byType.has(t));
-  const countyRows = [...byCounty.entries()].sort((a, b) => b[1].total - a[1].total);
-  const pct = total ? Math.round((totalVisited / total) * 100) : 0;
+  // Visited log: most recently visited first.
+  const visitedRows = useMemo(() => {
+    const rows = [];
+    for (const log of Object.values(visited)) {
+      const site = byId.get(log.siteId);
+      if (site) rows.push({ site, log });
+    }
+    rows.sort((a, b) => b.log.visitedAt.localeCompare(a.log.visitedAt));
+    return rows;
+  }, [visited, byId]);
+
+  // Hidden sites, alphabetical — listed here so they can be found and restored.
+  const hiddenSites = useMemo(() => {
+    const rows: Site[] = [];
+    for (const id of hidden) {
+      const site = byId.get(id);
+      if (site) rows.push(site);
+    }
+    rows.sort((a, b) => a.name.localeCompare(b.name));
+    return rows;
+  }, [hidden, byId]);
 
   return (
     <div className="stats">
-      <div className="stats-total">
-        <span className="stats-big">
-          {totalVisited} / {total}
-        </span>
-        <span className="stats-pct">{pct}% visited</span>
-        <div className="stats-bar">
-          <div className="stats-bar-fill" style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-
-      {nudge && (
-        <p className="stats-nudge">
-          {nudge.unseen ? (
-            <>
-              🔍 Rarest type you haven't seen:{' '}
-              <strong>{SITE_TYPE_LABELS[nudge.type]}</strong> — only{' '}
-              {byType.get(nudge.type)!.total} in the whole collection.
-            </>
-          ) : (
-            <>
-              🔍 Rarest type with sites left:{' '}
-              <strong>{SITE_TYPE_LABELS[nudge.type]}</strong> (
-              {byType.get(nudge.type)!.total - byType.get(nudge.type)!.visited} to go).
-            </>
-          )}
+      <h3 className="stats-heading">Wishlist ({wishlistSites.length})</h3>
+      {wishlistSites.length === 0 ? (
+        <p className="hint">
+          No saved places yet. Tap ★ on a site to add it to your wishlist.
         </p>
-      )}
-      {total > 0 && totalVisited === total && (
-        <p className="stats-nudge">🏆 Collection complete. Time for a new CSV.</p>
-      )}
-
-      <h3 className="stats-heading">By type</h3>
-      <ul className="stats-list">
-        {typeRows.map((type) => {
-          const c = byType.get(type)!;
-          return (
-            <li key={type} className="stats-row">
-              <span className="dot" style={{ background: SITE_TYPE_COLORS[type] }} />
-              <span className="stats-label">{SITE_TYPE_LABELS[type]}</span>
-              <span className="stats-count">
-                {c.visited} / {c.total}
+      ) : (
+        <ul>
+          {wishlistSites.map((site) => (
+            <li
+              key={site.id}
+              className={`row ${site.id === selectedSiteId ? 'selected' : ''}`}
+              onClick={() => setSelected(site.id)}
+            >
+              <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+              <span className="row-main">
+                <span className="row-name">★ {site.name}</span>
+                <span className="row-sub">
+                  {SITE_TYPE_LABELS[site.category]}
+                  {site.county ? ` · ${site.county}` : ''}
+                </span>
               </span>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      )}
 
-      <h3 className="stats-heading">By area</h3>
-      <ul className="stats-list">
-        {countyRows.map(([county, c]) => (
-          <li key={county} className="stats-row">
-            <span className="stats-label">{county}</span>
-            <span className="stats-count">
-              {c.visited} / {c.total}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <h3 className="stats-heading">Visited ({visitedRows.length})</h3>
+      {visitedRows.length === 0 ? (
+        <p className="hint">
+          No visits logged yet. Mark a site visited to start your log.
+        </p>
+      ) : (
+        <ul>
+          {visitedRows.map(({ site, log }) => (
+            <li
+              key={site.id}
+              className={`row is-visited ${site.id === selectedSiteId ? 'selected' : ''}`}
+              onClick={() => setSelected(site.id)}
+            >
+              <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+              <span className="row-main">
+                <span className="row-name">✓ {site.name}</span>
+                <span className="row-sub">
+                  {SITE_TYPE_LABELS[site.category]}
+                  {site.county ? ` · ${site.county}` : ''}
+                </span>
+              </span>
+              <span className="row-dist">{formatVisitedDate(log.visitedAt)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {hiddenSites.length > 0 && (
+        <>
+          <h3 className="stats-heading">Hidden ({hiddenSites.length})</h3>
+          <ul>
+            {hiddenSites.map((site) => (
+              <li
+                key={site.id}
+                className={`row ${site.id === selectedSiteId ? 'selected' : ''}`}
+                onClick={() => setSelected(site.id)}
+              >
+                <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+                <span className="row-main">
+                  <span className="row-name">🚫 {site.name}</span>
+                  <span className="row-sub">
+                    {SITE_TYPE_LABELS[site.category]}
+                    {site.county ? ` · ${site.county}` : ''}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
