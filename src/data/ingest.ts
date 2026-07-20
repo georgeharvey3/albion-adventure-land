@@ -113,6 +113,7 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
   }
 
   const description = col(row, mapping.columns.description) || undefined;
+  const sourceUrl = col(row, mapping.columns.sourceUrl) || undefined;
   const county = col(row, mapping.columns.county) || undefined;
   const access = col(row, mapping.columns.access) || undefined;
   const walkTime = col(row, mapping.columns.walkTime) || undefined;
@@ -137,6 +138,7 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
     access,
     category,
     ...(walkTime ? { walkTime } : {}),
+    ...(sourceUrl ? { sourceUrl } : {}),
     ...(listingId ? { listingId, listingTitle } : {}),
   };
 }

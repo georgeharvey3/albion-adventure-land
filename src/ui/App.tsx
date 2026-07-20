@@ -14,7 +14,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'near', label: 'Near me' },
   { id: 'filters', label: 'Filters' },
   { id: 'outing', label: 'Outing' },
-  { id: 'stats', label: 'Stats' },
+  { id: 'stats', label: 'Saved' },
 ];
 
 export function App() {

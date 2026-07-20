@@ -7,6 +7,20 @@ import { directionsToSite, placeLink } from '../links/googleMaps';
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
 // A fuller per-site page with note + photo arrives in Phase 2 (F11).
 
+// Attribution label for the description's source link, keyed off the URL's host
+// so new scraped sources don't need a Site schema change.
+function sourceLinkLabel(url: string): string {
+  try {
+    const host = new URL(url).hostname;
+    if (host.includes('ukclimbing')) return 'UKClimbing';
+    if (host.includes('camra') || host.includes('heritagepubs') || host.includes('pubheritage'))
+      return 'CAMRA Heritage Pubs';
+    return host.replace(/^www\./, '');
+  } catch {
+    return 'source';
+  }
+}
+
 export function SiteDetail() {
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const sites = useStore((s) => s.sites);
@@ -14,10 +28,12 @@ export function SiteDetail() {
   const position = useStore((s) => s.position);
   const visited = useStore((s) => (selectedSiteId ? s.visited[selectedSiteId] : undefined));
   const wishlisted = useStore((s) => (selectedSiteId ? s.wishlist.has(selectedSiteId) : false));
+  const hidden = useStore((s) => (selectedSiteId ? s.hidden.has(selectedSiteId) : false));
   const setSelected = useStore((s) => s.setSelected);
   const markVisited = useStore((s) => s.markVisited);
   const unmarkVisited = useStore((s) => s.unmarkVisited);
   const toggleWishlist = useStore((s) => s.toggleWishlist);
+  const toggleHidden = useStore((s) => s.toggleHidden);
   const inTrip = useStore((s) => (selectedSiteId ? !!s.outing?.stopIds.includes(selectedSiteId) : false));
   const addToTrip = useStore((s) => s.addToTrip);
   const removeFromTrip = useStore((s) => s.removeFromTrip);
@@ -44,6 +60,7 @@ export function SiteDetail() {
       <h2 className="card-title">{site.name}</h2>
       {visited && <div className="badge visited">✓ Visited {visited.visitedAt.slice(0, 10)}</div>}
       {wishlisted && !visited && <div className="badge wish">★ Wishlist</div>}
+      {hidden && <div className="badge">🚫 Hidden</div>}
       {parent && (
         <p className="card-listing">
           Part of{' '}
@@ -59,7 +76,7 @@ export function SiteDetail() {
         <p className="card-source">
           Description via{' '}
           <a href={site.sourceUrl} target="_blank" rel="noreferrer">
-            CAMRA Heritage Pubs ↗
+            {sourceLinkLabel(site.sourceUrl)} ↗
           </a>
         </p>
       )}
@@ -109,6 +126,9 @@ export function SiteDetail() {
         )}
         <button className="btn" onClick={() => toggleWishlist(site.id)}>
           {wishlisted ? '★ On wishlist' : '☆ Wishlist'}
+        </button>
+        <button className="btn" onClick={() => toggleHidden(site.id)}>
+          {hidden ? '🚫 Unhide' : '🚫 Hide'}
         </button>
         {/* Trip = today's ordered subset. Adding needs a position to order the
             route from (spec: require a position); without one the button is

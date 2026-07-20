@@ -11,6 +11,8 @@ import {
   deleteVisit,
   addWishlist,
   removeWishlist,
+  addHidden,
+  removeHidden,
   type VisitLog,
 } from './db';
 
@@ -55,6 +57,7 @@ interface AppState {
   // User state (mirrors IndexedDB).
   visited: Record<string, VisitLog>;
   wishlist: Set<string>;
+  hidden: Set<string>;
   userLoaded: boolean;
 
   // Filters.
@@ -103,6 +106,7 @@ interface AppState {
   markVisited: (siteId: string, note?: string) => Promise<void>;
   unmarkVisited: (siteId: string) => Promise<void>;
   toggleWishlist: (siteId: string) => Promise<void>;
+  toggleHidden: (siteId: string) => Promise<void>;
   setPosition: (pos: Position | null) => void;
   setLivePosition: (pos: Position) => void;
   setGeoError: (msg: string | null) => void;
@@ -116,6 +120,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   visited: {},
   wishlist: new Set(),
+  hidden: new Set(),
   userLoaded: false,
 
   activeTypes: new Set(SITE_TYPES),
@@ -147,8 +152,13 @@ export const useStore = create<AppState>((set, get) => ({
       });
 
     const userPromise = loadUserState()
-      .then(({ visited, wishlist }) => {
-        set({ visited, wishlist: new Set(wishlist), userLoaded: true });
+      .then(({ visited, wishlist, hidden }) => {
+        set({
+          visited,
+          wishlist: new Set(wishlist),
+          hidden: new Set(hidden),
+          userLoaded: true,
+        });
       })
       .catch(() => {
         // Fresh state if IndexedDB is unavailable; app still works read-only.
@@ -214,7 +224,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   findOuting: (another = false) => {
-    const { sites, visited, position, outingTypes, outingAnyParents, outingIncludeVisited, outingShownIds } =
+    const { sites, visited, hidden, position, outingTypes, outingAnyParents, outingIncludeVisited, outingShownIds } =
       get();
     const slots = resolveOutingSlots(outingTypes, outingAnyParents);
     if (!position || slots.size === 0) return; // UI disables the button
@@ -222,7 +232,10 @@ export const useStore = create<AppState>((set, get) => ({
     const resolve = outingSlotResolver(slots);
     const slotOf = (s: Site) => resolve(s.category) ?? s.category;
     const pool = sites.filter(
-      (s) => resolve(s.category) !== undefined && (outingIncludeVisited || !(s.id in visited)),
+      (s) =>
+        resolve(s.category) !== undefined &&
+        !hidden.has(s.id) &&
+        (outingIncludeVisited || !(s.id in visited)),
     );
     const exclude = new Set(another ? outingShownIds : []);
     const cluster = findNearestOuting(position, slots, slotOf, pool, exclude);
@@ -350,6 +363,21 @@ export const useStore = create<AppState>((set, get) => ({
       w.add(siteId);
     }
     set({ wishlist: w });
+  },
+
+  // Hide/unhide a site: user state (persisted), keyed by stable id. Hidden sites
+  // are dropped from the map, the near-me list, and the outing search pool — but
+  // stay selectable (Saved tab → Hidden) so they can be restored.
+  toggleHidden: async (siteId) => {
+    const h = new Set(get().hidden);
+    if (h.has(siteId)) {
+      await removeHidden(siteId);
+      h.delete(siteId);
+    } else {
+      await addHidden(siteId);
+      h.add(siteId);
+    }
+    set({ hidden: h });
   },
 
   setPosition: (position) => set({ position, geoError: null }),

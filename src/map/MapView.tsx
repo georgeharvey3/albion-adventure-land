@@ -18,8 +18,8 @@ import { shapeMarker, type MarkerShape } from './shapeMarker';
 const GB_CENTER: L.LatLngTuple = [53.0, -3.5];
 
 // Shape encodes the top-level category: pubs are squares, wild swims are
-// triangles, ruins are diamonds, folklore sites stay as circles —
-// distinguishable without colour.
+// triangles, ruins are diamonds, scrambles are mountain chevrons, folklore
+// sites stay as circles — distinguishable without colour.
 function shapeFor(category: SiteCategory): MarkerShape {
   switch (category) {
     case 'historic_pubs':
@@ -28,23 +28,27 @@ function shapeFor(category: SiteCategory): MarkerShape {
       return 'triangle';
     case 'ruins':
       return 'diamond';
+    case 'scrambles':
+      return 'chevron';
     default:
       return 'circle';
   }
 }
 
-// One styling scheme for all shapes: greyed when visited, orange ring when
-// wishlisted, larger when selected.
+// One styling scheme for all shapes. Visited sites keep their category colour
+// (they are not hidden or dimmed — visiting a place doesn't take it off the
+// map), marked only by a dark ring. Wishlisted gets an orange ring; selected is
+// larger.
 function markerStyle(view: FilteredSiteView, selected: boolean): L.CircleMarkerOptions {
   const { site, visited, wishlisted } = view;
   const shape = shapeFor(site.category);
-  const base = shape === 'triangle' || shape === 'diamond' ? 7.5 : 6;
+  const base = shape === 'triangle' || shape === 'diamond' || shape === 'chevron' ? 7.5 : 6;
   return {
     radius: selected ? base + 3 : base,
-    color: visited ? '#888' : wishlisted ? '#f4a261' : '#fff',
-    weight: visited ? 1 : wishlisted ? 3 : 1.5,
-    fillColor: visited ? '#bbb' : SITE_TYPE_COLORS[site.category],
-    fillOpacity: visited ? 0.6 : 0.95,
+    color: wishlisted ? '#f4a261' : visited ? '#2a2a2a' : '#fff',
+    weight: wishlisted ? 3 : visited ? 2 : 1.5,
+    fillColor: SITE_TYPE_COLORS[site.category],
+    fillOpacity: 0.95,
   };
 }
 

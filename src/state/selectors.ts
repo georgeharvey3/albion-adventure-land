@@ -22,11 +22,13 @@ export function useFilteredSites(): FilteredSiteView[] {
   const activeTypes = useStore((s) => s.activeTypes);
   const visited = useStore((s) => s.visited);
   const wishlist = useStore((s) => s.wishlist);
+  const hidden = useStore((s) => s.hidden);
 
   return useMemo(() => {
     const views: FilteredSiteView[] = [];
     for (const site of sites) {
       if (!activeTypes.has(site.category)) continue;
+      if (hidden.has(site.id)) continue; // user-hidden: off the map and lists
       views.push({
         site,
         visited: site.id in visited,
@@ -34,7 +36,7 @@ export function useFilteredSites(): FilteredSiteView[] {
       });
     }
     return views;
-  }, [sites, activeTypes, visited, wishlist]);
+  }, [sites, activeTypes, visited, wishlist, hidden]);
 }
 
 /** The filtered sites annotated with distance, sorted nearest-first when a

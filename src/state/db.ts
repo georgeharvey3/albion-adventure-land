@@ -21,10 +21,16 @@ interface AlbionDB extends DBSchema {
     key: string; // siteId
     value: { siteId: string };
   };
+  // Sites the user has chosen to hide from the map/lists. Precious user state,
+  // keyed by the stable site id like the others.
+  hidden: {
+    key: string; // siteId
+    value: { siteId: string };
+  };
 }
 
 const DB_NAME = 'albion';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<AlbionDB>> | null = null;
 
@@ -38,6 +44,9 @@ function getDb(): Promise<IDBPDatabase<AlbionDB>> {
         if (!db.objectStoreNames.contains('wishlist')) {
           db.createObjectStore('wishlist', { keyPath: 'siteId' });
         }
+        if (!db.objectStoreNames.contains('hidden')) {
+          db.createObjectStore('hidden', { keyPath: 'siteId' });
+        }
       },
     });
   }
@@ -47,17 +56,23 @@ function getDb(): Promise<IDBPDatabase<AlbionDB>> {
 export interface PersistedUserState {
   visited: Record<string, VisitLog>;
   wishlist: string[];
+  hidden: string[];
 }
 
 export async function loadUserState(): Promise<PersistedUserState> {
   const db = await getDb();
-  const [visits, wishes] = await Promise.all([
+  const [visits, wishes, hiddens] = await Promise.all([
     db.getAll('visited'),
     db.getAll('wishlist'),
+    db.getAll('hidden'),
   ]);
   const visited: Record<string, VisitLog> = {};
   for (const v of visits) visited[v.siteId] = v;
-  return { visited, wishlist: wishes.map((w) => w.siteId) };
+  return {
+    visited,
+    wishlist: wishes.map((w) => w.siteId),
+    hidden: hiddens.map((h) => h.siteId),
+  };
 }
 
 export async function putVisit(log: VisitLog): Promise<void> {
@@ -78,4 +93,14 @@ export async function addWishlist(siteId: string): Promise<void> {
 export async function removeWishlist(siteId: string): Promise<void> {
   const db = await getDb();
   await db.delete('wishlist', siteId);
+}
+
+export async function addHidden(siteId: string): Promise<void> {
+  const db = await getDb();
+  await db.put('hidden', { siteId });
+}
+
+export async function removeHidden(siteId: string): Promise<void> {
+  const db = await getDb();
+  await db.delete('hidden', siteId);
 }

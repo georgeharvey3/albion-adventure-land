@@ -13,7 +13,7 @@ import L from 'leaflet';
 // across the 1.x line. If the renderer isn't canvas we fall back to the stock
 // circle drawing rather than break.
 
-export type MarkerShape = 'circle' | 'square' | 'triangle' | 'diamond';
+export type MarkerShape = 'circle' | 'square' | 'triangle' | 'diamond' | 'chevron';
 
 export interface ShapeMarkerOptions extends L.CircleMarkerOptions {
   shape?: MarkerShape;
@@ -38,6 +38,14 @@ const ShapeMarkerClass = L.CircleMarker.extend({
     } else if (shape === 'triangle') {
       ctx.moveTo(p.x, p.y - r);
       ctx.lineTo(p.x + r, p.y + r);
+      ctx.lineTo(p.x - r, p.y + r);
+    } else if (shape === 'chevron') {
+      // mountain-peak chevron (^) — hollow-bottomed triangle
+      ctx.moveTo(p.x, p.y - r);
+      ctx.lineTo(p.x + r, p.y + r);
+      ctx.lineTo(p.x + r * 0.4, p.y + r);
+      ctx.lineTo(p.x, p.y - r * 0.1);
+      ctx.lineTo(p.x - r * 0.4, p.y + r);
       ctx.lineTo(p.x - r, p.y + r);
     } else {
       // diamond

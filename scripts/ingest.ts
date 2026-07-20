@@ -7,6 +7,7 @@ import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/
 import { camraMapping } from '../src/data/mappings/camra.ts';
 import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
 import { ruinsMapping } from '../src/data/mappings/ruins.ts';
+import { scramblesMapping } from '../src/data/mappings/scrambles.ts';
 import { geocodePostcodes, normalizePostcode } from './geocode.ts';
 import { SITE_TYPE_LABELS, type Site } from '../src/data/types.ts';
 
@@ -27,6 +28,7 @@ const SOURCES: SourceSpec[] = [
   { csv: 'data/CAMRA.csv', mapping: camraMapping },
   { csv: 'data/swims.csv', mapping: wildSwimsMapping },
   { csv: 'data/ruins.csv', mapping: ruinsMapping },
+  { csv: 'data/scrambles.csv', mapping: scramblesMapping },
 ];
 
 function parseCsv(text: string): RawRow[] {
