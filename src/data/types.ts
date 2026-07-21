@@ -251,6 +251,18 @@ export function normalizeCategory(raw: string | undefined): SiteCategory {
   return SITE_TYPE_SET.has(slug) ? (slug as SiteCategory) : 'other';
 }
 
+// Build-time-resolved site photo (scripts/fetch-images.ts). The pixels live in
+// public/images/<file> — downloaded once at build time so the app never hits a
+// photo host at runtime (offline-first). `author`/`license`/`sourceUrl` carry the
+// attribution the CC licenses require; render them wherever the photo shows.
+export interface SiteImage {
+  file: string; // filename under public/images/
+  author?: string;
+  license?: string; // e.g. "CC BY-SA 2.0"
+  sourceUrl?: string; // page to credit/link (Commons file page, CAMRA pub page…)
+  provider: 'commons' | 'wikidata' | 'camra' | 'geograph' | 'megalithic';
+}
+
 export interface Site {
   id: string; // stable, derived: slug(name)+rounded(lat,lng)
   name: string;
@@ -262,6 +274,10 @@ export interface Site {
   source: string; // which CSV / guidebook this came from
   sourceUrl?: string; // canonical page this site/description came from (e.g. CAMRA pub page); shown as attribution
   category: SiteCategory
+
+  // Photo resolved at build time (like description enrichment: derived, replaceable,
+  // never user state — user photos are Phase 3's IndexedDB blobs, a separate thing).
+  image?: SiteImage;
 
   // Listing grouping (spec: a `listing` groups a `main` point with its
   // trailheads/nearby features). DERIVED from the source's listing columns at

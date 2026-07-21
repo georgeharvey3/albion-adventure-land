@@ -61,6 +61,14 @@ navigation is delegated to Google Maps via deep links. No backend.
   (`npm run scrape:camra`).
 - User state is kept strictly separate from site data and keyed on a stable,
   derived site `id`, so re-importing a CSV never loses your visit history.
+- **Site photos** (optional): `npm run fetch:images` resolves one photo per site
+  at build time — pubs from their CAMRA page, named monuments via Wikidata,
+  everything else via Wikimedia Commons geosearch (which includes the ~1.7M-photo
+  Geograph import, so rural coverage is good). Results are cached in
+  `data/image-cache.json` and normalized to ≤480px WebP in `public/images/`;
+  re-run `npm run ingest` afterwards to bake them into `sites.json`. The run is
+  resumable — interrupt it freely. Attribution (author · license · source link)
+  is stored per photo and shown on the site card.
 
 ## Documentation
 

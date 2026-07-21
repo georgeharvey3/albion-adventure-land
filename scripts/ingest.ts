@@ -9,7 +9,8 @@ import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
 import { ruinsMapping } from '../src/data/mappings/ruins.ts';
 import { scramblesMapping } from '../src/data/mappings/scrambles.ts';
 import { geocodePostcodes, normalizePostcode } from './geocode.ts';
-import { SITE_TYPE_LABELS, type Site } from '../src/data/types.ts';
+import { IMAGES_DIR, loadImageCache } from './image-cache.ts';
+import { SITE_TYPE_LABELS, type Site, type SiteImage } from '../src/data/types.ts';
 
 // Build-time ingest (spec §5.2, §12 step 2). Reads the real CSV with Papa Parse
 // (NOT naive splitting — descriptions contain embedded commas/newlines), applies
@@ -100,6 +101,32 @@ async function main(): Promise<void> {
       }
     }
     totalSkipped += skippedNonCollectible;
+  }
+
+  // Attach build-time-resolved photos (scripts/fetch-images.ts). Optional like
+  // the pub enrichment: absent cache/files just mean sites ship photo-less.
+  // `thumbUrl` is fetcher bookkeeping (re-download path) — not baked into JSON.
+  const imageCache = loadImageCache();
+  let attached = 0;
+  let missingFiles = 0;
+  for (let i = 0; i < allSites.length; i++) {
+    const entry = imageCache[allSites[i].id];
+    if (!entry?.image) continue;
+    const { thumbUrl: _omit, ...image } = entry.image;
+    if (!existsSync(resolve(IMAGES_DIR, image.file))) {
+      missingFiles++;
+      continue;
+    }
+    allSites[i] = { ...allSites[i], image: image as SiteImage };
+    attached++;
+  }
+  if (attached || missingFiles) {
+    console.log(`\nPhotos: ${attached} sites have one attached.`);
+    if (missingFiles) {
+      console.warn(
+        `  ⚠ ${missingFiles} cached photos missing from public/images — run \`npm run fetch:images\` to re-download.`,
+      );
+    }
   }
 
   // Type-frequency summary (rarity is derived at load in the app, not stored).

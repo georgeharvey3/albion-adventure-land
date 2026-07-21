@@ -44,6 +44,11 @@ export function SiteDetail() {
   const [descCollapsed, setDescCollapsed] = useState(false);
   useEffect(() => setDescCollapsed(false), [selectedSiteId]);
 
+  // A photo that 404s (stale cache entry, partial deploy) collapses to nothing
+  // rather than a broken-image glyph.
+  const [photoBroken, setPhotoBroken] = useState(false);
+  useEffect(() => setPhotoBroken(false), [selectedSiteId]);
+
   if (!site) return null;
 
   const distance = position ? haversine(position, site) : null;
@@ -67,6 +72,31 @@ export function SiteDetail() {
       {visited && <div className="badge visited">✓ Visited {visited.visitedAt.slice(0, 10)}</div>}
       {wishlisted && !visited && <div className="badge wish">★ Wishlist</div>}
       {hidden && <div className="badge">🚫 Hidden</div>}
+      {site.image && !photoBroken && (
+        <figure className="card-photo">
+          <img
+            src={`${import.meta.env.BASE_URL}images/${site.image.file}`}
+            alt={site.name}
+            loading="lazy"
+            onError={() => setPhotoBroken(true)}
+          />
+          {/* CC attribution (author · license · source link) — required by the
+              licenses the build-time fetcher accepts. */}
+          {(site.image.author || site.image.license || site.image.sourceUrl) && (
+            <figcaption>
+              {[site.image.author, site.image.license].filter(Boolean).join(' · ')}
+              {site.image.sourceUrl && (
+                <>
+                  {' '}
+                  <a href={site.image.sourceUrl} target="_blank" rel="noreferrer">
+                    source ↗
+                  </a>
+                </>
+              )}
+            </figcaption>
+          )}
+        </figure>
+      )}
       {parent && (
         <p className="card-listing">
           Part of{' '}

@@ -70,6 +70,12 @@ fully offline. See spec §4 and §7.
   a row (`main`, `trailhead`, `trailhead_parking`, `nearby_feature`), and the
   human site name is in `point_name`. This is **not** the `SiteType` vocab — map
   accordingly. A `listing` groups a main point with its trailheads/features.
+- Build-time enrichment (geocoding, CAMRA descriptions, site photos) always
+  follows the same pattern: a script under `scripts/` is the only place the
+  build touches the network, results are cached on disk under `data/` keyed by
+  the **stable site id**, and ingest bakes them in — runtime never fetches.
+  Photos: `scripts/fetch-images.ts` → `data/image-cache.json` + `public/images/`
+  (≤480px WebP, runtime-cached by the SW, never precached).
 - Pipeline: read → apply mapping → (OSGB grid ref → WGS84 if needed) → validate
   (lat/lng present and in range) → dedupe by `id` → emit normalized JSON.
   **Log rows that fail validation; never drop them silently.** Unnamed /
