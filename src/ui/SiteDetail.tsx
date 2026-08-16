@@ -126,16 +126,17 @@ export function SiteDetail() {
         >
           Directions ↗
         </a>
-        {site.postcode && (
-          <a
-            className="btn"
-            href={placeLink({ ...site, postcode: site.postcode })}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View on Google Maps ↗
-          </a>
-        )}
+        {/* Every site, not just pubs: the listing is where Google's user photos
+            and reviews live, and a deep link is the only way we can offer them
+            (see placeLink — Places content can't be shown on our OSM map). */}
+        <a
+          className="btn"
+          href={placeLink(site)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View on Google Maps ↗
+        </a>
         {visited ? (
           <button className="btn" onClick={() => unmarkVisited(site.id)}>
             Unmark visited

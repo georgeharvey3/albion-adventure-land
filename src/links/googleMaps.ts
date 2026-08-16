@@ -17,12 +17,30 @@ export function directionsToSite(site: Site, origin?: { lat: number; lng: number
 
 /**
  * Place-lookup handoff — opens the site's Google Maps *listing* (photos,
- * reviews, hours, website) rather than routing to it. Postcode-keyed sites
- * (pubs) are queried by name + postcode, which lands on the right listing
- * reliably; this is how a sparse pub row borrows Google's rich place data.
+ * reviews, hours, website) rather than routing to it. This is how a sparse row
+ * borrows Google's rich place data, and it is the ONLY lawful way this app can
+ * surface Google's user-posted photos: the Places API forbids using its content
+ * alongside a non-Google map (we render Leaflet/OSM) and forbids caching it
+ * (we are offline-first). A deep link carries neither restriction — the user
+ * lands in Google's own surface, where Google's terms are Google's business.
+ *
+ * The query is a text search, so precision varies by what we know about a site:
+ *   • postcode-keyed sites (pubs) → "name + postcode", which lands on the right
+ *     listing reliably;
+ *   • everything else → "name + county". Best-effort: an obscure holy well with
+ *     no Google listing may land on a namesake elsewhere or on no result at all.
+ * Making this exact means resolving a Places `place_id` per site at build time
+ * and passing `query_place_id` — place IDs are the one piece of Places data the
+ * terms allow storing indefinitely. Deferred: it needs a billed API pass.
  */
-export function placeLink(site: Site & { postcode: string }): string {
-  const params = new URLSearchParams({ api: '1', query: `${site.name} ${site.postcode}` });
+export function placeLink(site: Site): string {
+  // Postcode first (most specific), then county; a bare name is the fallback
+  // when the source gave us neither.
+  const qualifier = site.postcode ?? site.county;
+  const params = new URLSearchParams({
+    api: '1',
+    query: qualifier ? `${site.name} ${qualifier}` : site.name,
+  });
   return `https://www.google.com/maps/search/?${params.toString()}`;
 }
 
