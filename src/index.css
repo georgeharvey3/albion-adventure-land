@@ -6,6 +6,18 @@
   --accent: #1f6b4f;
   --accent-ink: #fff;
   --card: #fffdf8;
+  /* Shown behind the app while it boots; matches the manifest background_color
+     and the iOS launch images so a cold start doesn't flash white. */
+  --splash: #1f6b4f;
+
+  /* Safe-area insets, aliased once so the rest of the sheet can use them in
+     calc() without repeating the fallback. Zero everywhere except iOS
+     standalone / notched devices, so nothing shifts on desktop. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -18,8 +30,21 @@ body,
 #root {
   margin: 0;
   height: 100%;
-  background: var(--bg);
+  background: var(--splash);
   color: var(--ink);
+  /* The shell is a fixed app frame — nothing at document level ever scrolls,
+     which is what kills iOS rubber-banding and pull-to-refresh. */
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* Stop iOS inflating text when the phone is turned to landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* No grey flash on tap, no long-press magnifier/callout over the map. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 .app {
@@ -27,6 +52,29 @@ body,
   inset: 0;
   display: flex;
   flex-direction: column;
+  background: var(--bg);
+  /* App chrome shouldn't be selectable — a long press on a control should feel
+     like a button, not like text. Site prose opts back in below. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The one place selection is wanted: site names and write-ups are worth copying. */
+.card-title,
+.card-desc,
+.card-meta,
+.card-source {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Kill the 300ms double-tap-to-zoom delay on every control. */
+button,
+a,
+label,
+summary,
+input {
+  touch-action: manipulation;
 }
 
 /* Map area fills the space above the bottom sheet; it is also the positioning
@@ -39,6 +87,39 @@ body,
 }
 .map {
   height: 100%;
+}
+
+/* In iOS standalone the status bar is translucent and its text is white, drawn
+   straight over the map tiles. This gradient keeps it legible against whatever
+   is underneath. Height is derived from the inset, so it collapses to nothing
+   (and is invisible) on any device without one. */
+.map-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--sat) * 1.5);
+  z-index: 450;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(18, 42, 32, 0.62) 0%,
+    rgba(18, 42, 32, 0.5) 62%,
+    rgba(18, 42, 32, 0) 100%
+  );
+}
+
+/* Keep Leaflet's zoom / locate controls clear of the notch and of landscape
+   rounded corners. */
+.leaflet-top {
+  padding-top: var(--sat);
+}
+.leaflet-left {
+  padding-left: var(--sal);
+}
+.leaflet-right {
+  padding-right: var(--sar);
 }
 
 .leaflet-container {
@@ -70,6 +151,13 @@ body,
 .sheet {
   flex: 0 0 auto;
   max-height: 45vh;
+  /* dvh tracks Safari's collapsing toolbars; vh above is the fallback. */
+  max-height: 45dvh;
+  /* Clear the home indicator and landscape rounded corners. The padding is
+     inside the sheet's background, so the fill still runs to the screen edge. */
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -84,6 +172,8 @@ body,
 }
 .tab {
   flex: 1;
+  /* 46px keeps the tab bar at a comfortable thumb target. */
+  min-height: 46px;
   padding: 12px 8px;
   border: none;
   background: none;
@@ -111,6 +201,8 @@ body,
 .sheet-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Don't let a list flick chain into the map or the document. */
+  overscroll-behavior: contain;
   padding: 8px 12px 16px;
 }
 
@@ -452,8 +544,8 @@ body,
    write-up off-screen with no way to scroll to it. */
 .card {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: calc(8px + var(--sal));
+  right: calc(8px + var(--sar));
   bottom: 8px;
   z-index: 600;
   background: var(--card);
@@ -461,8 +553,9 @@ body,
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
-  /* Leave a strip of map visible above the card; anything longer scrolls. */
-  max-height: calc(100% - 120px);
+  /* Leave a strip of map visible above the card; anything longer scrolls. The
+     top inset keeps a full-height card from running under the status bar. */
+  max-height: calc(100% - 120px - var(--sat));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -581,6 +674,7 @@ body,
 }
 .btn {
   flex: 1 1 auto;
+  min-height: 44px;
   text-align: center;
   padding: 10px 12px;
   border: 1px solid var(--line);
@@ -643,8 +737,8 @@ body,
 }
 .stop-remove {
   flex: 0 0 auto;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border: none;
   background: none;
   color: var(--muted);
@@ -722,10 +816,54 @@ body,
   color: var(--muted);
 }
 
+/* "Add to home screen" nudge — shares the card's slot at the bottom of the map
+   area, and is only ever rendered when no site is selected, so the two never
+   stack. Browser-only: it can't appear inside the installed app. */
+.install-hint {
+  position: absolute;
+  left: calc(8px + var(--sal));
+  right: calc(8px + var(--sar));
+  bottom: 8px;
+  z-index: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 6px 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+.install-hint p {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+/* Inline iOS share glyph, sized and aligned to the surrounding text. */
+.share-glyph {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.2em;
+  color: #0a84ff;
+}
+.install-hint-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  margin: -4px 0 0;
+  border: none;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 /* Overlays */
 .overlay {
   position: absolute;
-  top: 12px;
+  top: calc(12px + var(--sat));
   left: 50%;
   transform: translateX(-50%);
   z-index: 700;
@@ -747,10 +885,22 @@ body,
     top: 0;
     right: 0;
     bottom: 0;
-    width: 380px;
+    width: calc(380px + var(--sar));
     max-height: none;
     border-top: none;
     border-left: 1px solid var(--line);
+    /* Side panel: the tab bar now starts at the top of the screen, so it needs
+       the status-bar inset the map area was absorbing in the stacked layout.
+       The left inset does not apply here — the panel is hard against the right
+       edge, so only --sar can ever overlap it, and the width above already
+       compensates for that padding to keep the content column at 380px. */
+    padding-top: var(--sat);
+    padding-left: 0;
+  }
+  /* Here the map does reach the bottom of the screen, so its attribution needs
+     to clear the home indicator. */
+  .leaflet-bottom {
+    padding-bottom: var(--sab);
   }
   /* Collapsed side panel shrinks to the tab bar at the top, freeing the map. */
   .sheet.collapsed {
@@ -761,8 +911,8 @@ body,
   }
   .card {
     left: auto;
-    right: 396px;
-    bottom: 16px;
+    right: calc(396px + var(--sar));
+    bottom: calc(16px + var(--sab));
     width: 360px;
     /* Side-panel layout — .map-area is the full viewport height, so let a long
        write-up show in full and only scroll if it exceeds the whole screen. */

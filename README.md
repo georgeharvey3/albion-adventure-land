@@ -73,9 +73,10 @@ navigation is delegated to Google Maps via deep links. No backend.
 ```bash
 npm install
 npm run ingest   # CSV → public/data/sites.json (re-run when the CSV changes)
+npm run icons    # re-render the app icons (only after editing the emblem)
 npm run dev      # dev server
 npm run build    # ingest + typecheck + production PWA build
-npm run preview  # serve the production build
+npm run preview  # serve the production build, at the real deployed base path
 ```
 
 `npm run dev` opens the app: a Leaflet map of all sites coloured by type and a
@@ -89,3 +90,39 @@ offline and reload.
 
 > Tiles use keyless OSM raster for now; swap in a keyed provider (MapTiler /
 > Thunderforest) in `src/map/MapView.tsx` for outdoor/topo styles.
+
+## Installing it on a phone
+
+The app is built to live on a home screen rather than in a browser tab.
+
+**iPhone / iPad** — open the site in Safari, tap Share, then **Add to Home
+Screen**. (The app shows a one-time reminder of this when opened in Safari.)
+Launched from the home screen it runs with no browser chrome, draws under the
+status bar, and keeps its own icon and launch screen. **Android** — Chrome
+offers *Install app* from its menu.
+
+Once installed, open it once with signal over an area you care about: the site
+data is precached on first load and map tiles are cached as you pan, after
+which the app is fully usable in airplane mode for that region.
+
+### App icon and launch screens
+
+`scripts/icons.ts` is the single source of truth for the brand mark. It renders
+every icon *and* `public/favicon.svg` from one `EMBLEM` declaration, so the
+vector and raster marks cannot drift apart. It is deliberately dependency-free —
+a small supersampling rasteriser plus a minimal PNG writer over Node's zlib —
+rather than pulling in a native image toolchain for five flat shapes.
+
+Output (committed, so the app build needs no image tooling):
+
+| File | Used by |
+|---|---|
+| `icons/icon-192.png`, `icons/icon-512.png` | web manifest, `purpose: any` |
+| `icons/icon-maskable-512.png` | manifest `purpose: maskable` (emblem inside the 80% safe circle) |
+| `icons/apple-touch-icon.png` | the iOS home-screen icon — iOS ignores manifest icons and rejects SVG here |
+| `icons/splash/*.png` | iOS launch screens, one per device size |
+
+iOS only uses a launch image whose media query matches the device exactly, so
+`scripts/ios-screens.ts` holds the device table; `scripts/icons.ts` renders from
+it and `vite.config.ts` injects the matching `<link>` tags. Adding a new iPhone
+means one entry there and `npm run icons`.

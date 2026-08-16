@@ -1,10 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- `viewport-fit=cover` lets the app draw into the notch/home-indicator
+         areas; the CSS pays that back with env(safe-area-inset-*) padding.
+         Zoom is locked because the map does its own pinch handling. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#1f6b4f" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content="Offline-first companion for visiting curated sites across Britain." />
+
+    <!-- Home-screen / standalone behaviour. `apple-mobile-web-app-capable`
+         is what drops Safari's chrome on iOS; `black-translucent` then lets the
+         map run full-bleed under the status bar (see the .map-area scrim). -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Albion" />
+    <meta name="application-name" content="Albion" />
+    <!-- Stop iOS auto-linking numbers in scraped site write-ups. -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- iOS ignores manifest icons for the home screen and will not accept an
+         SVG here — this PNG is what actually becomes the app icon. -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <!-- <link rel="apple-touch-startup-image"> tags are injected at build time
+         from scripts/ios-screens.ts — see the ios-splash plugin in vite.config.ts. -->
+
     <title>Albion Adventure Land</title>
   </head>
   <body>

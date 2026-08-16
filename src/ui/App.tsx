@@ -7,6 +7,7 @@ import { Filters } from './Filters';
 import { SiteDetail } from './SiteDetail';
 import { Outing } from './Outing';
 import { Stats } from './Stats';
+import { InstallHint } from './InstallHint';
 
 type Tab = 'near' | 'filters' | 'outing' | 'stats';
 
@@ -52,7 +53,7 @@ export function App() {
           or collapsed, and never depends on viewport-height math. */}
       <div className="map-area">
         <MapView />
-        {selectedSiteId && <SiteDetail />}
+        {selectedSiteId ? <SiteDetail /> : <InstallHint />}
       </div>
 
       {!dataLoaded && <div className="overlay">Loading sites…</div>}
