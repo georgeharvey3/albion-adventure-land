@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Site } from '../data/types';
+import { parseTagKey, parentOf } from '../data/types';
 import { haversine } from '../geo/haversine';
 import { useStore, type Position } from './store';
 
@@ -20,15 +21,31 @@ export interface SiteView extends FilteredSiteView {
 export function useFilteredSites(): FilteredSiteView[] {
   const sites = useStore((s) => s.sites);
   const activeTypes = useStore((s) => s.activeTypes);
+  const activeTags = useStore((s) => s.activeTags);
   const visited = useStore((s) => s.visited);
   const wishlist = useStore((s) => s.wishlist);
   const hidden = useStore((s) => s.hidden);
 
   return useMemo(() => {
+    // Tag picks are grouped by the layer they belong to, so each site is only
+    // ever tested against its own layer's tags. A layer absent from this map has
+    // no tag picked and is therefore unnarrowed.
+    const tagsByParent = new Map<string, Set<string>>();
+    for (const key of activeTags) {
+      const { parent, tag } = parseTagKey(key);
+      const set = tagsByParent.get(parent);
+      if (set) set.add(tag);
+      else tagsByParent.set(parent, new Set([tag]));
+    }
+
     const views: FilteredSiteView[] = [];
     for (const site of sites) {
       if (!activeTypes.has(site.category)) continue;
       if (hidden.has(site.id)) continue; // user-hidden: off the map and lists
+      const wanted = tagsByParent.get(parentOf(site.category));
+      // Any one of the layer's picked tags is enough (OR). A site with no tags
+      // cannot match, so it drops out while its layer is narrowed.
+      if (wanted && !site.tags?.some((t) => wanted.has(t))) continue;
       views.push({
         site,
         visited: site.id in visited,
@@ -36,7 +53,7 @@ export function useFilteredSites(): FilteredSiteView[] {
       });
     }
     return views;
-  }, [sites, activeTypes, visited, wishlist, hidden]);
+  }, [sites, activeTypes, activeTags, visited, wishlist, hidden]);
 }
 
 /** The filtered sites annotated with distance, sorted nearest-first when a

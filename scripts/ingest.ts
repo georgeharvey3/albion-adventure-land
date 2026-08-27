@@ -1,15 +1,23 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Papa from 'papaparse';
-import { ingest, ingestPubs, type Geocoder, type RawRow, type PubEnrichment } from '../src/data/ingest.ts';
+import {
+  ingest,
+  ingestPubs,
+  parseImages,
+  type Geocoder,
+  type RawRow,
+  type PubEnrichment,
+} from '../src/data/ingest.ts';
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
 import { camraMapping } from '../src/data/mappings/camra.ts';
 import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
 import { ruinsMapping } from '../src/data/mappings/ruins.ts';
+import { magicalFranceMapping } from '../src/data/mappings/magical_france.ts';
 import { scramblesMapping } from '../src/data/mappings/scrambles.ts';
 import { geocodePostcodes, normalizePostcode } from './geocode.ts';
-import { SITE_TYPE_LABELS, type Site } from '../src/data/types.ts';
+import { SITE_TYPE_LABELS, type Site, type SiteImage } from '../src/data/types.ts';
 
 // Build-time ingest (spec §5.2, §12 step 2). Reads the real CSV with Papa Parse
 // (NOT naive splitting — descriptions contain embedded commas/newlines), applies
@@ -29,6 +37,7 @@ const SOURCES: SourceSpec[] = [
   { csv: 'data/swims.csv', mapping: wildSwimsMapping },
   { csv: 'data/ruins.csv', mapping: ruinsMapping },
   { csv: 'data/scrambles.csv', mapping: scramblesMapping },
+  { csv: 'data/MF-north.csv', mapping: magicalFranceMapping },
 ];
 
 function parseCsv(text: string): RawRow[] {
@@ -66,6 +75,51 @@ function loadPubEnrichment(): Record<string, PubEnrichment> {
   return JSON.parse(readFileSync(file, 'utf8')) as Record<string, PubEnrichment>;
 }
 
+// A source's companion pictures CSV, when it declares one. Absent file is a
+// hard error, not a silent skip: the mapping named it, so a missing file is a
+// mistake worth failing the build over.
+function loadImages(mapping: SourceMapping): Map<string, SiteImage[]> {
+  if (!mapping.images) return new Map();
+  const file = resolve(root, mapping.images.csv);
+  if (!existsSync(file)) {
+    throw new Error(`${mapping.source}: images CSV not found at ${mapping.images.csv}`);
+  }
+  return parseImages(parseCsv(readFileSync(file, 'utf8')), mapping);
+}
+
+// Copy the picture files a source references out of data/ (source material) and
+// into public/ (what the app serves and Workbox precaches). Same direction as
+// sites.json: data/ is the input, public/ is generated. A referenced file that
+// is not on disk is reported, not skipped silently — the CSV and the folder are
+// meant to agree.
+function copyImages(mapping: SourceMapping, byListing: ReadonlyMap<string, SiteImage[]>): void {
+  if (!mapping.images || !byListing.size) return;
+  const srcDir = resolve(root, mapping.images.dir);
+  const outDir = resolve(root, 'public', mapping.images.baseUrl);
+  mkdirSync(outDir, { recursive: true });
+
+  let copied = 0;
+  const missing: string[] = [];
+  for (const images of byListing.values()) {
+    for (const image of images) {
+      const fileName = image.url.slice(image.url.lastIndexOf('/') + 1);
+      const from = resolve(srcDir, fileName);
+      if (!existsSync(from)) {
+        missing.push(fileName);
+        continue;
+      }
+      copyFileSync(from, resolve(outDir, fileName));
+      copied++;
+    }
+  }
+
+  console.log(`  copied ${copied} picture files → public/${mapping.images.baseUrl}/`);
+  if (missing.length) {
+    console.warn(`  ⚠ ${missing.length} picture file(s) named in the CSV are not in ${mapping.images.dir}:`);
+    for (const f of missing) console.warn(`    - ${f}`);
+  }
+}
+
 async function main(): Promise<void> {
   const allSites: Site[] = [];
   const seen = new Set<string>();
@@ -77,10 +131,12 @@ async function main(): Promise<void> {
     console.log(`\nIngesting ${csv} …`);
     const text = readFileSync(resolve(root, csv), 'utf8');
     const rows = parseCsv(text);
+    const images = loadImages(mapping);
+    copyImages(mapping, images);
     const { sites, rejected, skippedNonCollectible } =
       mapping.coords === 'geocode_postcode'
         ? ingestPubs(rows, mapping, await buildGeocoder(rows, mapping), pubEnrichment)
-        : ingest(rows, mapping);
+        : ingest(rows, mapping, images);
 
     for (const s of sites) {
       if (seen.has(s.id)) continue; // cross-source dedupe by stable id
@@ -89,6 +145,19 @@ async function main(): Promise<void> {
     }
 
     console.log(`  ${rows.length} rows → ${sites.length} sites`);
+    if (images.size) {
+      const attached = sites.filter((s) => s.images?.length);
+      const total = attached.reduce((n, s) => n + (s.images?.length ?? 0), 0);
+      console.log(`  ${total} pictures on ${attached.length} of ${images.size} listings`);
+      // A listing whose pictures found no `main` point is a data mismatch, not a
+      // silent drop — name it so the CSVs can be corrected.
+      const matched = new Set(attached.map((s) => s.listingId));
+      for (const listingId of images.keys()) {
+        if (!matched.has(listingId)) {
+          console.warn(`  ⚠ pictures for listing ${listingId} matched no main point`);
+        }
+      }
+    }
     if (skippedNonCollectible) {
       console.log(`  skipped ${skippedNonCollectible} non-collectible/excluded rows`);
     }

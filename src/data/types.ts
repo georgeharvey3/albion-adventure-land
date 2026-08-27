@@ -85,6 +85,25 @@ export function parentOf(category: SiteCategory): ParentCategory {
   return CATEGORY_PARENT[category];
 }
 
+// --- Source tags ----------------------------------------------------------
+// Some sources (wild swims, ruins) carry free-text descriptive labels in a
+// `Tags` column ("Waterfall", "Dramatic"). The vocabulary is per-source and NOT
+// controlled — unlike SiteCategory — so tags are stored verbatim on the Site
+// and the filter's tag list is DERIVED from the loaded data, like rarity.
+//
+// A tag filter selection is SCOPED to the parent category it was picked under:
+// two sources can use the same word for different things ("Difficult path"
+// appears in both swims and ruins), and a tag only ever narrows its own layer.
+// `tagKey` is that scoping, an opaque key the filter state is keyed on.
+export function tagKey(parent: ParentCategory, tag: string): string {
+  return `${parent}::${tag}`;
+}
+
+export function parseTagKey(key: string): { parent: ParentCategory; tag: string } {
+  const at = key.indexOf('::');
+  return { parent: key.slice(0, at) as ParentCategory, tag: key.slice(at + 2) };
+}
+
 // --- Outing slots ---------------------------------------------------------
 // The outing picker (spec §7.2) matches "one site per selected slot". A slot is
 // one of three shapes:
@@ -251,6 +270,19 @@ export function normalizeCategory(raw: string | undefined): SiteCategory {
   return SITE_TYPE_SET.has(slug) ? (slug as SiteCategory) : 'other';
 }
 
+// One picture from a source guidebook, joined to a listing at ingest by
+// `listing_no` (see the companion `*-images.csv` next to each source CSV).
+// `url` is relative to the app base (BASE_URL), never absolute, so it resolves
+// under the GitHub Pages subpath as well as at the dev-server root. Intrinsic
+// width/height come from the CSV so the card can reserve space and not reflow
+// while the picture loads.
+export interface SiteImage {
+  url: string;
+  width?: number;
+  height?: number;
+  caption?: string;
+}
+
 export interface Site {
   id: string; // stable, derived: slug(name)+rounded(lat,lng)
   name: string;
@@ -272,6 +304,16 @@ export interface Site {
   listingId?: string;
   listingTitle?: string; // the curated listing label (CSV `listing_title`)
   parentId?: string; // stable id of the listing's `main` point
+
+  // Guidebook pictures for this listing, in source order. DERIVED at ingest from
+  // the source's companion images CSV and attached only to the listing's `main`
+  // point, so a listing's pictures are not duplicated onto its sub-features.
+  images?: SiteImage[];
+
+  // Free-text labels from the source guidebook, verbatim and in source order
+  // (see `tagKey`). Only the swims and ruins sources carry them today. Read-only
+  // site data — the *selection* of tags is filter state, held in the store.
+  tags?: string[];
 
   // Walk-in time from parking to the site, verbatim from the source guidebook
   // (e.g. "15 mins"). A fixed editorial figure — NOT travel time from the user's

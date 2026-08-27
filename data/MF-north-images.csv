@@ -1,0 +1,19 @@
+region,listing_no,listing_title,image_file,image_no,page,width,height,caption
+The Paris Meridian and the North,1,Amiens Cathedral,listing_01_1.jpg,1,1,577,362,
+The Paris Meridian and the North,2,Paris Observatory,listing_02_1.jpg,1,1,581,447,
+The Paris Meridian and the North,3,"Saint-Sulpice, Paris",listing_03_1.jpg,1,1,874,581,
+The Paris Meridian and the North,4,"Notre-Dame-du-Fort, Étampes",listing_04_1.jpg,1,2,280,350,
+The Paris Meridian and the North,5,Notre-Dame de Liesse,listing_05_1.jpg,1,2,284,346,
+The Paris Meridian and the North,5,Notre-Dame de Liesse,listing_05_2.jpg,2,2,581,416,
+The Paris Meridian and the North,6,"Hottée de Gargantua, Molinchart",listing_06_1.jpg,1,2,878,664,
+The Paris Meridian and the North,7,Laon,listing_07_1.jpg,1,3,874,579,
+The Paris Meridian and the North,7,Laon,listing_07_2.jpg,2,3,284,250,
+The Paris Meridian and the North,7,Laon,listing_07_3.jpg,3,3,284,249,Saint-Martin
+The Paris Meridian and the North,8,"Vierzieux de Gargantua, Bois-lès-Pargny",listing_08_1.jpg,1,3,284,507,
+The Paris Meridian and the North,9,Abbaye d'Orval,listing_09_1.jpg,1,3,878,584,
+The Paris Meridian and the North,9,Abbaye d'Orval,listing_09_2.jpg,2,4,874,578,
+The Paris Meridian and the North,9,Abbaye d'Orval,listing_09_3.jpg,3,4,581,510,
+The Paris Meridian and the North,10,"Notre-Dame d'Épine, Avioth",listing_10_1.jpg,1,4,284,530,
+The Paris Meridian and the North,11,"Crypte Saint-Dagobert, Stenay",listing_11_1.jpg,1,4,581,867,
+The Paris Meridian and the North,12,"Roche des Fées, Lafrimbolle",listing_12_1.jpg,1,5,874,545,
+The Paris Meridian and the North,12,"Roche des Fées, Lafrimbolle",listing_12_2.jpg,2,5,874,546,Turquestein

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
+import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type SiteImage } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
+import { Lightbox } from './Lightbox';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
@@ -20,6 +21,51 @@ function sourceLinkLabel(url: string): string {
   } catch {
     return 'source';
   }
+}
+
+// Guidebook pictures for the listing, shown above the write-up. Several pictures
+// become a horizontal snap strip rather than a stack, so the card stays short and
+// the map stays visible (the same reason the description collapses).
+//
+// A picture that fails to load is removed instead of leaving a broken-image box:
+// the files are shipped as static assets, so a missing one is a deployment gap,
+// not something the reader should have to look at.
+function SiteGallery({ images }: { images: SiteImage[] }) {
+  const [broken, setBroken] = useState<Set<string>>(new Set());
+  // Which picture the full-screen viewer is showing, or null when it is closed.
+  const [opened, setOpened] = useState<number | null>(null);
+  const shown = images.filter((img) => !broken.has(img.url));
+  if (!shown.length) return null;
+
+  return (
+    <>
+      <div className={shown.length > 1 ? 'card-gallery multi' : 'card-gallery'}>
+        {shown.map((img, i) => (
+          <figure className="card-shot" key={img.url}>
+            <button
+              className="shot-open"
+              onClick={() => setOpened(i)}
+              aria-label={img.caption ? `Enlarge: ${img.caption}` : 'Enlarge picture'}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}${img.url}`}
+                alt={img.caption ?? ''}
+                width={img.width}
+                height={img.height}
+                loading="lazy"
+                decoding="async"
+                onError={() => setBroken((b) => new Set(b).add(img.url))}
+              />
+            </button>
+            {img.caption && <figcaption>{img.caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+      {opened !== null && (
+        <Lightbox images={shown} startIndex={opened} onClose={() => setOpened(null)} />
+      )}
+    </>
+  );
 }
 
 export function SiteDetail() {
@@ -77,6 +123,7 @@ export function SiteDetail() {
       )}
       {site.walkTime && <p className="card-meta">🚶 Walk in: {site.walkTime}</p>}
       {site.access && <p className="card-meta">Access: {site.access}</p>}
+      {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
       {site.description && (
         <>
           <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>

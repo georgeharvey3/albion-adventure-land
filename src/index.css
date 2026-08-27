@@ -272,12 +272,102 @@ body,
 .layer-toggle.mixed .switch::after {
   transform: translateX(9px);
 }
+/* Filter layer header: fixed-height row for every layer, so the top-level list
+   reads as equal-weight rows. The name area expands/collapses the body; the
+   switch on the right turns the whole layer on/off. */
+.filters .layer-head {
+  display: flex;
+  align-items: center;
+}
+.layer-expand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px 4px 12px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--ink);
+  text-align: left;
+}
+.layer-expand:disabled {
+  cursor: default;
+}
+.caret {
+  flex: 0 0 12px;
+  font-size: 11px;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+.layer-expand.open .caret {
+  transform: rotate(90deg);
+}
+.layer-name.muted {
+  color: var(--muted);
+}
+.layer-switch {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.layer-switch.on .switch {
+  background: var(--accent);
+}
+.layer-switch.on .switch::after {
+  transform: translateX(18px);
+}
+.layer-switch.mixed .switch {
+  background: #9bbcae;
+}
+.layer-switch.mixed .switch::after {
+  transform: translateX(9px);
+}
+
+/* All-layer select/deselect, above the layer list. */
+.filters-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
 .layer-subs {
   display: flex;
   flex-wrap: wrap;
   padding: 10px 12px 6px;
   border-top: 1px solid var(--line);
 }
+/* Tag refinement row: same chip shape as the type chips, but a tag is OFF by
+   default (plain) and ON when picked (accent fill) — the inverse of the type
+   chips, which start all-on. */
+.layer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10px 12px 6px;
+  border-top: 1px solid var(--line);
+}
+.tags-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.tag-chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.tag-chip.on .chip-count {
+  color: rgba(255, 255, 255, 0.75);
+}
+.tags-more {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 6px;
+}
+
 /* Select/deselect-all sits on its own full-width line above the chips. */
 .subs-controls {
   width: 100%;
@@ -494,6 +584,61 @@ body,
   font-size: 13px;
   color: var(--muted);
   margin: 4px 0;
+}
+/* Guidebook pictures, above the write-up. One picture fills the card width; two
+   or more become a horizontal snap strip with a fixed height, so a tall portrait
+   plate and a wide landscape one line up and the card height stays predictable. */
+.card-gallery {
+  margin: 8px 0;
+}
+.card-gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+}
+.card-gallery.multi {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  /* Bleed to the card edges so the strip reads as scrollable, not clipped. */
+  margin-inline: -16px;
+  padding-inline: 16px;
+}
+.card-gallery.multi .card-shot {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  max-width: 85%;
+}
+.card-gallery.multi img {
+  width: auto;
+  height: 160px;
+  max-width: 100%;
+  object-fit: contain;
+}
+.card-shot {
+  margin: 0;
+}
+/* The thumbnail is a button so the viewer opens from keyboard as well as touch,
+   but it must not look like one. */
+.shot-open {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  width: 100%;
+}
+.card-gallery.multi .shot-open {
+  width: auto;
+}
+.card-shot figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
 }
 .card-desc {
   font-size: 14px;
@@ -768,4 +913,103 @@ body,
        write-up show in full and only scroll if it exceeds the whole screen. */
     max-height: calc(100% - 32px);
   }
+}
+
+/* Full-screen picture viewer. Above the card (600), the sheet (700) and — the
+   one that is easy to miss — Leaflet's own controls, which it places at
+   z-index 1000 (`.leaflet-top`/`.leaflet-bottom`). Below that, the zoom buttons
+   and the attribution punch through the backdrop. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overscroll-behavior: contain;
+}
+.lightbox-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* The gestures are handled in JS; letting the browser also scroll or zoom here
+     makes the pan fight the page. */
+  touch-action: none;
+  user-select: none;
+}
+.lightbox-stage img {
+  /* Size comes from the component, which fits the picture to the stage; these
+     are only a guard against a frame rendered before that is measured. */
+  max-width: 100%;
+  max-height: 100%;
+  /* Keep small guidebook plates crisp-ish when enlarged past their own pixels. */
+  image-rendering: auto;
+  will-change: transform;
+  -webkit-user-drag: none;
+}
+.lightbox-close {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  right: 8px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lightbox-count {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 12px;
+  z-index: 2;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 64px;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lightbox-nav.prev {
+  left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.lightbox-nav.next {
+  right: 0;
+  border-radius: 6px 0 0 6px;
+}
+.lightbox-nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.lightbox-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
 }

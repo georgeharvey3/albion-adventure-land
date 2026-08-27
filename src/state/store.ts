@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Site, SiteCategory, ParentCategory } from '../data/types';
-import { SITE_TYPES, resolveOutingSlots, outingSlotResolver } from '../data/types';
+import { SITE_TYPES, resolveOutingSlots, outingSlotResolver, tagKey } from '../data/types';
 import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
 import { findNearestOuting, nearestPerSlot, type SlotNearest } from '../geo/outing';
 import { orderRoute } from '../geo/tsp';
@@ -62,6 +62,12 @@ interface AppState {
 
   // Filters.
   activeTypes: Set<SiteCategory>;
+  // Tag refinement (spec F3, second level). Keyed by `tagKey(parent, tag)`, so a
+  // tag only ever narrows the layer it was picked under. EMPTY MEANS NO
+  // NARROWING: a layer with no tag picked shows all of its sites, and a layer
+  // with tags picked shows only sites carrying at least one of them (OR within
+  // a layer, AND across layers is meaningless — each layer filters itself).
+  activeTags: Set<string>;
 
   // Outing mode. The slot selection is a QUERY, deliberately independent of
   // the map filter (a display concern) — spec §6 F12.
@@ -95,6 +101,8 @@ interface AppState {
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
+  toggleTag: (parent: ParentCategory, tag: string) => void;
+  clearTags: (parent: ParentCategory) => void;
   toggleOutingType: (category: SiteCategory) => void;
   setOutingTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setOutingParentAny: (parent: ParentCategory, any: boolean) => void;
@@ -124,6 +132,7 @@ export const useStore = create<AppState>((set, get) => ({
   userLoaded: false,
 
   activeTypes: new Set(SITE_TYPES),
+  activeTags: new Set(),
 
   outingTypes: new Set(),
   outingAnyParents: new Set(),
@@ -187,6 +196,24 @@ export const useStore = create<AppState>((set, get) => ({
 
   setAllTypes: (on) => {
     set({ activeTypes: on ? new Set(SITE_TYPES) : new Set() });
+  },
+
+  toggleTag: (parent, tag) => {
+    const next = new Set(get().activeTags);
+    const key = tagKey(parent, tag);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    set({ activeTags: next });
+  },
+
+  // Drop every tag picked under one layer (its "Clear tags" control), leaving
+  // the other layers' tag selections alone.
+  clearTags: (parent) => {
+    const next = new Set<string>();
+    for (const key of get().activeTags) {
+      if (!key.startsWith(`${parent}::`)) next.add(key);
+    }
+    set({ activeTags: next });
   },
 
   // Changing the query invalidates the current result — keeping a cluster on

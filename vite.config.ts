@@ -38,7 +38,7 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         // Precache the app shell and bundled site JSON.
-        globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,json}'],
         // sites.json is the whole dataset and must be precached for offline-first
         // (see spec §9) — it has already grown past Workbox's 2 MiB default as
         // sources were added. Raise the ceiling with headroom for dataset growth.

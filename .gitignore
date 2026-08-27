@@ -1,3 +1,7 @@
+# Site pictures copied out of data/ by `npm run ingest`. The source folders in
+# data/ are what is committed — this copy is a build output, like dist/.
+public/images/
+
 node_modules/
 dist/
 dist-ssr/
@@ -18,3 +22,10 @@ dist-ssr/
 npm-debug.log*
 
 env/
+# Python helper scripts (extract_swims.py) and their caches
+__pycache__/
+.mypy_cache/
+
+# Source guidebook PDFs. Large binaries — the extracted CSV in data/ is what
+# the app uses.
+*.pdf

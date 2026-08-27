@@ -1,4 +1,4 @@
-import { type Site, normalizeCategory } from './types';
+import { type Site, type SiteImage, normalizeCategory } from './types';
 import { type SourceMapping } from './mappings/magical_britain';
 
 // Pure ingest logic (spec §5.2). Runtime-agnostic so it runs in the Node build
@@ -57,18 +57,48 @@ export function makePubId(name: string, postcode: string): string {
   return `${slug(name)}_${slug(postcode)}`;
 }
 
-function inUkBounds(lat: number, lng: number): boolean {
-  return (
-    lat >= UK_BOUNDS.minLat &&
-    lat <= UK_BOUNDS.maxLat &&
-    lng >= UK_BOUNDS.minLng &&
-    lng <= UK_BOUNDS.maxLng
-  );
+// Sanity bounds for a row's coordinates. A source declares its own window when
+// it is not British (magical France); everything else falls back to the UK box.
+// The check exists to catch swapped or mistyped lat/lng, not to gate a region.
+function inBounds(lat: number, lng: number, mapping: SourceMapping): boolean {
+  const b = mapping.bounds ?? UK_BOUNDS;
+  return lat >= b.minLat && lat <= b.maxLat && lng >= b.minLng && lng <= b.maxLng;
 }
 
 function col(row: RawRow, key: string | undefined): string {
   if (!key) return '';
   return (row[key] ?? '').trim();
+}
+
+// Free-text source tags. The column holds a JSON array in one cell
+// (`["Waterfall", "Walk in"]`). Parsing is deliberately lenient: tags are a
+// filter convenience, so a malformed cell yields no tags rather than rejecting
+// an otherwise-good row. A comma-separated cell is accepted as a fallback.
+// `UNKNOWN:<char>` entries are artefacts of the source's own tag conversion and
+// carry no meaning — they are dropped so they never reach a filter chip.
+export function parseTags(raw: string): string[] {
+  if (!raw) return [];
+  let values: unknown[];
+  if (raw.startsWith('[')) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      values = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      values = [];
+    }
+  } else {
+    values = raw.split(',');
+  }
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  for (const v of values) {
+    if (typeof v !== 'string') continue;
+    const tag = v.trim();
+    if (!tag || tag.startsWith('UNKNOWN:') || seen.has(tag)) continue;
+    seen.add(tag);
+    tags.push(tag);
+  }
+  return tags;
 }
 
 // Rows dropped by the mapping's `exclude` rule (e.g. Northern Ireland pubs).
@@ -108,8 +138,8 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return { row, reason: `unparseable coordinates "${latRaw},${lngRaw}"` };
   }
-  if (!inUkBounds(lat, lng)) {
-    return { row, reason: `coordinates out of UK range (${lat},${lng})` };
+  if (!inBounds(lat, lng, mapping)) {
+    return { row, reason: `coordinates outside the source's bounds (${lat},${lng})` };
   }
 
   const description = col(row, mapping.columns.description) || undefined;
@@ -118,6 +148,7 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
   const access = col(row, mapping.columns.access) || undefined;
   const walkTime = col(row, mapping.columns.walkTime) || undefined;
   const category = mapping.fixedCategory ?? normalizeCategory(col(row, mapping.columns.category));
+  const tags = parseTags(col(row, mapping.columns.tags));
 
   // Listing grouping (derived). `listingId` keys every collectible point in the
   // listing; built from region + listing number so it's stable across re-imports.
@@ -138,12 +169,77 @@ export function mapRow(row: RawRow, mapping: SourceMapping): Site | RejectedRow 
     access,
     category,
     ...(walkTime ? { walkTime } : {}),
+    ...(tags.length ? { tags } : {}),
     ...(sourceUrl ? { sourceUrl } : {}),
     ...(listingId ? { listingId, listingTitle } : {}),
   };
 }
 
-export function ingest(rows: RawRow[], mapping: SourceMapping): IngestResult {
+// --- Companion pictures CSV ----------------------------------------------
+// A source can ship a sidecar `*-images.csv` listing its guidebook pictures.
+// Its schema is fixed (we author it, unlike the guidebook CSVs), so it needs no
+// per-source column mapping — only the file path and the folder the pictures are
+// served from, declared in `mapping.images`.
+//
+// The join key is the same `region + listing_no` pair that builds `listingId` in
+// mapRow, so a picture row lands on the listing whatever the point is called.
+// Pictures are ordered by `image_no`, and rows with no `image_file` are ignored.
+const IMAGE_COLUMNS = {
+  region: 'region',
+  listingNo: 'listing_no',
+  file: 'image_file',
+  imageNo: 'image_no',
+  width: 'width',
+  height: 'height',
+  caption: 'caption',
+} as const;
+
+/** Build `listingId → pictures` from a source's companion images CSV. Returns an
+ *  empty map when the mapping declares no pictures. */
+export function parseImages(rows: RawRow[], mapping: SourceMapping): Map<string, SiteImage[]> {
+  const byListing = new Map<string, SiteImage[]>();
+  if (!mapping.images) return byListing;
+
+  const base = mapping.images.baseUrl.replace(/^\/+|\/+$/g, '');
+  const ordered: { listingId: string; order: number; image: SiteImage }[] = [];
+
+  for (const row of rows) {
+    const file = col(row, IMAGE_COLUMNS.file);
+    const listingNo = col(row, IMAGE_COLUMNS.listingNo);
+    if (!file || !listingNo) continue;
+
+    const listingId = `${slug(col(row, IMAGE_COLUMNS.region))}__l${listingNo}`;
+    const width = Number(col(row, IMAGE_COLUMNS.width));
+    const height = Number(col(row, IMAGE_COLUMNS.height));
+    const caption = col(row, IMAGE_COLUMNS.caption) || undefined;
+    const order = Number(col(row, IMAGE_COLUMNS.imageNo));
+
+    ordered.push({
+      listingId,
+      order: Number.isFinite(order) ? order : 0,
+      image: {
+        url: `${base}/${file}`,
+        ...(Number.isFinite(width) && width > 0 ? { width } : {}),
+        ...(Number.isFinite(height) && height > 0 ? { height } : {}),
+        ...(caption ? { caption } : {}),
+      },
+    });
+  }
+
+  ordered.sort((a, b) => a.order - b.order);
+  for (const { listingId, image } of ordered) {
+    const list = byListing.get(listingId);
+    if (list) list.push(image);
+    else byListing.set(listingId, [image]);
+  }
+  return byListing;
+}
+
+export function ingest(
+  rows: RawRow[],
+  mapping: SourceMapping,
+  imagesByListing: ReadonlyMap<string, SiteImage[]> = new Map(),
+): IngestResult {
   const rejected: RejectedRow[] = [];
   let skippedNonCollectible = 0;
 
@@ -178,7 +274,8 @@ export function ingest(rows: RawRow[], mapping: SourceMapping): IngestResult {
   }
 
   // Pass 2: attach parentId (only to non-main points whose listing has a main)
-  // and dedupe by stable id.
+  // and the listing's pictures (only to the main point, so a listing's pictures
+  // are not repeated on each of its sub-features), then dedupe by stable id.
   const sites: Site[] = [];
   const seen = new Set<string>();
   for (const { site } of entries) {
@@ -187,7 +284,13 @@ export function ingest(rows: RawRow[], mapping: SourceMapping): IngestResult {
     }
     seen.add(site.id);
     const mainId = site.listingId ? mainIdByListing.get(site.listingId) : undefined;
-    sites.push(mainId && mainId !== site.id ? { ...site, parentId: mainId } : site);
+    const isMain = !!site.listingId && mainId === site.id;
+    const images = isMain ? imagesByListing.get(site.listingId!) : undefined;
+    sites.push({
+      ...site,
+      ...(mainId && mainId !== site.id ? { parentId: mainId } : {}),
+      ...(images?.length ? { images } : {}),
+    });
   }
 
   return { sites, rejected, skippedNonCollectible };
@@ -233,8 +336,8 @@ export function mapPubRow(
   if (!coords) {
     return { row, reason: `postcode "${postcode}" did not geocode` };
   }
-  if (!inUkBounds(coords.lat, coords.lng)) {
-    return { row, reason: `geocoded coords out of UK range (${coords.lat},${coords.lng}) for "${postcode}"` };
+  if (!inBounds(coords.lat, coords.lng, mapping)) {
+    return { row, reason: `geocoded coords outside the source's bounds (${coords.lat},${coords.lng}) for "${postcode}"` };
   }
 
   const id = makePubId(name, postcode);

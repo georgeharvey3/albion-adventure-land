@@ -27,6 +27,7 @@ export interface SourceMapping {
     role?: string; // structural point_type column
     listingNo?: string; // groups a main point with its sub-features
     listingTitle?: string; // curated label for the listing
+    tags?: string; // free-text descriptive labels, JSON array in one cell
     [k: string]: string | undefined;
   };
   // When the source has no category column, every row takes this fixed leaf type
@@ -38,6 +39,19 @@ export interface SourceMapping {
   // Structural roles that represent a collectible destination. Other roles
   // (trailheads, parking) are navigation aids — logged and excluded from sites.
   collectibleRoles: string[];
+  // Coordinate sanity box for this source. Omit for UK sources (the default).
+  // Non-UK sources (e.g. magical France) must declare their own, or every row
+  // is rejected as out of range. This is validation only — it catches swapped
+  // lat/lng and bad grid conversions, it does not filter the product.
+  bounds?: { minLat: number; maxLat: number; minLng: number; maxLng: number };
+  // Companion pictures for this source, joined to listings by `listing_no` (see
+  // `parseImages` in ../ingest). `csv` is the manifest and `dir` the folder of
+  // picture files, both relative to the repo root and both source data. The
+  // build copies the referenced files into `public/<baseUrl>/`, which is what
+  // the app serves; `baseUrl` is app-relative with no leading slash, so it
+  // resolves under the GitHub Pages subpath too. Omit when the source has no
+  // pictures.
+  images?: { csv: string; dir: string; baseUrl: string };
   // Rows to drop entirely by product decision (not a data error): any row whose
   // `column` value is in `values` is skipped (counted, not rejected).
   exclude?: { column: string; values: string[] };
