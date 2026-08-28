@@ -308,6 +308,8 @@ body,
   color: var(--muted);
 }
 .layer-switch {
+  display: flex; /* the .switch track is sized, so it must not be an inline box */
+  align-items: center;
   flex: 0 0 auto;
   padding: 12px 14px;
   border: none;
