@@ -74,4 +74,13 @@ export const magicalBritainMapping: SourceMapping = {
     category: 'category'
   },
   collectibleRoles: ['main', 'nearby_feature'],
+  // Guidebook pictures pulled out of the book PDF by extract_images.py, joined
+  // by region + listing_no. The manifest is the extractor's own index, so a
+  // re-run of the extractor refreshes it in place. The build copies the files
+  // from data/mb-images/ into public/images/mb/.
+  images: {
+    csv: 'data/mb-images/images_index.csv',
+    dir: 'data/mb-images',
+    baseUrl: 'images/mb',
+  },
 };

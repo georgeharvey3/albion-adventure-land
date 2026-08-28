@@ -37,13 +37,28 @@ export default defineConfig(({ command }) => ({
         ],
       },
       workbox: {
-        // Precache the app shell and bundled site JSON.
-        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,json}'],
+        // Precache the app shell and bundled site JSON. Guidebook pictures are
+        // deliberately NOT precached: they are ~33 MB and would all download on
+        // first load. They are runtime-cached instead (see below), so a picture
+        // stays offline after it is seen once. The app is fully functional
+        // without them.
+        globPatterns: ['**/*.{js,css,html,svg,json}'],
         // sites.json is the whole dataset and must be precached for offline-first
         // (see spec §9) — it has already grown past Workbox's 2 MiB default as
         // sources were added. Raise the ceiling with headroom for dataset growth.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
+          {
+            // Guidebook pictures — cache-first, so a listing seen online keeps
+            // its pictures in airplane mode. Kept out of the precache above.
+            urlPattern: /\/images\/.*\.(?:jpg|jpeg|png|webp)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'site-pictures',
+              expiration: { maxEntries: 1200, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             // OSM raster tiles — cache-first with generous expiry (offline tiles).
             urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,

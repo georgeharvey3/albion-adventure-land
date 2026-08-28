@@ -28,4 +28,5 @@ __pycache__/
 
 # Source guidebook PDFs. Large binaries — the extracted CSV in data/ is what
 # the app uses.
-*.pdf
+/pdfs/
+.venv*/
