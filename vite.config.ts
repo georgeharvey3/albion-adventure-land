@@ -16,7 +16,15 @@ export default defineConfig(({ command }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      // Precached explicitly: `globPatterns` below deliberately excludes PNGs
+      // (guidebook pictures), so the app icons need naming here.
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'icon-192.png',
+        'icon-512.png',
+        'icon-maskable-512.png',
+      ],
       manifest: {
         name: 'Albion Adventure Land',
         short_name: 'Albion',
@@ -24,16 +32,20 @@ export default defineConfig(({ command }) => ({
         theme_color: '#1f6b4f',
         background_color: '#f7f5f0',
         display: 'standalone',
-        // Relative so they resolve against the manifest's location (the Pages
-        // subpath), not the domain root. vite-plugin-pwa prefixes icon `src`
-        // with `base` automatically.
+        // All manifest URLs are left relative so they resolve against the
+        // manifest's own location (the Pages subpath), not the domain root.
+        // That applies to the icon `src` values below too — the plugin emits
+        // them verbatim rather than prefixing `base`.
         start_url: '.',
         scope: '.',
-        // SVG app icon (no PNG toolchain yet). Modern browsers accept this for
-        // install; swap in 192/512 PNGs when an icon pipeline lands.
+        // PNGs rendered from favicon.svg (see scripts/render-icons.mjs). Android
+        // wants 192 and 512; the maskable variant is full-bleed and square so
+        // the launcher's own mask does the rounding instead of double-rounding
+        // the SVG's corners. iOS uses the apple-touch-icon link in index.html.
         icons: [
-          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
