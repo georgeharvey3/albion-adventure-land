@@ -5,6 +5,7 @@ import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
 import { findNearestOuting, nearestPerSlot, type SlotNearest } from '../geo/outing';
 import { orderRoute } from '../geo/tsp';
 import { haversine } from '../geo/haversine';
+import { DEFAULT_DETOUR_BUDGET } from '../geo/corridor';
 import {
   loadUserState,
   putVisit,
@@ -22,6 +23,25 @@ export interface Position {
   accuracy: number; // metres
   manual: boolean; // true if dropped by the user (geolocation fallback)
 }
+
+// Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps
+// behaving exactly as it always has; adding a destination turns the anchor from
+// a point into a corridor and every distance-aware surface reinterprets itself.
+// A null destination means point mode — today's app, unchanged.
+//
+// Destinations come from a map tap or from a site already in the dataset:
+// runtime geocoding is off the table (CLAUDE.md — build-time and cached only),
+// so there is no free-text "Fort William" box. `siteId` records which site the
+// destination came from, so the site card can show "✓ Destination".
+export interface Destination {
+  lat: number;
+  lng: number;
+  label: string;
+  siteId?: string;
+}
+
+/** Route-mode list order: travel order along the journey, or least detour. */
+export type RouteSort = 'progress' | 'detour';
 
 // Outing mode v1 (spec §6 F12/F14/F16). The result stores ids, not Site
 // objects — sites are the read-only source of truth and are looked up on
@@ -88,9 +108,16 @@ interface AppState {
   // anything overlapping them (spec §7.2).
   outingShownIds: string[];
 
-  // Geolocation.
+  // Geolocation (the journey's FROM end).
   position: Position | null;
   geoError: string | null;
+
+  // Journey (issue #14). Null destination === point mode, i.e. today's app.
+  destination: Destination | null;
+  detourBudget: number; // metres of extra driving a stop may cost
+  routeSort: RouteSort;
+  // True while the map is armed to take the next tap as the destination.
+  pickingDestination: boolean;
 
   // UI: the site shown in the detail card (map popup / list tap).
   selectedSiteId: string | null;
@@ -118,6 +145,11 @@ interface AppState {
   setPosition: (pos: Position | null) => void;
   setLivePosition: (pos: Position) => void;
   setGeoError: (msg: string | null) => void;
+  setDestination: (dest: Destination | null) => void;
+  setDestinationFromSite: (siteId: string) => void;
+  setDetourBudget: (metres: number) => void;
+  setRouteSort: (sort: RouteSort) => void;
+  setPickingDestination: (on: boolean) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -143,6 +175,11 @@ export const useStore = create<AppState>((set, get) => ({
 
   position: null,
   geoError: null,
+
+  destination: null,
+  detourBudget: DEFAULT_DETOUR_BUDGET,
+  routeSort: 'progress',
+  pickingDestination: false,
 
   selectedSiteId: null,
 
@@ -425,4 +462,24 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => set({ selectedSiteId }),
+
+  // Setting or clearing the destination always disarms the map's picker: the
+  // tap that set it is spent, and clearing while armed would leave the map in
+  // crosshair mode with nothing to pick.
+  setDestination: (destination) => set({ destination, pickingDestination: false }),
+
+  // "Set as destination" from a site card — the common road-trip case ("I'm
+  // driving to this castle, what's on the way?").
+  setDestinationFromSite: (siteId) => {
+    const site = get().sites.find((s) => s.id === siteId);
+    if (!site) return;
+    set({
+      destination: { lat: site.lat, lng: site.lng, label: site.name, siteId: site.id },
+      pickingDestination: false,
+    });
+  },
+
+  setDetourBudget: (detourBudget) => set({ detourBudget }),
+  setRouteSort: (routeSort) => set({ routeSort }),
+  setPickingDestination: (pickingDestination) => set({ pickingDestination }),
 }));

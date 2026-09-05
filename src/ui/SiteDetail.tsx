@@ -84,6 +84,10 @@ export function SiteDetail() {
   const inTrip = useStore((s) => (selectedSiteId ? !!s.outing?.stopIds.includes(selectedSiteId) : false));
   const addToTrip = useStore((s) => s.addToTrip);
   const removeFromTrip = useStore((s) => s.removeFromTrip);
+  const destination = useStore((s) => s.destination);
+  const setDestination = useStore((s) => s.setDestination);
+  const setDestinationFromSite = useStore((s) => s.setDestinationFromSite);
+  const isDestination = !!selectedSiteId && destination?.siteId === selectedSiteId;
 
   // Collapsing the write-up shrinks the card and gives the map back. Fresh
   // selection starts expanded again.
@@ -198,6 +202,18 @@ export function SiteDetail() {
         <button className="btn" onClick={() => toggleHidden(site.id)}>
           {hidden ? '🚫 Unhide' : '🚫 Hide'}
         </button>
+        {/* The common road-trip entry point (issue #14): "I'm driving to this
+            castle — what's on the way?" Needs no position of its own; the
+            journey's From end is whatever anchor the app already has. */}
+        {isDestination ? (
+          <button className="btn dest on" onClick={() => setDestination(null)}>
+            🏁 Destination
+          </button>
+        ) : (
+          <button className="btn dest" onClick={() => setDestinationFromSite(site.id)}>
+            🏁 Set as destination
+          </button>
+        )}
         {/* Trip = today's ordered subset. Adding needs a position to order the
             route from (spec: require a position); without one the button is
             disabled rather than silently doing nothing. The button state itself

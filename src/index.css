@@ -869,6 +869,149 @@ body,
   color: var(--muted);
 }
 
+/* Journey bar (From → To). Sits above the tabs and stays put when the sheet
+   collapses — the anchor governs every tab, so it must not go with the body. */
+.journey-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+  font-size: 13px;
+}
+.journey-ends {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.journey-from,
+.journey-to {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.journey-from {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.journey-to {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+}
+.journey-arrow {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.journey-clear,
+.journey-add {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--accent);
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.journey-clear {
+  padding: 4px 8px;
+  color: var(--muted);
+}
+.journey-add.picking {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.journey-add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.journey-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.journey-budget {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.journey-budget select {
+  margin-left: 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 4px;
+}
+.journey-length {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.journey-hint {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Route-mode near-me list */
+.route-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.route-head .hint {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mode-toggle.route-sort {
+  flex: 0 0 auto;
+}
+/* Route rows trade the single distance figure for detour + progress. */
+.row-route {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.row-detour {
+  font-weight: 600;
+}
+.row-progress {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Destination flag on the map. */
+.destination-marker {
+  background: transparent;
+  border: none;
+}
+.destination-marker span {
+  display: block;
+  font-size: 18px;
+  line-height: 24px;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+}
+
+.btn.dest.on {
+  background: #eef5f1;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Overlays */
 .overlay {
   position: absolute;

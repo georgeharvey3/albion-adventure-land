@@ -7,6 +7,7 @@ import { Filters } from './Filters';
 import { SiteDetail } from './SiteDetail';
 import { Outing } from './Outing';
 import { Stats } from './Stats';
+import { JourneyBar } from './JourneyBar';
 
 type Tab = 'near' | 'filters' | 'outing' | 'stats';
 
@@ -23,6 +24,7 @@ export function App() {
   const dataError = useStore((s) => s.dataError);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
+  const destination = useStore((s) => s.destination);
   const [tab, setTab] = useState<Tab>('filters');
   const [collapsed, setCollapsed] = useState(false);
 
@@ -42,6 +44,16 @@ export function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  // Setting a destination is a question ("what's on the way?"); the near-me
+  // list is where it gets answered, so show it rather than leaving the answer
+  // behind whichever tab happened to be open. Clearing it changes nothing —
+  // the user goes back to what they were doing.
+  useEffect(() => {
+    if (!destination) return;
+    setTab('near');
+    setCollapsed(false);
+  }, [destination]);
 
   useGeolocation();
 
@@ -63,6 +75,9 @@ export function App() {
       )}
 
       <div className={collapsed ? 'sheet collapsed' : 'sheet'}>
+        {/* Persistent, above the tabs and outside the collapse: the journey
+            anchor governs every tab, so it must not disappear with the body. */}
+        <JourneyBar />
         <nav className="tabs">
           {TABS.map(({ id, label }) => (
             <button

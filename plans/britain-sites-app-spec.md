@@ -405,6 +405,29 @@ At load: `rarity(type) = 1 / log2(count[type] + 1)` (`src/geo/rarity.ts`).
 Consumers: the F6 rarest-unvisited nudge (Stats tab), then rarity-weighted
 selection value in F15 (Phase 4).
 
+### 7.4b Journey corridor — detour + progress ✅ built (`src/geo/corridor.ts`)
+
+The road-trip anchor. Every other distance surface hangs off a single *point*
+(`position`); route discovery needs a **corridor**: “I’m driving A → B, what’s
+worth stopping for on the way?” Three haversines per site, nothing else:
+
+- `detour(S) = d(A,S) + d(S,B) − d(A,B)` — the extra ground covered by stopping
+  at S instead of driving straight through.
+- `progress(S)` — S projected onto the A→B line, normalised to 0–1, via the law
+  of cosines on those same three legs. Gives travel order.
+- Corridor membership is `detour <= budget`.
+
+Thresholding *detour* (rather than distance-to-line) traces an **ellipse with A
+and B as its foci** — naturally fat in the middle of the drive and pinched at
+both ends, which is what people mean by “on my way”. It also settles the “how
+wide is a corridor?” question in the only unit a driver cares about: extra
+kilometres. `corridorEllipse` returns that ring for the map overlay (drawn on a
+local plane — presentation only; membership is always decided on real haversine
+distances).
+
+Point mode is the special case `destination === null`, where every surface
+behaves exactly as it did before route mode existed.
+
 ### 7.5 Distance-matrix caching (Phase 4)
 Road times need a routing engine, but only *while planning* (on wifi), not
 while driving. Fetch the N×N matrix once (OSRM `table` / ORS matrix / Google),
@@ -509,6 +532,19 @@ Still open — surface these rather than silently picking:
    Google.
 5. **Cross-device sync** — stay client-only with export/import (F17), revisit
    only if the friction is real.
+6. **Free-text destination entry (route mode)** — settled *for now* by the
+   architecture, not by preference: runtime geocoding is out (build-time and
+   cached only), so a destination comes from a map tap or from a site already
+   in the dataset (“Set as destination” on any site card). That covers the
+   road-trip intent. Typing “Fort William” would need either a coarse offline
+   place index (a few hundred GB towns is small — the realistic option) or an
+   online-only lookup, which breaks the airplane-mode guarantee. Revisit after
+   a real road trip: if tapping the map for a destination is the friction,
+   ship the offline index.
+7. **Detour budget on a short journey** — the budget is absolute, so a 20 km
+   budget on a 2 km drive traces an ellipse far larger than the journey. It is
+   geometrically correct and the user asked for it, but it may want a cap
+   relative to journey length. Field-test before adding policy.
 
 ---
 

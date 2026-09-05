@@ -5,6 +5,7 @@ import { SITE_TYPE_COLORS, type SiteCategory } from '../data/types';
 import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
+import { corridorEllipse } from '../geo/corridor';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -58,10 +59,12 @@ export function MapView() {
   const siteLayerRef = useRef<L.LayerGroup | null>(null);
   const meLayerRef = useRef<L.LayerGroup | null>(null);
   const outingLayerRef = useRef<L.LayerGroup | null>(null);
+  const corridorLayerRef = useRef<L.LayerGroup | null>(null);
   const droppingRef = useRef(false);
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
   const outingFitKeyRef = useRef<string | null>(null);
+  const journeyFitKeyRef = useRef<string | null>(null);
   const markersRef = useRef(new Map<string, { marker: L.CircleMarker; view: FilteredSiteView }>());
   const prevSelectedRef = useRef<string | null>(null);
 
@@ -72,6 +75,10 @@ export function MapView() {
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);
+  const destination = useStore((s) => s.destination);
+  const detourBudget = useStore((s) => s.detourBudget);
+  const pickingDestination = useStore((s) => s.pickingDestination);
+  const setDestination = useStore((s) => s.setDestination);
 
   // One-time map init.
   useEffect(() => {
@@ -86,6 +93,8 @@ export function MapView() {
       maxZoom: 19,
     }).addTo(map);
 
+    // Corridor first so its shaded ellipse sits under the pins, not over them.
+    corridorLayerRef.current = L.layerGroup().addTo(map);
     siteLayerRef.current = L.layerGroup().addTo(map);
     outingLayerRef.current = L.layerGroup().addTo(map);
     meLayerRef.current = L.layerGroup().addTo(map);
@@ -112,6 +121,8 @@ export function MapView() {
             return;
           }
           droppingRef.current = !droppingRef.current;
+          // Only one thing can claim the next tap.
+          if (droppingRef.current) useStore.getState().setPickingDestination(false);
           btn.classList.toggle('active', droppingRef.current);
           map.getContainer().style.cursor = droppingRef.current ? 'crosshair' : '';
         });
@@ -121,11 +132,26 @@ export function MapView() {
     map.addControl(new Ctl());
 
     map.on('click', (e: L.LeafletMouseEvent) => {
-      if (!droppingRef.current) return;
-      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng, accuracy: 0, manual: true });
-      droppingRef.current = false;
-      dropBtnRef.current?.classList.remove('active');
-      map.getContainer().style.cursor = '';
+      // Dropping an "I am here" pin wins if both modes are somehow armed; the
+      // journey picker below is disarmed whenever this one is turned on.
+      if (droppingRef.current) {
+        setPosition({ lat: e.latlng.lat, lng: e.latlng.lng, accuracy: 0, manual: true });
+        droppingRef.current = false;
+        dropBtnRef.current?.classList.remove('active');
+        map.getContainer().style.cursor = '';
+        return;
+      }
+      // Journey destination (issue #14). No reverse geocoding is available
+      // offline, so an arbitrary map point is labelled by its coordinates.
+      if (useStore.getState().pickingDestination) {
+        const { lat, lng } = e.latlng;
+        setDestination({
+          lat,
+          lng,
+          label: `${lat.toFixed(3)}, ${lng.toFixed(3)}`,
+        });
+        map.getContainer().style.cursor = '';
+      }
     });
 
     // The map's height changes when the bottom sheet expands/collapses;
@@ -138,7 +164,7 @@ export function MapView() {
       map.remove();
       mapRef.current = null;
     };
-  }, [setPosition]);
+  }, [setPosition, setDestination]);
 
   // Render site pins whenever the filtered set or visited/wishlist state
   // changes. Deliberately NOT keyed on position or selection: GPS ticks must
@@ -230,6 +256,84 @@ export function MapView() {
       map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
     }
   }, [outing, sites, position, setSelected]);
+
+  // Journey corridor overlay (issue #14): the straight from→to line plus the
+  // shaded detour ellipse, so "on my way" is something you can see rather than
+  // infer from a number. Redraws when the budget changes — that IS the feedback
+  // for widening it.
+  useEffect(() => {
+    const layer = corridorLayerRef.current;
+    const map = mapRef.current;
+    if (!layer || !map) return;
+    layer.clearLayers();
+    if (!position || !destination) {
+      journeyFitKeyRef.current = null;
+      return;
+    }
+
+    const ring = corridorEllipse(position, destination, detourBudget);
+    if (ring.length) {
+      L.polygon(
+        ring.map((p) => [p.lat, p.lng] as L.LatLngTuple),
+        {
+          color: '#1f6b4f',
+          weight: 1.5,
+          opacity: 0.5,
+          dashArray: '4 5',
+          fillColor: '#1f6b4f',
+          fillOpacity: 0.07,
+          interactive: false,
+        },
+      ).addTo(layer);
+    }
+
+    L.polyline(
+      [
+        [position.lat, position.lng],
+        [destination.lat, destination.lng],
+      ],
+      { color: '#1f6b4f', weight: 2, opacity: 0.6, interactive: false },
+    ).addTo(layer);
+
+    L.marker([destination.lat, destination.lng], {
+      icon: L.divIcon({
+        className: 'destination-marker',
+        html: '<span>🏁</span>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      }),
+    })
+      .bindTooltip(destination.label)
+      .addTo(layer);
+
+    // Fit once per journey, keyed on the two ends only: refitting on every
+    // budget change or GPS tick would fight the user for the viewport.
+    const fitKey = `${destination.lat},${destination.lng}`;
+    if (journeyFitKeyRef.current !== fitKey) {
+      journeyFitKeyRef.current = fitKey;
+      map.fitBounds(
+        L.latLngBounds([
+          [position.lat, position.lng],
+          [destination.lat, destination.lng],
+        ]),
+        { padding: [60, 60] },
+      );
+    }
+  }, [position, destination, detourBudget]);
+
+  // Crosshair while the journey picker is armed. Arming it also cancels the
+  // "I am here" drop mode so a single tap can only mean one thing.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!pickingDestination) {
+      if (!droppingRef.current) map.getContainer().style.cursor = '';
+      return;
+    }
+    droppingRef.current = false;
+    dropBtnRef.current?.classList.remove('active');
+    map.getContainer().style.cursor = 'crosshair';
+  }, [pickingDestination]);
 
   // Live / manual location dot + accuracy ring.
   useEffect(() => {
