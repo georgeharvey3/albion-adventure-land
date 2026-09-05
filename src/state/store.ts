@@ -45,7 +45,8 @@ export type RouteSort = 'progress' | 'detour';
 
 // Outing mode v1 (spec §6 F12/F14/F16). The result stores ids, not Site
 // objects — sites are the read-only source of truth and are looked up on
-// render. `stopIds` is already in route order (NN + 2-opt from the anchor).
+// render. `stopIds` is already in route order (NN + 2-opt from the anchor, and
+// to the journey's destination when one is pinned — issue #15).
 //
 // The SAME result is populated two ways: the cluster algorithm ("Find outing")
 // and hand-picking ("Add to trip", spec: trip = today's ordered subset). A
@@ -151,6 +152,40 @@ interface AppState {
   setRouteSort: (sort: RouteSort) => void;
   setPickingDestination: (on: boolean) => void;
 }
+
+// Re-order an outing's stops against the CURRENT journey and refresh the
+// derived anchor distance (issue #15). Point mode orders an open path from the
+// anchor, exactly as it always has; route mode pins the destination as a fixed
+// terminal node, so the route is A → stops → B and can't double back past B.
+//
+// A site pinned as the destination is already the final stop, so it is dropped
+// from the vias rather than visited twice. Returns null when nothing is left.
+function reorderOuting(
+  outing: OutingResult,
+  stopIds: string[],
+  sites: Site[],
+  position: Position | null,
+  destination: Destination | null,
+): OutingResult | null {
+  const byId = new Map(sites.map((s) => [s.id, s]));
+  const members = stopIds
+    .filter((id) => id !== destination?.siteId)
+    .map((id) => byId.get(id))
+    .filter((s): s is Site => !!s);
+  if (members.length === 0) return null;
+  // Re-order only if we have an anchor; otherwise keep the current relative
+  // order (position is normally present, since adding required it).
+  const stops = position ? orderRoute(position, members, destination) : members;
+  return {
+    ...outing,
+    stopIds: stops.map((s) => s.id),
+    distanceFromAnchor: position ? haversine(position, stops[0]) : 0,
+  };
+}
+
+// A hand-picked trip has no seed or cluster spread — those fields describe a
+// found cluster only — and `edited` gates the "replace your trip?" confirm.
+const EMPTY_TRIP: OutingResult = { stopIds: [], distanceFromAnchor: 0, edited: true };
 
 export const useStore = create<AppState>((set, get) => ({
   sites: [],
@@ -323,7 +358,7 @@ export const useStore = create<AppState>((set, get) => ({
       return;
     }
 
-    const stops = orderRoute(position, cluster.members);
+    const stops = orderRoute(position, cluster.members, get().destination);
     set({
       outing: {
         seedId: cluster.seed.id,
@@ -342,50 +377,28 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Hand-pick a stop into the shared outing (spec: trip = today's ordered
   // subset). No type constraint — unlike the cluster search, a trip can hold any
-  // mix. Re-optimises from the current position on every add (NN + 2-opt), so
-  // the route stays tight as it grows. Position-gated: the UI disables the card
+  // mix. Re-optimises against the journey on every add (NN + 2-opt), so the
+  // route stays tight as it grows. Position-gated: the UI disables the card
   // button until there's a location to order from. `edited` flips true, and the
   // cluster's "find another" history is dropped — it no longer describes this
   // hand-built route.
   addToTrip: (siteId) => {
-    const { sites, position, outing } = get();
+    const { sites, position, destination, outing } = get();
     if (!position) return; // UI disables the card button without a position
-    const byId = new Map(sites.map((s) => [s.id, s]));
     const currentIds = outing?.stopIds ?? [];
-    if (currentIds.includes(siteId) || !byId.has(siteId)) return;
-    const members = [...currentIds, siteId].map((id) => byId.get(id)!).filter(Boolean);
-    const stops = orderRoute(position, members);
-    set({
-      outing: {
-        stopIds: stops.map((s) => s.id),
-        distanceFromAnchor: haversine(position, stops[0]),
-        edited: true,
-      },
-      outingFailure: null,
-      outingShownIds: [],
-    });
+    if (currentIds.includes(siteId)) return;
+    const trip = reorderOuting(EMPTY_TRIP, [...currentIds, siteId], sites, position, destination);
+    if (!trip) return; // unknown id, or the site is already the pinned destination
+    set({ outing: trip, outingFailure: null, outingShownIds: [] });
   },
 
   // Drop a stop; re-optimise the remainder. Emptying the trip clears the outing.
   removeFromTrip: (siteId) => {
-    const { sites, position, outing } = get();
+    const { sites, position, destination, outing } = get();
     if (!outing) return;
     const remaining = outing.stopIds.filter((id) => id !== siteId);
-    if (remaining.length === 0) {
-      set({ outing: null, outingFailure: null, outingShownIds: [] });
-      return;
-    }
-    const byId = new Map(sites.map((s) => [s.id, s]));
-    const members = remaining.map((id) => byId.get(id)!).filter(Boolean);
-    // Re-order only if we have an anchor; otherwise keep the current relative
-    // order (position is normally present, since adding required it).
-    const stops = position ? orderRoute(position, members) : members;
     set({
-      outing: {
-        stopIds: stops.map((s) => s.id),
-        distanceFromAnchor: position ? haversine(position, stops[0]) : 0,
-        edited: true,
-      },
+      outing: reorderOuting(EMPTY_TRIP, remaining, sites, position, destination),
       outingFailure: null,
       outingShownIds: [],
     });
@@ -466,17 +479,25 @@ export const useStore = create<AppState>((set, get) => ({
   // Setting or clearing the destination always disarms the map's picker: the
   // tap that set it is spent, and clearing while armed would leave the map in
   // crosshair mode with nothing to pick.
-  setDestination: (destination) => set({ destination, pickingDestination: false }),
+  //
+  // It also re-orders any live trip (issue #15): gaining an end turns the route
+  // into A → stops → B, and losing one turns it back into an open path, so the
+  // order that was optimal a moment ago generally isn't any more.
+  setDestination: (destination) => {
+    const { sites, position, outing } = get();
+    set({
+      destination,
+      pickingDestination: false,
+      outing: outing ? reorderOuting(outing, outing.stopIds, sites, position, destination) : null,
+    });
+  },
 
   // "Set as destination" from a site card — the common road-trip case ("I'm
   // driving to this castle, what's on the way?").
   setDestinationFromSite: (siteId) => {
     const site = get().sites.find((s) => s.id === siteId);
     if (!site) return;
-    set({
-      destination: { lat: site.lat, lng: site.lng, label: site.name, siteId: site.id },
-      pickingDestination: false,
-    });
+    get().setDestination({ lat: site.lat, lng: site.lng, label: site.name, siteId: site.id });
   },
 
   setDetourBudget: (detourBudget) => set({ detourBudget }),

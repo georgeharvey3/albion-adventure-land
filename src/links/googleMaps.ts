@@ -28,6 +28,16 @@ export function placeLink(site: Site & { postcode: string }): string {
 
 const MAX_WAYPOINTS = 9; // consumer URL cap (verify before relying on it — spec §8)
 
+/**
+ * How many trip stops fit in one Maps link. The URL's `destination` slot is
+ * free real estate in point mode — the last stop takes it — but in route mode
+ * (issue #15) the journey's destination is pinned there, so every stop has to
+ * be a waypoint and the budget shrinks by one.
+ */
+export function maxRouteStops(hasFixedEnd: boolean): number {
+  return hasFixedEnd ? MAX_WAYPOINTS : MAX_WAYPOINTS + 1;
+}
+
 /** Multi-stop route. `ordered` is [start, ...vias, end] — any lat/lng points,
  *  so the outing anchor (not a Site) can be the origin. Throws if too many vias. */
 export function multiStopRoute(ordered: { lat: number; lng: number }[]): string {

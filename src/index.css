@@ -447,6 +447,15 @@ body,
   align-items: center;
   justify-content: center;
 }
+/* The pinned destination closing the stop list — a stop you don't remove here,
+   so it reads as the route's terminus rather than one of its picks. */
+.trip-destination .stop-num {
+  background: transparent;
+  font-size: 15px;
+}
+.trip-destination .row-name {
+  font-weight: 600;
+}
 .outing-export {
   display: block;
   margin-top: 10px;
