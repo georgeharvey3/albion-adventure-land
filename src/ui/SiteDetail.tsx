@@ -88,12 +88,22 @@ interface SiteBodyProps {
    *  row already carries all three in its own header, so it turns them off
    *  rather than saying everything twice. */
   showHeader?: boolean;
+  /** Whether the write-up starts as the two-line teaser. The floating card
+   *  collapses so the map stays visible; a browse-list row has no map to
+   *  protect and opening the row was already the request to read, so it
+   *  starts expanded. */
+  collapseDescription?: boolean;
 }
 
 /** Everything there is to say about one site: pictures, write-up, listing links
  *  and the full action set. No positioning or dismiss chrome of its own — the
  *  caller supplies that. */
-export function SiteBody({ site, onShowOnMap, showHeader = true }: SiteBodyProps) {
+export function SiteBody({
+  site,
+  onShowOnMap,
+  showHeader = true,
+  collapseDescription = true,
+}: SiteBodyProps) {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
   const visited = useStore((s) => s.visited[site.id]);
@@ -112,12 +122,16 @@ export function SiteBody({ site, onShowOnMap, showHeader = true }: SiteBodyProps
   const setDestinationFromSite = useStore((s) => s.setDestinationFromSite);
   const isDestination = destination?.siteId === site.id;
 
-  // The write-up starts collapsed so the card stays short and the map stays
-  // visible; the reader opens it when they want it. A short description has no
-  // toggle, so it is never clamped. Fresh selection collapses again.
+  // On the map the write-up starts as the teaser so the card stays short and the
+  // map stays visible; the reader opens it when they want it. A short
+  // description has no toggle, so it is never clamped. Fresh selection returns
+  // to the caller's default.
   const collapsible = isCollapsible(site.description);
-  const [descCollapsed, setDescCollapsed] = useState(collapsible);
-  useEffect(() => setDescCollapsed(isCollapsible(site.description)), [site.id, site.description]);
+  const startCollapsed = collapseDescription && collapsible;
+  const [descCollapsed, setDescCollapsed] = useState(startCollapsed);
+  useEffect(() => {
+    setDescCollapsed(collapseDescription && isCollapsible(site.description));
+  }, [site.id, site.description, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
 

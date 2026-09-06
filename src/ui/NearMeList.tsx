@@ -276,6 +276,7 @@ export function NearMeList() {
                   <SiteBody
                     site={site}
                     showHeader={false}
+                    collapseDescription={false}
                     onShowOnMap={() => setBrowse(false)}
                   />
                   {/* Naming the neighbours turns the step into a decision
