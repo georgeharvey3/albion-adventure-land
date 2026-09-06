@@ -1302,9 +1302,9 @@ body,
   }
 }
 
-/* Prev/next bar closing an expanded row — the swipe made visible. Naming the
-   neighbouring sites is the point: "Next › Lily Tarn" is a decision, "Next ›"
-   alone is a leap in the dark. */
+/* Prev/next bar closing an expanded row. Naming the neighbouring sites is the
+   point: "Next › Lily Tarn" is a decision, "Next ›" alone is a leap in the
+   dark. */
 .row-nav {
   display: flex;
   gap: 8px;

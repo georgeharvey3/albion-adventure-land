@@ -21,109 +21,14 @@ import { SiteBody } from './SiteDetail';
 // write-up *in place* rather than throwing the reader to a card floating over a
 // map they can no longer see. It is for the armchair half of the loop —
 // "what's out there?" — where the map's 55% of the screen buys nothing. An
-// opened site can then be stepped through with a swipe, the prev/next bar or
-// the arrow keys, so reading ten in a row costs nine gestures rather than
-// eighteen.
+// opened site is stepped through with the prev/next bar closing it, or the
+// arrow keys, so reading ten in a row costs ten taps rather than twenty.
 //
 // Only the nearest PAGE_SIZE rows are rendered (with "show more" paging) —
 // mounting all ~2,600 rows was a large chunk of the mobile jank, and the
 // near-me loop only ever needs the top of the list.
 
 const PAGE_SIZE = 150;
-
-// Horizontal travel that counts as a swipe rather than a tap or a scroll. Lower
-// than the picture viewer's 60px: a list row is a shorter, more casual gesture
-// than paging through a full-screen photo.
-const SWIPE_PX = 48;
-
-/** Horizontal drag on the expanded row steps to the neighbouring site.
- *
- *  The awkward part is touch. Chrome cancels the pointer stream the moment it
- *  decides a touch is a scroll, so a pointer-events-only version works with a
- *  mouse and silently does nothing on a phone. Preventing the scroll for a
- *  gesture we have already judged horizontal keeps the pointer events coming.
- *
- *  That preventDefault has to be a hand-bound, non-passive listener, because
- *  React registers touchmove passively at the root where preventDefault is
- *  ignored. `touch-action: pan-y` would say the same thing declaratively and in
- *  one line, but touch-action is intersected down the whole ancestor chain, so
- *  it would also veto the picture strip's own sideways scrolling. */
-function useRowSwipe(onSwipe: (delta: number) => void) {
-  const from = useRef<{ x: number; y: number } | null>(null);
-  const swiped = useRef(false);
-  // null while the gesture is too small to call, then true for a swipe we are
-  // keeping and false for a scroll we are letting the browser have.
-  const horizontal = useRef<boolean | null>(null);
-
-  // Movement in either axis that settles what the gesture is. Small, so the
-  // decision is made before the browser commits to scrolling.
-  const DECIDE_PX = 10;
-
-  const onTouchMove = useCallback((e: TouchEvent) => {
-    const start = from.current;
-    if (!start || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - start.x;
-    const dy = e.touches[0].clientY - start.y;
-    if (horizontal.current === null) {
-      if (Math.abs(dx) < DECIDE_PX && Math.abs(dy) < DECIDE_PX) return;
-      horizontal.current = Math.abs(dx) > Math.abs(dy);
-      // A scroll: drop the gesture so the release cannot be read as a swipe,
-      // and leave the browser to it.
-      if (!horizontal.current) from.current = null;
-    }
-    if (horizontal.current && e.cancelable) e.preventDefault();
-  }, []);
-
-  const attached = useRef<HTMLElement | null>(null);
-  const ref = useCallback(
-    (node: HTMLElement | null) => {
-      attached.current?.removeEventListener('touchmove', onTouchMove);
-      attached.current = node;
-      node?.addEventListener('touchmove', onTouchMove, { passive: false });
-    },
-    [onTouchMove],
-  );
-
-  const handlers = {
-    onPointerDown: (e: React.PointerEvent) => {
-      swiped.current = false;
-      from.current = null;
-      horizontal.current = null;
-      // The multi-picture strip scrolls sideways under its own steam; a swipe
-      // there is the reader looking at the next plate, not the next site.
-      if ((e.target as Element).closest?.('.card-gallery.multi')) return;
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      // Capture so the release still reaches us if the pointer wanders off the
-      // element it started on — the same trick the picture viewer uses.
-      (e.target as Element).setPointerCapture?.(e.pointerId);
-      from.current = { x: e.clientX, y: e.clientY };
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      const start = from.current;
-      from.current = null;
-      if (!start) return;
-      const dx = e.clientX - start.x;
-      // Ignore anything that travelled further down the page than across it:
-      // that was a scroll the browser happened to hand us.
-      if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) <= Math.abs(e.clientY - start.y)) return;
-      swiped.current = true;
-      onSwipe(dx < 0 ? 1 : -1);
-    },
-    onPointerCancel: () => {
-      from.current = null;
-    },
-    // A swipe that happens to start and end on a button must not also press it.
-    // Capture phase, so this runs before the button's own handler.
-    onClickCapture: (e: React.MouseEvent) => {
-      if (!swiped.current) return;
-      swiped.current = false;
-      e.preventDefault();
-      e.stopPropagation();
-    },
-  };
-
-  return { ref, handlers };
-}
 
 // Row thumbnail: the listing's first guidebook plate, or a flat tile in the
 // category colour when there is no picture (only ~14% of sites have one, and a
@@ -184,18 +89,6 @@ export function NearMeList() {
     [views, selectedSiteId, setSelected],
   );
 
-  const swipe = useRowSwipe(goToNeighbour);
-
-  // The expanded row carries two refs: the one this component scrolls to, and
-  // the one the swipe hook binds its non-passive touchmove listener to.
-  const setExpandedRow = useCallback(
-    (el: HTMLLIElement | null) => {
-      expandedRef.current = el;
-      swipe.ref(el);
-    },
-    [swipe.ref],
-  );
-
   // Bring the reader to the selected site when they were moved to it — entering
   // browse mode on a site picked from the map, or stepping to a neighbour —
   // but not when they tapped a row themselves, where the row should stay put
@@ -219,9 +112,9 @@ export function NearMeList() {
     pendingScroll.current = false;
   }, [browse, selectedSiteId, limit, views]);
 
-  // Arrow keys do on a desktop what the swipe does on a phone. Skipped while a
-  // modal is up: the picture viewer binds the same two keys, and there the
-  // arrows belong to the pictures.
+  // Arrow keys do from the keyboard what the prev/next bar does with a tap.
+  // Skipped while a modal is up: the picture viewer binds the same two keys,
+  // and there the arrows belong to the pictures.
   useEffect(() => {
     if (!browse || !selectedSiteId) return;
     const onKey = (e: KeyboardEvent) => {
@@ -349,11 +242,10 @@ export function NearMeList() {
           return (
             <li
               key={site.id}
-              ref={expanded ? setExpandedRow : undefined}
+              ref={expanded ? expandedRef : undefined}
               className={`row browse ${expanded ? 'expanded' : ''} ${
                 visited ? 'is-visited' : ''
               }`}
-              {...(expanded ? swipe.handlers : {})}
             >
               <button
                 className="row-head"
@@ -386,9 +278,8 @@ export function NearMeList() {
                     showHeader={false}
                     onShowOnMap={() => setBrowse(false)}
                   />
-                  {/* The swipe made visible: naming the neighbours turns the
-                      step into a decision rather than a leap in the dark, and
-                      gives keyboard and screen-reader users the same move. */}
+                  {/* Naming the neighbours turns the step into a decision
+                      rather than a leap in the dark. */}
                   <div className="row-nav">
                     <button
                       className="row-nav-btn"
