@@ -11,7 +11,8 @@ import {
   type SiteCategory,
 } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
-import { multiStopRoute } from '../links/googleMaps';
+import { routeLength } from '../geo/tsp';
+import { maxRouteStops, multiStopRoute } from '../links/googleMaps';
 
 // Outing tab. One shared, ephemeral route is populated two ways:
 //   • hand-picking — "Add to trip" on a site card builds an ordered subset of
@@ -20,10 +21,17 @@ import { multiStopRoute } from '../links/googleMaps';
 //     the nearest full-house of the selected types (spec §6 F12/F14/F16). Its
 //     type picker is a QUERY, independent of the map filter.
 // Either way the output is the same: an NN+2-opt route + Google Maps handoff.
+//
+// With a destination pinned (issue #15) the same trip becomes a road trip: the
+// destination is a fixed final stop, and the headline changes to the only
+// number that means anything on a corridor — how much extra driving the stops
+// cost. "Distance from anchor + spread" describes a cluster you drive out to;
+// it says nothing useful about a route you were making anyway.
 
 export function Outing() {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
+  const destination = useStore((s) => s.destination);
   const outingTypes = useStore((s) => s.outingTypes);
   const outingAnyParents = useStore((s) => s.outingAnyParents);
   const includeVisited = useStore((s) => s.outingIncludeVisited);
@@ -54,12 +62,30 @@ export function Outing() {
   // A parent in "Any of these" mode contributes a stop even with no leaf ticked
   // (it means "any of the whole category"), so participation is either.
   const canFind = !!position && (outingTypes.size > 0 || outingAnyParents.size > 0);
-  // One stop per selected type, so a big selection can exceed Google Maps'
-  // ~9-waypoint URL cap (multiStopRoute throws above it) — hide the export
-  // rather than crash; the per-stop directions still work from the site card.
+
+  // Route mode's headline: the drive you were doing anyway versus the drive
+  // with the stops folded in. Recomputed from the live anchor rather than read
+  // off the stored result, so it doesn't go stale as GPS moves.
+  const drive =
+    position && destination
+      ? {
+          base: haversine(position, destination),
+          withStops: routeLength(position, stops, destination),
+        }
+      : null;
+
+  // A big selection can exceed Google Maps' ~9-waypoint URL cap (multiStopRoute
+  // throws above it) — hide the export rather than crash; the per-stop
+  // directions still work from the site card. A pinned destination occupies the
+  // URL's destination slot, so one fewer stop fits.
+  const stopCap = maxRouteStops(!!destination);
   const mapsUrl =
-    position && stops.length > 0 && stops.length <= 10
-      ? multiStopRoute([{ lat: position.lat, lng: position.lng }, ...stops])
+    position && stops.length > 0 && stops.length <= stopCap
+      ? multiStopRoute([
+          { lat: position.lat, lng: position.lng },
+          ...stops,
+          ...(destination ? [destination] : []),
+        ])
       : null;
 
   // A fresh Find overwrites the shared route. Confirm first if the current one
@@ -76,15 +102,24 @@ export function Outing() {
       {outing ? (
         <div className="outing-result">
           <div className="outing-result-head">
-            <p className="hint">
-              {position
-                ? `${stops.length} stops, starting ${formatDistance(outing.distanceFromAnchor)} from ${position.manual ? 'your dropped pin' : 'you'}`
-                : `${stops.length} stops`}
-              {outing.radiusM != null &&
-                stops.length > 1 &&
-                `, spread over ${formatDistance(outing.radiusM)}`}
-              {position ? '.' : ' — drop a location to route them.'}
-            </p>
+            {drive ? (
+              <p className="hint">
+                Your drive is {formatDistance(drive.base)}. With{' '}
+                {stops.length === 1 ? 'this stop' : `these ${stops.length} stops`}:{' '}
+                {formatDistance(drive.withStops)} (+
+                {formatDistance(Math.max(0, drive.withStops - drive.base))}).
+              </p>
+            ) : (
+              <p className="hint">
+                {position
+                  ? `${stops.length} stops, starting ${formatDistance(outing.distanceFromAnchor)} from ${position.manual ? 'your dropped pin' : 'you'}`
+                  : `${stops.length} stops`}
+                {outing.radiusM != null &&
+                  stops.length > 1 &&
+                  `, spread over ${formatDistance(outing.radiusM)}`}
+                {position ? '.' : ' — drop a location to route them.'}
+              </p>
+            )}
             <button className="btn small" onClick={clearOuting}>
               Clear
             </button>
@@ -121,12 +156,31 @@ export function Outing() {
                 </li>
               );
             })}
+            {/* Where you were going anyway. It closes the route rather than
+                being one of its picks, so it carries no number and no ✕ —
+                it's cleared from the journey bar, not from the trip. */}
+            {destination && (
+              <li className="row trip-destination">
+                <span className="stop-num" aria-hidden="true">
+                  🏁
+                </span>
+                <span className="row-main">
+                  <span className="row-name">{destination.label}</span>
+                  <span className="row-sub">Destination</span>
+                </span>
+                {stops.length > 0 && (
+                  <span className="row-dist">
+                    +{formatDistance(haversine(stops[stops.length - 1], destination))}
+                  </span>
+                )}
+              </li>
+            )}
           </ol>
           {mapsUrl ? (
             <a className="btn primary outing-export" href={mapsUrl} target="_blank" rel="noreferrer">
               Open route in Google Maps ↗
             </a>
-          ) : stops.length > 10 ? (
+          ) : stops.length > stopCap ? (
             <p className="hint">
               Too many stops for one Google Maps link — open directions from each
               site's card instead.

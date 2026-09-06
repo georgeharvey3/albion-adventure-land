@@ -218,7 +218,13 @@ export function SiteDetail() {
             route from (spec: require a position); without one the button is
             disabled rather than silently doing nothing. The button state itself
             is the "added" confirmation — the Outing tab carries the count. */}
-        {inTrip ? (
+        {isDestination ? (
+          // Already the route's fixed final stop (issue #15) — adding it as a
+          // via as well would just visit it twice.
+          <button className="btn trip" disabled title="Already the end of your trip">
+            + Add to trip
+          </button>
+        ) : inTrip ? (
           <button className="btn trip on" onClick={() => removeFromTrip(site.id)}>
             ✓ In trip
           </button>
