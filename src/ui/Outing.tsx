@@ -11,6 +11,7 @@ import {
   type SiteCategory,
 } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
+import { formatDetour } from '../geo/corridor';
 import { routeLength } from '../geo/tsp';
 import { maxRouteStops, multiStopRoute } from '../links/googleMaps';
 
@@ -27,6 +28,12 @@ import { maxRouteStops, multiStopRoute } from '../links/googleMaps';
 // number that means anything on a corridor — how much extra driving the stops
 // cost. "Distance from anchor + spread" describes a cluster you drive out to;
 // it says nothing useful about a route you were making anyway.
+//
+// The finder follows (issue #16): with a destination set it stops looking for
+// the nearest cluster and looks for one of each ON THE WAY, inside the detour
+// budget. So its copy shifts too, and its failure state gains a third answer —
+// "nothing of that type is within the budget" — whose remedy is the budget
+// control in the journey bar rather than dropping the type.
 
 export function Outing() {
   const sites = useStore((s) => s.sites);
@@ -198,8 +205,9 @@ export function Outing() {
         <summary>Find one for me</summary>
 
         <p className="hint">
-          Pick the kinds of day you want — the nearest cluster with one of each,
-          as a ready-made route.
+          {destination
+            ? `Pick the kinds of day you want — one of each on your way to ${destination.label}, as a ready-made route.`
+            : 'Pick the kinds of day you want — the nearest cluster with one of each, as a ready-made route.'}
         </p>
 
         {layers.map(({ parent, leaves }) => {
@@ -337,19 +345,38 @@ export function Outing() {
         )}
         {failure?.kind === 'missing-types' && (
           <div className="outing-failure">
-            <p>Some of the selected types have nothing to visit:</p>
+            {/* In route mode a type fails either way: nothing left anywhere, or
+                nothing close enough to the route. Both are listed, each with
+                the reason that applies to it, so the remedy is obvious per
+                type rather than guessed at. */}
+            <p>
+              {failure.budget !== null
+                ? 'Some of the selected types have nothing on your way:'
+                : 'Some of the selected types have nothing to visit:'}
+            </p>
             <ul>
               {failure.nearest
-                .filter(({ site }) => !site)
-                .map(({ slot }) => (
+                .filter(
+                  ({ site, distance }) =>
+                    !site || (failure.budget !== null && distance! > failure.budget),
+                )
+                .map(({ slot, site, distance }) => (
                   <li key={slot}>
                     <span className="dot" style={{ background: outingSlotColor(slot) }} />
                     {outingSlotLabel(slot)}:{' '}
-                    {includeVisited ? 'none in the collection' : 'none left unvisited'}
+                    {!site
+                      ? includeVisited
+                        ? 'none in the collection'
+                        : 'none left unvisited'
+                      : `nearest is ${formatDetour(distance!)}`}
                   </li>
                 ))}
             </ul>
-            <p className="hint">Try dropping the type, or include visited sites.</p>
+            <p className="hint">
+              {failure.budget !== null
+                ? 'Try a wider detour budget in the bar above, dropping the type, or including visited sites.'
+                : 'Try dropping the type, or include visited sites.'}
+            </p>
           </div>
         )}
       </details>

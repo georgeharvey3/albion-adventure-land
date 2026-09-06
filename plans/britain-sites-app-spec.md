@@ -369,20 +369,29 @@ own type at distance 0), and seeds are scored so that *near and tight* beats
 
 ```
 if some t ∈ T has no site in P: return null       // the only failure mode
-sort P by haversine(anchor, ·) ascending           // stable; tie-break by id
+sort P by proximity(·) ascending                   // stable; tie-break by id
 for each seed in P:
-  if best exists and haversine(anchor, seed) > best.cost: break   // exact cutoff
+  if best exists and proximity(seed) > best.cost: break            // exact cutoff
   members = nearest-to-seed site of each t ∈ T    // |members| = |T|
-  cost    = haversine(anchor, seed) + Σ haversine(seed, member)
+  cost    = proximity(seed) + W · Σ haversine(seed, member)
   keep the cheapest (id tie-break)
 return { seed, members, distanceFromAnchor, radiusM }   // radiusM = spread
 ```
 
+`proximity` and `W` are the only things route mode changes (issue #16), and
+they are injected, not branched on:
+
+| | `proximity(S)` | `W` | pool `P` |
+|---|---|---|---|
+| **Point** (no destination) | `haversine(anchor, S)` | 3 | selected types, minus visited |
+| **Route** (destination set) | `detour(S, from, to)` (§7.4b) | 0 (§11.1) | …and minus anything outside the detour budget |
+
 Properties worth preserving:
-- The cost function is the balance knob: anchor distance plus the summed
-  seed→member legs approximates the day’s travel. A seed farther away than
-  the current best *total* cost can never win (spread ≥ 0), which makes the
-  outward scan’s early exit exact.
+- The cost function is the balance knob: proximity plus the summed seed→member
+  legs approximates the day’s travel. A seed whose *own* proximity exceeds the
+  current best *total* cost can never win (the spread term is ≥ 0 and the scan
+  is sorted by proximity), which makes the outward scan’s early exit exact —
+  for any proximity function that is ≥ 0, detour included.
 - One stop per type, always: a single-type query returns exactly the nearest
   site of that type; stop count = |T|, so the Maps export must respect the
   waypoint cap (F16).
@@ -390,9 +399,15 @@ Properties worth preserving:
 - O(|P|²) worst case — trivial at ~1.2k sites; no indexing needed. Don’t add a
   spatial index until profiling says so.
 - “Find another” = re-run with clusters overlapping previously returned
-  members excluded; exhaustion returns null (“no more”).
+  members excluded; exhaustion returns null (“no more”). This is why the
+  member choice must stay seed-*dependent* — see §11.1.
 - Shown to the user: `distanceFromAnchor` (anchor → seed) and `radiusM`
-  (spread), so a sprawling result is legible.
+  (spread), so a sprawling result is legible. In route mode neither is the
+  headline: total added driving is (§6 F16 / issue #15).
+- Failure diagnostics (`nearestPerSlot`) run over the pool *before* the
+  corridor filter, so route mode can tell “there is no such site left” from
+  “the nearest one is +34 km off your route” — the second is fixed by widening
+  the budget, and the message says so.
 
 ### 7.3 Routing — NN + 2-opt ✅ built (`src/geo/tsp.ts`)
 N ≤ `MAX_STOPS`, so nothing heavy: nearest-neighbour from the fixed anchor
@@ -524,6 +539,32 @@ Still open — surface these rather than silently picking:
 1. **Outing cost function** — v1 scores clusters by anchor distance + summed
    seed→member legs. After real outings, decide whether tightness needs more
    or less weight (or a user-facing knob).
+
+   *Route mode (issue #16) has already forced half of this.* The finder
+   generalises to a corridor by injecting `detour` as the proximity term, and
+   the spread weight had to be re-tuned from 3 to **0** to stop it collapsing
+   every road trip into one knot of sites: on a corridor the budget already
+   bounds sprawl, so spread only ends up charging for distance *along* the
+   route, which is driving you were doing anyway. Measured (swim + ruin + pub,
+   20 km budget, extra driving over the direct route):
+
+   | Journey | W=0 | W=1 (≈W=2≈W=3) |
+   |---|---|---|
+   | Glasgow → Portree | +5.8 km, at 10/24/37% of the way | +22.4 km, at 0/2/3% |
+   | London → Bristol | +2.8 km, at 12/23/33% | +1.7 km, at 2/2/2% |
+   | Manchester → York | +23.0 km, at 0/21/35% | +20.4 km, at 35/34/39% |
+   | Exeter → Penzance | +7.4 km, at 80/83/86% | +4.9 km, at 80/82/82% |
+
+   **Still open, and the more interesting half:** scoring each member by its own
+   detour rather than by its distance from the seed does better again (+0.8 /
+   +0.0 / +24.9 / +1.2 km on the same four journeys — near the floor, and
+   naturally spaced along the drive). It was *not* adopted, because it makes
+   member choice seed-independent: every seed then yields the same cluster, so
+   “find another” has nothing disjoint to offer and dies after one result.
+   Making it work needs a different exclusion rule — drop shown members from the
+   candidate pool instead of rejecting whole clusters — which would change point
+   mode too. Field-test route mode first; if the stops it picks feel like
+   detours rather than discoveries, that's the change to make.
 2. **Tile provider** — keyless OSM works; a keyed MapTiler/Thunderforest
    outdoor style would suit rural footpaths. Costs a key + attribution change.
 3. **Photo storage (Phase 3)** — IndexedDB blobs (recommended, offline-safe)
