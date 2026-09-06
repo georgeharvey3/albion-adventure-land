@@ -27,6 +27,13 @@ function sourceLinkLabel(url: string): string {
   }
 }
 
+// A write-up only gets the collapse treatment past this length: anything shorter
+// already fits the teaser, so clamping it would hide text with no way to open it.
+const DESC_CLAMP_CHARS = 160;
+function isCollapsible(description?: string): boolean {
+  return !!description && description.length > DESC_CLAMP_CHARS;
+}
+
 // Guidebook pictures for the listing, shown above the write-up. Several pictures
 // become a horizontal snap strip rather than a stack, so the card stays short and
 // the map stays visible (the same reason the description collapses).
@@ -105,10 +112,12 @@ export function SiteBody({ site, onShowOnMap, showHeader = true }: SiteBodyProps
   const setDestinationFromSite = useStore((s) => s.setDestinationFromSite);
   const isDestination = destination?.siteId === site.id;
 
-  // Collapsing the write-up shrinks the card and gives the map back. Fresh
-  // selection starts expanded again.
-  const [descCollapsed, setDescCollapsed] = useState(false);
-  useEffect(() => setDescCollapsed(false), [site.id]);
+  // The write-up starts collapsed so the card stays short and the map stays
+  // visible; the reader opens it when they want it. A short description has no
+  // toggle, so it is never clamped. Fresh selection collapses again.
+  const collapsible = isCollapsible(site.description);
+  const [descCollapsed, setDescCollapsed] = useState(collapsible);
+  useEffect(() => setDescCollapsed(isCollapsible(site.description)), [site.id, site.description]);
 
   const distance = position ? haversine(position, site) : null;
 
@@ -148,7 +157,7 @@ export function SiteBody({ site, onShowOnMap, showHeader = true }: SiteBodyProps
           <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
             {site.description}
           </p>
-          {site.description.length > 160 && (
+          {collapsible && (
             <button
               className="desc-toggle"
               onClick={() => setDescCollapsed((c) => !c)}
