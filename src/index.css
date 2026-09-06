@@ -148,6 +148,9 @@ body,
   flex-direction: column;
 }
 .row-name {
+  /* Same column-flex cross-axis trap as .row-nav-name (see the note there):
+     without this the ellipsis has nothing to bite on in WebKit. */
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
@@ -1315,6 +1318,9 @@ body,
 .row-nav-btn {
   flex: 1 1 0;
   min-width: 0;
+  /* Structural backstop: whatever an engine decides about the label's own
+     sizing, nothing escapes the button's border. */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1340,12 +1346,25 @@ body,
 .row-nav-btn:disabled .row-nav-dir {
   color: var(--muted);
 }
-/* One line: two of these sit side by side on a 390px phone, so a long name
-   has to give way rather than push its neighbour off the row. */
+/* Two of these sit side by side on a phone, so a long name has to give way
+   rather than push its neighbour off the row — but it wraps to a second line
+   before it is cut, because naming where you are going is the whole point of
+   the button.
+
+   `min-width: 0` is the load-bearing line. A flex item in a *column* container
+   gets `min-width: auto`, which Chromium resolves to 0 on the cross axis but
+   WebKit leaves at min-content: the label then sizes to its full text and
+   neither wraps nor clips, which is exactly how "Llyn Bowydd, Blaenau
+   Ffestiniog" ran off the side of an iPhone while every desktop looked fine. */
 .row-nav-name {
+  min-width: 0;
   font-size: 13px;
+  line-height: 1.35;
   color: var(--ink);
-  white-space: nowrap;
+  overflow-wrap: anywhere; /* a single unbroken long word still has to give */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
