@@ -25,18 +25,25 @@ export function App() {
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
   const destination = useStore((s) => s.destination);
+  const browse = useStore((s) => s.browse);
+  const setBrowse = useStore((s) => s.setBrowse);
   const [tab, setTab] = useState<Tab>('filters');
   const [collapsed, setCollapsed] = useState(false);
 
   // Tapping a tab while collapsed expands the sheet to that tab; tapping the
   // active tab toggles collapse. Keeps the map fully visible on small screens.
+  //
+  // Browse mode is a way of reading the near-me list, so it ends when the
+  // reader leaves that tab — and while it is on there is no map to free, so
+  // collapsing is a no-op rather than a way to end up with a blank screen.
   const selectTab = (next: Tab) => {
     if (collapsed) {
       setCollapsed(false);
       setTab(next);
     } else if (next === tab) {
-      setCollapsed(true);
+      if (!browse) setCollapsed(true);
     } else {
+      if (next !== 'near') setBrowse(false);
       setTab(next);
     }
   };
@@ -61,8 +68,13 @@ export function App() {
     <div className="app">
       {/* The card is positioned inside .map-area so it hugs the bottom of the
           map — i.e. it sits just above the sheet whether the sheet is expanded
-          or collapsed, and never depends on viewport-height math. */}
-      <div className="map-area">
+          or collapsed, and never depends on viewport-height math.
+
+          In browse mode the whole area is hidden rather than unmounted: tearing
+          the Leaflet map down would throw away the view the reader is coming
+          back to and rebuild every marker on return. Its ResizeObserver picks
+          the size back up. */}
+      <div className={browse ? 'map-area hidden' : 'map-area'}>
         <MapView />
         {selectedSiteId && <SiteDetail />}
       </div>
@@ -74,7 +86,7 @@ export function App() {
         </div>
       )}
 
-      <div className={collapsed ? 'sheet collapsed' : 'sheet'}>
+      <div className={`sheet ${collapsed ? 'collapsed' : ''} ${browse ? 'browse' : ''}`}>
         {/* Persistent, above the tabs and outside the collapse: the journey
             anchor governs every tab, so it must not disappear with the body. */}
         <JourneyBar />
@@ -91,15 +103,18 @@ export function App() {
               )}
             </button>
           ))}
-          <button
-            className="tab collapse-toggle"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
-            title={collapsed ? 'Expand panel' : 'Collapse panel'}
-          >
-            {collapsed ? '▲' : '▼'}
-          </button>
+          {/* Nothing to collapse towards while the map is hidden. */}
+          {!browse && (
+            <button
+              className="tab collapse-toggle"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
+              title={collapsed ? 'Expand panel' : 'Collapse panel'}
+            >
+              {collapsed ? '▲' : '▼'}
+            </button>
+          )}
         </nav>
         {!collapsed && (
           <div className="sheet-body">

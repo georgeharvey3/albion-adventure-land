@@ -131,12 +131,19 @@ interface AppState {
   // True while the map is armed to take the next tap as the destination.
   pickingDestination: boolean;
 
-  // UI: the site shown in the detail card (map popup / list tap).
+  // UI: the site shown in the detail card (map popup / list tap). In browse
+  // mode this same id is the row expanded in place, so leaving browse mode
+  // hands the map the site you were just reading about.
   selectedSiteId: string | null;
+  // UI: browse mode hides the map and gives the near-me list the whole screen,
+  // for reading through sites rather than working a map. Ephemeral, like the
+  // selection — a session always opens on the map.
+  browse: boolean;
 
   // Actions.
   init: () => Promise<void>;
   setSelected: (siteId: string | null) => void;
+  setBrowse: (browse: boolean) => void;
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
@@ -228,6 +235,7 @@ export const useStore = create<AppState>((set, get) => ({
   pickingDestination: false,
 
   selectedSiteId: null,
+  browse: false,
 
   init: async () => {
     // Load site data and user state in parallel; they're independent.
@@ -525,6 +533,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => set({ selectedSiteId }),
+  setBrowse: (browse) => set({ browse }),
 
   // Setting or clearing the destination always disarms the map's picker: the
   // tap that set it is spent, and clearing while armed would leave the map in

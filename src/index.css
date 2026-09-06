@@ -1167,3 +1167,137 @@ body,
   font-size: 13px;
   text-align: center;
 }
+
+/* ---------------------------------------------------------------------------
+   Browse mode — the near-me list without the map.
+
+   The list has always scrolled; what it lacked was room. The sheet is capped at
+   45vh so the map keeps the majority of the screen, which is right when you are
+   standing somewhere and wrong when you are reading. Browse mode hides the map
+   and gives the list the lot, and rows grow a picture, a teaser and an
+   open-in-place write-up to fill it.
+   ------------------------------------------------------------------------- */
+
+.map-area.hidden {
+  display: none;
+}
+
+/* With the map gone the sheet is the screen. `min-height: 0` keeps the flex
+   child shrinkable so .sheet-body, not the page, is what scrolls. */
+.sheet.browse {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+}
+
+/* Hint and mode toggle share a line, so turning browse mode on and off costs no
+   vertical space of its own. */
+.list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.list-head .hint {
+  flex: 1;
+  min-width: 0;
+}
+
+/* `margin-left: auto` rather than the flex parent's alignment: route mode drops
+   the hint, and the toggle should stay put rather than slide left with it. */
+.browse-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.browse-toggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* A browse row is a disclosure: the header is a real button (keyboard-operable,
+   unlike the map-mode row) and the write-up opens underneath it. */
+.row.browse {
+  display: block;
+  padding: 0;
+  cursor: default;
+}
+.row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 8px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row.browse.expanded {
+  background: #eef5f1;
+}
+/* A reading list has the width for a long name; the map-mode row, squeezed into
+   45vh beside a distance, does not and keeps its ellipsis. */
+.row.browse .row-name {
+  white-space: normal;
+  overflow: visible;
+}
+
+/* Fixed square so a portrait plate and a landscape one leave the text on the
+   same left edge all the way down the list. */
+.row-thumb {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.05);
+}
+/* No picture: a flat swatch in the category colour, muted so a column of them
+   reads as texture rather than as 150 competing markers. */
+.row-thumb.blank {
+  opacity: 0.22;
+}
+
+.row-teaser {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: normal; /* descriptions carry scraped newlines; ignore them here */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* The opened write-up. 16px of horizontal padding matches .card, so the picture
+   strip's edge-bleed (`margin-inline: -16px`) lines up here too. */
+.row-body {
+  padding: 0 16px 14px 16px;
+}
+
+@media (min-width: 760px) {
+  /* The sheet is a right-hand panel here; browse mode takes the window. */
+  .sheet.browse {
+    left: 0;
+    width: auto;
+  }
+  /* Full-width rows on a desktop monitor put the distance a screen away from
+     the name. Hold the list to a readable column instead. */
+  .sheet.browse .list {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+}

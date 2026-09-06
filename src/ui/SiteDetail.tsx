@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type SiteImage } from '../data/types';
+import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site, type SiteImage } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
 import { Lightbox } from './Lightbox';
@@ -8,6 +8,10 @@ import { Lightbox } from './Lightbox';
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
 // A fuller per-site page with note + photo arrives in Phase 2 (F11).
+//
+// The write-up itself lives in `SiteBody`, which is deliberately chrome-free:
+// the floating card wraps it, and so does an expanded row in the near-me list's
+// browse mode. One site is described in exactly one place.
 
 // Attribution label for the description's source link, keyed off the URL's host
 // so new scraped sources don't need a Site schema change.
@@ -68,33 +72,43 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
   );
 }
 
-export function SiteDetail() {
-  const selectedSiteId = useStore((s) => s.selectedSiteId);
+interface SiteBodyProps {
+  site: Site;
+  /** Browse mode only: hands the reader back to the map at this site. Omitted by
+   *  the floating card, which is already on the map. */
+  onShowOnMap?: () => void;
+  /** Type, distance and title. The floating card needs them; an expanded list
+   *  row already carries all three in its own header, so it turns them off
+   *  rather than saying everything twice. */
+  showHeader?: boolean;
+}
+
+/** Everything there is to say about one site: pictures, write-up, listing links
+ *  and the full action set. No positioning or dismiss chrome of its own — the
+ *  caller supplies that. */
+export function SiteBody({ site, onShowOnMap, showHeader = true }: SiteBodyProps) {
   const sites = useStore((s) => s.sites);
-  const site = sites.find((x) => x.id === selectedSiteId);
   const position = useStore((s) => s.position);
-  const visited = useStore((s) => (selectedSiteId ? s.visited[selectedSiteId] : undefined));
-  const wishlisted = useStore((s) => (selectedSiteId ? s.wishlist.has(selectedSiteId) : false));
-  const hidden = useStore((s) => (selectedSiteId ? s.hidden.has(selectedSiteId) : false));
+  const visited = useStore((s) => s.visited[site.id]);
+  const wishlisted = useStore((s) => s.wishlist.has(site.id));
+  const hidden = useStore((s) => s.hidden.has(site.id));
   const setSelected = useStore((s) => s.setSelected);
   const markVisited = useStore((s) => s.markVisited);
   const unmarkVisited = useStore((s) => s.unmarkVisited);
   const toggleWishlist = useStore((s) => s.toggleWishlist);
   const toggleHidden = useStore((s) => s.toggleHidden);
-  const inTrip = useStore((s) => (selectedSiteId ? !!s.outing?.stopIds.includes(selectedSiteId) : false));
+  const inTrip = useStore((s) => !!s.outing?.stopIds.includes(site.id));
   const addToTrip = useStore((s) => s.addToTrip);
   const removeFromTrip = useStore((s) => s.removeFromTrip);
   const destination = useStore((s) => s.destination);
   const setDestination = useStore((s) => s.setDestination);
   const setDestinationFromSite = useStore((s) => s.setDestinationFromSite);
-  const isDestination = !!selectedSiteId && destination?.siteId === selectedSiteId;
+  const isDestination = destination?.siteId === site.id;
 
   // Collapsing the write-up shrinks the card and gives the map back. Fresh
   // selection starts expanded again.
   const [descCollapsed, setDescCollapsed] = useState(false);
-  useEffect(() => setDescCollapsed(false), [selectedSiteId]);
-
-  if (!site) return null;
+  useEffect(() => setDescCollapsed(false), [site.id]);
 
   const distance = position ? haversine(position, site) : null;
 
@@ -104,16 +118,17 @@ export function SiteDetail() {
   const children = site.parentId ? [] : sites.filter((x) => x.parentId === site.id);
 
   return (
-    <div className="card" role="dialog" aria-label={site.name}>
-      <button className="card-close" onClick={() => setSelected(null)} aria-label="Close">
-        ×
-      </button>
-      <div className="card-type">
-        <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
-        {SITE_TYPE_LABELS[site.category]}
-        {distance !== null ? ` · ${formatDistance(distance)} away` : ''}
-      </div>
-      <h2 className="card-title">{site.name}</h2>
+    <>
+      {showHeader && (
+        <>
+          <div className="card-type">
+            <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+            {SITE_TYPE_LABELS[site.category]}
+            {distance !== null ? ` · ${formatDistance(distance)} away` : ''}
+          </div>
+          <h2 className="card-title">{site.name}</h2>
+        </>
+      )}
       {visited && <div className="badge visited">✓ Visited {visited.visitedAt.slice(0, 10)}</div>}
       {wishlisted && !visited && <div className="badge wish">★ Wishlist</div>}
       {hidden && <div className="badge">🚫 Hidden</div>}
@@ -177,6 +192,13 @@ export function SiteDetail() {
         >
           Directions ↗
         </a>
+        {/* Browse mode hides the map, so the way back to it is an explicit
+            action rather than a mode the reader has to remember to leave. */}
+        {onShowOnMap && (
+          <button className="btn" onClick={onShowOnMap}>
+            Show on map
+          </button>
+        )}
         {site.postcode && (
           <a
             className="btn"
@@ -239,6 +261,24 @@ export function SiteDetail() {
           </button>
         )}
       </div>
+    </>
+  );
+}
+
+export function SiteDetail() {
+  const selectedSiteId = useStore((s) => s.selectedSiteId);
+  const sites = useStore((s) => s.sites);
+  const site = sites.find((x) => x.id === selectedSiteId);
+  const setSelected = useStore((s) => s.setSelected);
+
+  if (!site) return null;
+
+  return (
+    <div className="card" role="dialog" aria-label={site.name}>
+      <button className="card-close" onClick={() => setSelected(null)} aria-label="Close">
+        ×
+      </button>
+      <SiteBody site={site} />
     </div>
   );
 }
