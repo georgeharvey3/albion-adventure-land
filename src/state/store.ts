@@ -2,10 +2,15 @@ import { create } from 'zustand';
 import type { Site, SiteCategory, ParentCategory } from '../data/types';
 import { SITE_TYPES, resolveOutingSlots, outingSlotResolver, tagKey } from '../data/types';
 import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
-import { findNearestOuting, nearestPerSlot, type SlotNearest } from '../geo/outing';
+import {
+  findNearestOuting,
+  nearestPerSlot,
+  ROUTE_SPREAD_WEIGHT,
+  type SlotNearest,
+} from '../geo/outing';
 import { orderRoute } from '../geo/tsp';
-import { haversine } from '../geo/haversine';
-import { DEFAULT_DETOUR_BUDGET } from '../geo/corridor';
+import { haversine, type LatLng } from '../geo/haversine';
+import { DEFAULT_DETOUR_BUDGET, detour } from '../geo/corridor';
 import {
   loadUserState,
   putVisit,
@@ -64,8 +69,14 @@ export interface OutingResult {
 // A search can only fail when a selected slot has nothing available (all
 // visited / none in the dataset) or "find another" runs out of disjoint
 // alternatives — there is no proximity cap.
+//
+// Route mode adds one more way to come up empty: a type with nothing inside the
+// detour budget. `budget` is the metres that were on offer (null in point mode,
+// which has no budget), and each `nearest` entry's distance is a detour rather
+// than a straight-line distance — so the UI can say how much wider the budget
+// would have to be.
 export type OutingFailure =
-  | { kind: 'missing-types'; nearest: SlotNearest[] }
+  | { kind: 'missing-types'; nearest: SlotNearest[]; budget: number | null }
   | { kind: 'no-more' };
 
 interface AppState {
@@ -322,27 +333,65 @@ export const useStore = create<AppState>((set, get) => ({
     set({ outingIncludeVisited: on, outing: null, outingFailure: null, outingShownIds: [] });
   },
 
+  // "Find one for me". In point mode this is the nearest full-house cluster
+  // around the user. With a destination pinned (issue #16) the same search
+  // becomes "one of each, on my way": proximity stops meaning distance from the
+  // user and starts meaning extra driving, and the pool is pre-filtered to the
+  // corridor. Everything else — slot resolution, the outward scan, "find
+  // another", the failure states — is shared, not forked.
   findOuting: (another = false) => {
-    const { sites, visited, hidden, position, outingTypes, outingAnyParents, outingIncludeVisited, outingShownIds } =
-      get();
+    const {
+      sites,
+      visited,
+      hidden,
+      position,
+      destination,
+      detourBudget,
+      outingTypes,
+      outingAnyParents,
+      outingIncludeVisited,
+      outingShownIds,
+    } = get();
     const slots = resolveOutingSlots(outingTypes, outingAnyParents);
     if (!position || slots.size === 0) return; // UI disables the button
 
     const resolve = outingSlotResolver(slots);
     const slotOf = (s: Site) => resolve(s.category) ?? s.category;
-    const pool = sites.filter(
+    // The site pinned as the destination is already the end of the route, so it
+    // must never also be picked as a stop — in route mode it has a detour of
+    // zero and would otherwise win its slot outright. In point mode there is no
+    // destination and this term is inert.
+    const eligible = sites.filter(
       (s) =>
         resolve(s.category) !== undefined &&
         !hidden.has(s.id) &&
+        s.id !== destination?.siteId &&
         (outingIncludeVisited || !(s.id in visited)),
     );
-    const exclude = new Set(another ? outingShownIds : []);
-    const cluster = findNearestOuting(position, slots, slotOf, pool, exclude);
+
+    // Route mode: score by extra driving, weight spread accordingly, and search
+    // only what the journey can afford.
+    // Both are undefined in point mode, where findNearestOuting falls back to
+    // haversine-from-the-anchor and SPREAD_WEIGHT — the pre-#16 search exactly.
+    const proximity = destination
+      ? (s: LatLng) => detour(s, position, destination)
+      : undefined;
+    const spreadWeight = destination ? ROUTE_SPREAD_WEIGHT : undefined;
+    const pool = proximity ? eligible.filter((s) => proximity(s) <= detourBudget) : eligible;
+
+    const cluster = findNearestOuting(position, slots, slotOf, pool, {
+      proximity,
+      spreadWeight,
+      excludeMemberIds: new Set(another ? outingShownIds : []),
+    });
 
     if (!cluster) {
       // Failure is a first-class outcome (spec §6 F12): keep the current
       // result when "find another" runs dry; otherwise name the types that
-      // have nothing available (the only way a fresh search can fail).
+      // have nothing available. Diagnostics run over `eligible`, NOT the
+      // corridor-filtered pool, so route mode can distinguish "there is no such
+      // site left" from "the closest one is +34 km off your route" and offer a
+      // wider budget for the second.
       set(
         another
           ? { outingFailure: { kind: 'no-more' } }
@@ -351,14 +400,15 @@ export const useStore = create<AppState>((set, get) => ({
               outingShownIds: [],
               outingFailure: {
                 kind: 'missing-types',
-                nearest: nearestPerSlot(position, slots, slotOf, pool),
+                nearest: nearestPerSlot(position, slots, slotOf, eligible, proximity),
+                budget: destination ? detourBudget : null,
               },
             },
       );
       return;
     }
 
-    const stops = orderRoute(position, cluster.members, get().destination);
+    const stops = orderRoute(position, cluster.members, destination);
     set({
       outing: {
         seedId: cluster.seed.id,
@@ -483,12 +533,18 @@ export const useStore = create<AppState>((set, get) => ({
   // It also re-orders any live trip (issue #15): gaining an end turns the route
   // into A → stops → B, and losing one turns it back into an open path, so the
   // order that was optimal a moment ago generally isn't any more.
+  //
+  // The stops survive — a trip is the user's, not the search's — but the
+  // finder's state does not: a failure message and a "find another" history
+  // describe a search over the old corridor (issue #16), so both are dropped.
   setDestination: (destination) => {
     const { sites, position, outing } = get();
     set({
       destination,
       pickingDestination: false,
       outing: outing ? reorderOuting(outing, outing.stopIds, sites, position, destination) : null,
+      outingFailure: null,
+      outingShownIds: [],
     });
   },
 
@@ -500,7 +556,13 @@ export const useStore = create<AppState>((set, get) => ({
     get().setDestination({ lat: site.lat, lng: site.lng, label: site.name, siteId: site.id });
   },
 
-  setDetourBudget: (detourBudget) => set({ detourBudget }),
+  // Widening the budget is the documented answer to a route-mode "nothing of
+  // that type on your way", so it has to clear the failure that said so — and
+  // the "find another" history, which enumerated a narrower corridor. The trip
+  // itself is kept: the stops are the user's, and a stop outside the new budget
+  // is still a stop they chose.
+  setDetourBudget: (detourBudget) =>
+    set({ detourBudget, outingFailure: null, outingShownIds: [] }),
   setRouteSort: (routeSort) => set({ routeSort }),
   setPickingDestination: (pickingDestination) => set({ pickingDestination }),
 }));
