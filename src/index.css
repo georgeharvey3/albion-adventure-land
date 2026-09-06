@@ -1301,3 +1301,51 @@ body,
     margin: 0 auto;
   }
 }
+
+/* Prev/next bar closing an expanded row — the swipe made visible. Naming the
+   neighbouring sites is the point: "Next › Lily Tarn" is a decision, "Next ›"
+   alone is a leap in the dark. */
+.row-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.row-nav-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+}
+.row-nav-btn.next {
+  text-align: right;
+}
+.row-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.row-nav-dir {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.row-nav-btn:disabled .row-nav-dir {
+  color: var(--muted);
+}
+/* One line: two of these sit side by side on a 390px phone, so a long name
+   has to give way rather than push its neighbour off the row. */
+.row-nav-name {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
