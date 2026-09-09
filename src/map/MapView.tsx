@@ -54,6 +54,31 @@ function markerStyle(view: FilteredSiteView, selected: boolean): L.CircleMarkerO
   };
 }
 
+// "You are here" iconography. Blue is reserved for the user across the app —
+// no site category uses this hue at this size — and the pulse is the only
+// animated thing on the map, so the marker is identifiable at a glance.
+const ME_BLUE = '#1a73e8';
+
+const LIVE_ICON = L.divIcon({
+  className: 'me-marker me-marker--live',
+  html: '<span class="me-pulse"></span><span class="me-dot"></span>',
+  iconSize: [44, 44],
+  iconAnchor: [22, 22],
+});
+
+// A dropped pin is a different claim from a GPS fix ("I said I'm here"), so it
+// gets the classic teardrop, anchored at its tip rather than its centre.
+const MANUAL_ICON = L.divIcon({
+  className: 'me-marker me-marker--manual',
+  html:
+    '<svg viewBox="0 0 24 34" width="26" height="36" aria-hidden="true">' +
+    '<path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12c0 7.6 8.4 17.6 10.5 20.1C14.1 29.6 22.5 19.6 22.5 12 22.5 6.2 17.8 1.5 12 1.5Z" fill="#e76f51" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>' +
+    '<circle cx="12" cy="11.8" r="3.8" fill="#fff"/>' +
+    '</svg>',
+  iconSize: [26, 36],
+  iconAnchor: [13, 35],
+});
+
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -100,6 +125,18 @@ export function MapView() {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19,
     }).addTo(map);
+
+    // Dedicated panes for the "you are here" marker. The accuracy ring sits
+    // *below* the site pins (it's a translucent wash — it must not tint them),
+    // and the marker itself sits above every other overlay, including the
+    // numbered outing stops in the default marker pane (z-index 600). It stays
+    // under the tooltip pane (650) so its own label still reads on top.
+    map.createPane('meAccuracyPane').style.zIndex = '350';
+    const mePane = map.createPane('mePane');
+    mePane.style.zIndex = '645';
+    // The pulse halo is decorative and much wider than the dot: let taps on
+    // pins underneath through (the dot itself re-enables pointer events).
+    mePane.style.pointerEvents = 'none';
 
     // Corridor first so its shaded ellipse sits under the pins, not over them.
     corridorLayerRef.current = L.layerGroup().addTo(map);
@@ -355,7 +392,11 @@ export function MapView() {
     map.getContainer().style.cursor = 'crosshair';
   }, [pickingDestination]);
 
-  // Live / manual location dot + accuracy ring.
+  // Live / manual location marker + accuracy ring. Deliberately NOT a
+  // circleMarker: as a coloured dot it was indistinguishable from a folklore
+  // pin. It is now a DOM marker in its own top pane — a pulsing blue puck for
+  // live GPS, a teardrop pin for a manually dropped location — so "where I am"
+  // never reads as "a place to visit".
   useEffect(() => {
     const layer = meLayerRef.current;
     if (!layer) return;
@@ -365,20 +406,25 @@ export function MapView() {
     if (position.accuracy > 0) {
       L.circle([position.lat, position.lng], {
         radius: position.accuracy,
-        color: '#1f6b4f',
+        pane: 'meAccuracyPane',
+        color: ME_BLUE,
         weight: 1,
-        fillColor: '#1f6b4f',
-        fillOpacity: 0.12,
+        fillColor: ME_BLUE,
+        fillOpacity: 0.1,
+        interactive: false,
       }).addTo(layer);
     }
-    L.circleMarker([position.lat, position.lng], {
-      radius: 7,
-      color: '#fff',
-      weight: 2,
-      fillColor: position.manual ? '#e76f51' : '#1f6b4f',
-      fillOpacity: 1,
+    L.marker([position.lat, position.lng], {
+      pane: 'mePane',
+      icon: position.manual ? MANUAL_ICON : LIVE_ICON,
+      keyboard: false,
+      // Belt and braces: also wins inside the pane if anything else lands there.
+      zIndexOffset: 1000,
     })
-      .bindTooltip(position.manual ? 'Manual location' : 'You are here')
+      .bindTooltip(position.manual ? 'Manual location' : 'You are here', {
+        direction: 'top',
+        offset: position.manual ? [0, -34] : [0, -20],
+      })
       .addTo(layer);
   }, [position]);
 

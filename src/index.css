@@ -1006,6 +1006,81 @@ body,
 }
 
 /* Destination flag on the map. */
+/* "You are here" marker. The old version was a slightly bigger dot, which read
+   as just another folklore pin; this is a deliberately different object —
+   larger, blue, ringed in white, and gently pulsing. Its pane (see MapView)
+   keeps it above every site pin. */
+.me-marker {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+
+.me-marker--live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-marker--live .me-dot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(26, 115, 232, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+/* Expanding halo: the "live" cue, and it makes the marker findable on a busy
+   map without permanently covering the pins around it. */
+.me-marker--live .me-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: rgba(26, 115, 232, 0.35);
+  animation: me-pulse 2.2s ease-out infinite;
+}
+
+@keyframes me-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Motion is a nicety here, not information — the size, colour and ring already
+   carry the meaning. */
+@media (prefers-reduced-motion: reduce) {
+  .me-marker--live .me-pulse {
+    animation: none;
+    opacity: 0.35;
+    transform: scale(1.8);
+  }
+}
+
+.me-marker--manual svg {
+  display: block;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+  pointer-events: auto;
+}
+
 .destination-marker {
   background: transparent;
   border: none;
