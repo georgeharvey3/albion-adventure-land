@@ -8,10 +8,9 @@ import { SiteDetail } from './SiteDetail';
 import { Outing } from './Outing';
 import { Stats } from './Stats';
 import { JourneyBar } from './JourneyBar';
+import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 
-type Tab = 'near' | 'filters' | 'outing' | 'stats';
-
-const TABS: { id: Tab; label: string }[] = [
+const TABS: { id: SheetTab; label: string }[] = [
   { id: 'near', label: 'Near me' },
   { id: 'filters', label: 'Filters' },
   { id: 'outing', label: 'Outing' },
@@ -27,7 +26,8 @@ export function App() {
   const destination = useStore((s) => s.destination);
   const browse = useStore((s) => s.browse);
   const setBrowse = useStore((s) => s.setBrowse);
-  const [tab, setTab] = useState<Tab>('filters');
+  // Reopen on the tab that was open when the app was last closed.
+  const [tab, setTab] = useState<SheetTab>(() => loadViewState().tab ?? 'filters');
   const [collapsed, setCollapsed] = useState(false);
 
   // Tapping a tab while collapsed expands the sheet to that tab; tapping the
@@ -36,7 +36,7 @@ export function App() {
   // Browse mode is a way of reading the near-me list, so it ends when the
   // reader leaves that tab — and while it is on there is no map to free, so
   // collapsing is a no-op rather than a way to end up with a blank screen.
-  const selectTab = (next: Tab) => {
+  const selectTab = (next: SheetTab) => {
     if (collapsed) {
       setCollapsed(false);
       setTab(next);
@@ -51,6 +51,10 @@ export function App() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  useEffect(() => {
+    saveViewState({ tab });
+  }, [tab]);
 
   // Setting a destination is a question ("what's on the way?"); the near-me
   // list is where it gets answered, so show it rather than leaving the answer

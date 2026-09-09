@@ -21,6 +21,7 @@ import {
   removeHidden,
   type VisitLog,
 } from './db';
+import { loadViewState, saveViewState } from './viewState';
 
 export interface Position {
   lat: number;
@@ -234,7 +235,11 @@ export const useStore = create<AppState>((set, get) => ({
   routeSort: 'progress',
   pickingDestination: false,
 
-  selectedSiteId: null,
+  // Restored from the last session so reopening the app brings back the card
+  // you were reading. Set synchronously here, before the map mounts: that keeps
+  // the map's pan-to-selection effect a no-op (the site list is still empty),
+  // so the restored viewport is not overridden by a recentre on the pin.
+  selectedSiteId: loadViewState().selectedSiteId,
   browse: false,
 
   init: async () => {
@@ -246,6 +251,14 @@ export const useStore = create<AppState>((set, get) => ({
       })
       .then((sites) => {
         set({ sites, rarity: buildRarityIndex(sites), dataLoaded: true });
+        // A restored selection is only a remembered id: drop it if a CSV
+        // re-import has since removed that site, rather than leaving the store
+        // pointing at nothing.
+        const { selectedSiteId } = get();
+        if (selectedSiteId && !sites.some((s) => s.id === selectedSiteId)) {
+          saveViewState({ selectedSiteId: null });
+          set({ selectedSiteId: null });
+        }
       })
       .catch((err: unknown) => {
         set({ dataError: err instanceof Error ? err.message : String(err), dataLoaded: true });
@@ -532,7 +545,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ position, geoError: null });
   },
   setGeoError: (geoError) => set({ geoError }),
-  setSelected: (selectedSiteId) => set({ selectedSiteId }),
+  setSelected: (selectedSiteId) => {
+    saveViewState({ selectedSiteId });
+    set({ selectedSiteId });
+  },
   setBrowse: (browse) => set({ browse }),
 
   // Setting or clearing the destination always disarms the map's picker: the

@@ -6,7 +6,7 @@ import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
-import { loadMapView, saveMapView } from './viewState';
+import { loadViewState, saveViewState } from '../state/viewState';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -87,7 +87,7 @@ export function MapView() {
     // Restore where the user last was. Without this, reopening the installed
     // PWA (iOS cold-starts it after a few minutes in the background) always
     // came back at the whole-of-Britain view.
-    const saved = loadMapView();
+    const saved = loadViewState().map;
     const map = L.map(containerRef.current, { zoomControl: true, preferCanvas: true }).setView(
       saved ? [saved.lat, saved.lng] : GB_CENTER,
       saved ? saved.zoom : 6,
@@ -167,7 +167,7 @@ export function MapView() {
     // pagehide save is belt-and-braces for an iOS kill with no final moveend.
     const persist = () => {
       const c = map.getCenter();
-      saveMapView({ lat: c.lat, lng: c.lng, zoom: map.getZoom() });
+      saveViewState({ map: { lat: c.lat, lng: c.lng, zoom: map.getZoom() } });
     };
     map.on('moveend', persist);
     window.addEventListener('pagehide', persist);
