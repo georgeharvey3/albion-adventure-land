@@ -6,6 +6,7 @@ import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
+import { loadMapView, saveMapView } from './viewState';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -83,10 +84,17 @@ export function MapView() {
   // One-time map init.
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
+    // Restore where the user last was. Without this, reopening the installed
+    // PWA (iOS cold-starts it after a few minutes in the background) always
+    // came back at the whole-of-Britain view.
+    const saved = loadMapView();
     const map = L.map(containerRef.current, { zoomControl: true, preferCanvas: true }).setView(
-      GB_CENTER,
-      6,
+      saved ? [saved.lat, saved.lng] : GB_CENTER,
+      saved ? saved.zoom : 6,
     );
+    // A restored view is the user's view — don't let the fit-to-all-pins pass
+    // below throw it away once the site data lands.
+    if (saved) didFitRef.current = true;
     mapRef.current = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
@@ -154,6 +162,16 @@ export function MapView() {
       }
     });
 
+    // Remember the viewport. `moveend` covers zooms too and only fires once a
+    // gesture (or a programmatic fitBounds) has settled, so this is cheap; the
+    // pagehide save is belt-and-braces for an iOS kill with no final moveend.
+    const persist = () => {
+      const c = map.getCenter();
+      saveMapView({ lat: c.lat, lng: c.lng, zoom: map.getZoom() });
+    };
+    map.on('moveend', persist);
+    window.addEventListener('pagehide', persist);
+
     // The map's height changes when the bottom sheet expands/collapses;
     // Leaflet only watches window resize, so track the container directly.
     const ro = new ResizeObserver(() => map.invalidateSize());
@@ -161,6 +179,8 @@ export function MapView() {
 
     return () => {
       ro.disconnect();
+      window.removeEventListener('pagehide', persist);
+      map.off('moveend', persist);
       map.remove();
       mapRef.current = null;
     };
