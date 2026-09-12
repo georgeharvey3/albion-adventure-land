@@ -7,6 +7,7 @@ import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
 import { loadViewState, saveViewState } from '../state/viewState';
+import { iconMarkup } from '../ui/icons';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -18,6 +19,20 @@ import { loadViewState, saveViewState } from '../state/viewState';
 // selecting a pin restyles just the two markers involved.
 
 const GB_CENTER: L.LatLngTuple = [53.0, -3.5];
+
+// Leaflet's vector options take a colour string, not a CSS variable, so the
+// accent has to be resolved out of the token layer once and cached. Reading it
+// rather than repeating the hex is what stopped the route lines drifting a
+// shade away from the rest of the app the last time the palette moved.
+let accentCache: string | null = null;
+function accent(): string {
+  if (accentCache === null) {
+    accentCache =
+      getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() ||
+      '#216448';
+  }
+  return accentCache;
+}
 
 // Shape encodes the top-level category: pubs are squares, wild swims are
 // triangles, ruins are diamonds, scrambles are mountain chevrons, folklore
@@ -152,7 +167,7 @@ export function MapView() {
         const btn = L.DomUtil.create('button', 'drop-pin-btn');
         btn.type = 'button';
         btn.title = 'Drop a manual "I am here" pin';
-        btn.textContent = '📍';
+        btn.innerHTML = iconMarkup('mapPin', 20);
         dropBtnRef.current = btn;
         L.DomEvent.disableClickPropagation(btn);
         L.DomEvent.on(btn, 'click', () => {
@@ -312,7 +327,7 @@ export function MapView() {
     const points: L.LatLngTuple[] = stops.map((s) => [s.lat, s.lng]);
     if (position) points.unshift([position.lat, position.lng]);
     L.polyline(points, {
-      color: '#1f6b4f',
+      color: accent(),
       weight: 3,
       opacity: 0.75,
       dashArray: '6 6',
@@ -359,11 +374,11 @@ export function MapView() {
       L.polygon(
         ring.map((p) => [p.lat, p.lng] as L.LatLngTuple),
         {
-          color: '#1f6b4f',
+          color: accent(),
           weight: 1.5,
           opacity: 0.5,
           dashArray: '4 5',
-          fillColor: '#1f6b4f',
+          fillColor: accent(),
           fillOpacity: 0.07,
           interactive: false,
         },
@@ -375,13 +390,13 @@ export function MapView() {
         [position.lat, position.lng],
         [destination.lat, destination.lng],
       ],
-      { color: '#1f6b4f', weight: 2, opacity: 0.6, interactive: false },
+      { color: accent(), weight: 2, opacity: 0.6, interactive: false },
     ).addTo(layer);
 
     L.marker([destination.lat, destination.lng], {
       icon: L.divIcon({
         className: 'destination-marker',
-        html: '<span>🏁</span>',
+        html: `<span>${iconMarkup('flag', 20)}</span>`,
         iconSize: [24, 24],
         iconAnchor: [12, 12],
       }),
