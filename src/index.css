@@ -61,6 +61,19 @@ body,
   border-radius: 6px;
   cursor: pointer;
 }
+/* Zoom-to-me control (bottom right). Slightly larger than the top-left
+   controls because it sits where the thumb falls on a phone. `hidden` needs an
+   explicit rule: .drop-pin-btn sets display:flex, which would win otherwise. */
+.locate-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.locate-btn[hidden] {
+  display: none;
+}
+
 .drop-pin-btn.active {
   background: #ffe8d6;
   border-color: #e76f51;

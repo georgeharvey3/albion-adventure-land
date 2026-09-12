@@ -88,6 +88,7 @@ export function MapView() {
   const corridorLayerRef = useRef<L.LayerGroup | null>(null);
   const droppingRef = useRef(false);
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
+  const locateBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
   const outingFitKeyRef = useRef<string | null>(null);
   const journeyFitKeyRef = useRef<string | null>(null);
@@ -175,6 +176,31 @@ export function MapView() {
       },
     });
     map.addControl(new Ctl());
+
+    // "Zoom to me" control — bottom right, in thumb reach on a phone. It only
+    // recentres; it never asks for a fix, so it is hidden until a location
+    // exists (a live GPS fix or a manual pin) — see the effect below.
+    const LocateCtl = L.Control.extend({
+      options: { position: 'bottomright' as L.ControlPosition },
+      onAdd() {
+        const btn = L.DomUtil.create('button', 'drop-pin-btn locate-btn');
+        btn.type = 'button';
+        btn.title = 'Zoom to my location';
+        btn.textContent = '\u{1F3AF}';
+        btn.hidden = !useStore.getState().position;
+        locateBtnRef.current = btn;
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, 'click', () => {
+          const pos = useStore.getState().position;
+          if (!pos) return;
+          // Zoom in to a street-level view, but never zoom the user back out
+          // if they are already closer in.
+          map.setView([pos.lat, pos.lng], Math.max(map.getZoom(), 14));
+        });
+        return btn;
+      },
+    });
+    map.addControl(new LocateCtl());
 
     map.on('click', (e: L.LeafletMouseEvent) => {
       // Dropping an "I am here" pin wins if both modes are somehow armed; the
@@ -439,6 +465,12 @@ export function MapView() {
       ? 'Clear manual pin (resume live location)'
       : 'Drop a manual "I am here" pin';
   }, [position?.manual]);
+
+  // The zoom-to-me control is only useful once there is a location to zoom to.
+  useEffect(() => {
+    const btn = locateBtnRef.current;
+    if (btn) btn.hidden = !position;
+  }, [position]);
 
   // Pan to a site selected from the list.
   useEffect(() => {
