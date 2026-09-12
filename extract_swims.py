@@ -7,11 +7,16 @@ Relies on the book's typography:
   - Entry titles:      ApexNewPS-BoldTabular (bold), starting with the entry number
   - Entry terminator:  teal-coloured line "N mins, lat, lng"
   - Section headers:   ApexNewPS-MediumCaps 12pt (skipped)
+  - Chapter name:      ApexNewPS-Light 9pt in the page footer (the Region column)
   - Amenity icons:     WildGuideSymbols font, kept and mapped to tag names (see TAGS)
   - Photo labels/footers: MediumTabular, small MediumCaps, Light (dropped)
 
 Entries flow across columns and across page spreads; the parser reads
 columns left-to-right per page as one continuous stream.
+
+Entry numbers restart at 1 in each chapter, so an entry is identified by its
+chapter (Region) and its number (Listing no). extract_swim_images.py joins the
+book's photos to the entries on that pair.
 """
 import sys
 import re
@@ -122,9 +127,47 @@ def find_anchors(words):
     return anchors or [0]
 
 
-def page_lines(page):
-    words = [w for w in page.extract_words(
-        extra_attrs=["fontname", "size", "non_stroking_color"]) if keep_word(w)]
+FOOTER_FONT = "Light"   # chapter name printed in the page footer
+FOOTER_SIZE = 9.0
+FOOTER_FROM = 0.9       # footers sit in the bottom tenth of the page
+CHAPTER_MIN_PAGES = 3   # fewer pages than this is front matter, not a chapter
+
+
+def page_chapter(page, words):
+    """The chapter name printed in this page's footer, '' if there is none."""
+    foot = [w for w in words
+            if FOOTER_FONT in w["fontname"]
+            and round(w["size"], 1) == FOOTER_SIZE
+            and w["top"] > page.height * FOOTER_FROM]
+    foot.sort(key=lambda w: w["x0"])
+    return " ".join(w["text"] for w in foot).strip()
+
+
+def page_chapters(footers):
+    """
+    One chapter name per page, or None for front matter. A page with no footer
+    takes the chapter of the page after it: the pages without a footer are the
+    chapter opener spreads, which belong to the chapter they open. A name that
+    appears on fewer than CHAPTER_MIN_PAGES pages is front matter, not a
+    chapter.
+    """
+    real = {c for c, n in Counter(c for c in footers if c).items()
+            if n >= CHAPTER_MIN_PAGES}
+    out = [c if c in real else None for c in footers]
+    nxt = None
+    for i in range(len(out) - 1, -1, -1):
+        if out[i] is None:
+            out[i] = nxt
+        else:
+            nxt = out[i]
+    first = next((i for i, c in enumerate(footers) if c in real), len(out))
+    for i in range(first):
+        out[i] = None                 # anything before chapter one is front matter
+    return out
+
+
+def page_lines(all_words):
+    words = [w for w in all_words if keep_word(w)]
     if not words:
         return []
     anchors = find_anchors(words)
@@ -202,11 +245,15 @@ def add_syms(entry, line):
 
 def extract(pdf_path):
     entries = []
+    footers = []
     cur = None
     with pdfplumber.open(pdf_path) as pdf:
         n_pages = len(pdf.pages)
         for pi, page in enumerate(pdf.pages):
-            for l in page_lines(page):
+            all_words = page.extract_words(
+                extra_attrs=["fontname", "size", "non_stroking_color"])
+            footers.append(page_chapter(page, all_words))
+            for l in page_lines(all_words):
                 if l["section"]:
                     continue
                 m = MINS_RE.match(l["text"]) if l["teal"] else None
@@ -233,7 +280,9 @@ def extract(pdf_path):
                 add_syms(cur, l)
             print(f"\rpage {pi + 1}/{n_pages}", end="", file=sys.stderr)
     print(file=sys.stderr)
+    chapters = page_chapters(footers)
     for e in entries:
+        e["region"] = chapters[e["page"] - 1] or ""
         e["title"] = join_lines(e["title"])
         e["desc"] = join_lines(e["desc"])
         e["tags"], e["unknown"] = tags_of(e["syms"])
@@ -268,6 +317,8 @@ def validate(entries):
             problems.append(f"p{e['page']}: #{n} '{e['title']}' suspiciously short description ({len(e['desc'])} chars)")
         if not e["tags"]:
             problems.append(f"p{e['page']}: #{n} '{e['title']}' has no icons")
+        if not e["region"]:
+            problems.append(f"p{e['page']}: #{n} '{e['title']}' has no chapter name")
     return problems
 
 
@@ -288,12 +339,13 @@ def main():
     problems = validate(entries)
     with open(sys.argv[2], "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["Name", "Description", "Walk time", "Location", "Tags"])
+        w.writerow(["Name", "Description", "Walk time", "Location", "Tags",
+                    "Region", "Listing no"])
         for e in entries:
             loc = f"{e['lat']}, {e['lng']}" if e["lat"] else ""
             w.writerow([e["title"], e["desc"],
                         f"{e['mins']} mins" if e["mins"] else "", loc,
-                        json.dumps(e["tags"])])
+                        json.dumps(e["tags"]), e["region"], e["num"]])
     print(f"{len(entries)} entries written to {sys.argv[2]}")
 
     used, unknown = icon_report(entries)

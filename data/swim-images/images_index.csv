@@ -1,0 +1,716 @@
+region,listing_no,listing_title,image_file,image_no,page,width,height,caption,extracted
+Borders & Northumbria,2,"BLUE POOLS, GLEN ROSA",borders_northumbria_listing_02_1.jpg,1,163,874,547,,copied
+Borders & Northumbria,15,LOCH TROOL,borders_northumbria_listing_15_1.jpg,1,163,874,547,,copied
+Borders & Northumbria,23,GREY MARE’S TAIL,borders_northumbria_listing_23_1.jpg,1,164,285,263,,copied
+Borders & Northumbria,25,"THE DOOKITS, PEEBLES",borders_northumbria_listing_25_1.jpg,1,162,285,207,,copied
+Borders & Northumbria,25,"THE DOOKITS, PEEBLES",borders_northumbria_listing_25_2.jpg,2,164,581,542,,copied
+Borders & Northumbria,25,"THE DOOKITS, PEEBLES",borders_northumbria_listing_25_3.jpg,3,164,284,263,,copied
+Borders & Northumbria,29,"TWIZEL BRIDGE, R TILL",borders_northumbria_listing_29_1.jpg,1,162,284,204,,copied
+Borders & Northumbria,29,"TWIZEL BRIDGE, R TILL",borders_northumbria_listing_29_2.jpg,2,164,874,546,,copied
+Borders & Northumbria,33,"HETHPOOL LINN, COLLEGE BURN",borders_northumbria_listing_33_1.jpg,1,165,577,546,,copied
+Borders & Northumbria,35,"HARTHOPE LINN, HARTHOPE BURN",borders_northumbria_listing_35_1.jpg,1,162,280,386,,copied
+Borders & Northumbria,35,"HARTHOPE LINN, HARTHOPE BURN",borders_northumbria_listing_35_2.jpg,2,165,874,546,,copied
+Borders & Northumbria,35,"HARTHOPE LINN, HARTHOPE BURN",borders_northumbria_listing_35_3.jpg,3,165,284,263,,copied
+Borders & Northumbria,36,"LINHOPE SPOUT, LINHOPE BURN",borders_northumbria_listing_36_1.jpg,1,162,284,204,,copied
+Borders & Northumbria,36,"LINHOPE SPOUT, LINHOPE BURN",borders_northumbria_listing_36_2.jpg,2,162,284,204,,copied
+Borders & Northumbria,36,"LINHOPE SPOUT, LINHOPE BURN",borders_northumbria_listing_36_3.jpg,3,165,581,542,,copied
+Borders & Northumbria,38,"IRVING POOL, R COQUET",borders_northumbria_listing_38_1.jpg,1,160,1933,1196,,copied
+Borders & Northumbria,44,"WARKWORTH HERMITAGE, R COQUET",borders_northumbria_listing_44_1.jpg,1,166,581,542,,copied
+Borders & Northumbria,45,"LESBURY WEIR, R ALN",borders_northumbria_listing_45_1.jpg,1,166,874,546,,copied
+Borders & Northumbria,45,"LESBURY WEIR, R ALN",borders_northumbria_listing_45_2.jpg,2,166,285,263,,copied
+Borders & Northumbria,49,WANSBECK RIVERSIDE PARK,borders_northumbria_listing_49_1.jpg,1,166,285,262,,copied
+Cairngorms & River Dee,2,"DULSIE BRIDGE, R FINDHORN",cairngorms_river_dee_listing_02_1.jpg,1,175,284,204,,copied
+Cairngorms & River Dee,2,"DULSIE BRIDGE, R FINDHORN",cairngorms_river_dee_listing_02_2.jpg,2,175,280,209,,copied
+Cairngorms & River Dee,2,"DULSIE BRIDGE, R FINDHORN",cairngorms_river_dee_listing_02_3.jpg,3,176,874,546,,copied
+Cairngorms & River Dee,3,"RANDOLPH’S LEAP, R FINDHORN",cairngorms_river_dee_listing_03_1.jpg,1,176,284,263,,copied
+Cairngorms & River Dee,7,"FESHIEBRIDGE, KINCRAIG",cairngorms_river_dee_listing_07_1.jpg,1,177,284,263,,copied
+Cairngorms & River Dee,8,"LOCH AN EILEIN, ROTHIEMURCHUS",cairngorms_river_dee_listing_08_1.jpg,1,175,284,204,,copied
+Cairngorms & River Dee,8,"LOCH AN EILEIN, ROTHIEMURCHUS",cairngorms_river_dee_listing_08_2.jpg,2,177,581,542,,copied
+Cairngorms & River Dee,15,"EIDART FALLS, GLEN FESHIE",cairngorms_river_dee_listing_15_1.jpg,1,175,284,205,,copied
+Cairngorms & River Dee,15,"EIDART FALLS, GLEN FESHIE",cairngorms_river_dee_listing_15_2.jpg,2,175,284,204,,copied
+Cairngorms & River Dee,16,OLD CRAIGELLACHIE BRIDGE,cairngorms_river_dee_listing_16_1.jpg,1,177,600,566,,copied
+Cairngorms & River Dee,17,"LINN FALLS, ABERLOUR",cairngorms_river_dee_listing_17_1.jpg,1,177,280,267,,copied
+Cairngorms & River Dee,17,"LINN FALLS, ABERLOUR",cairngorms_river_dee_listing_17_2.jpg,2,178,581,542,,copied
+Cairngorms & River Dee,18,"LINN OF DEE, BRAEMAR",cairngorms_river_dee_listing_18_1.jpg,1,175,284,204,,copied
+Cairngorms & River Dee,19,"LINN OF QUOICH, R DEE",cairngorms_river_dee_listing_19_1.jpg,1,178,283,263,,copied
+Cairngorms & River Dee,20,"CAMBUS O’ MAY BRIDGE, DEE",cairngorms_river_dee_listing_20_1.jpg,1,173,1933,1195,,copied
+Cairngorms & River Dee,21,LOCH KINORD & BURN O’ VAT,cairngorms_river_dee_listing_21_1.jpg,1,176,284,204,,copied
+Cairngorms & River Dee,30,"PATTACK FALLS, STRATHMASHIE",cairngorms_river_dee_listing_30_1.jpg,1,178,581,542,,copied
+Cairngorms & River Dee,34,"SOLDIER’S LEAP, KILLIECRANKIE",cairngorms_river_dee_listing_34_1.jpg,1,176,284,204,,copied
+Cairngorms & River Dee,34,"SOLDIER’S LEAP, KILLIECRANKIE",cairngorms_river_dee_listing_34_2.jpg,2,178,284,263,,copied
+Cambrians To The Marches,2,"CWM CLETWR, TRE’R-DDÔL",cambrians_to_the_marches_listing_02_1.jpg,1,103,284,263,,copied
+Cambrians To The Marches,4,NANT-Y-MOCH & PLYNLIMON,cambrians_to_the_marches_listing_04_1.jpg,1,103,284,262,,copied
+Cambrians To The Marches,6,CWM RHEIDOL WATERFALLS,cambrians_to_the_marches_listing_06_1.jpg,1,103,581,542,,copied
+Cambrians To The Marches,7,"CWM YSTWYTH, HAFOD ESTATE",cambrians_to_the_marches_listing_07_1.jpg,1,104,284,263,,copied
+Cambrians To The Marches,8,YSTWYTH LOWER GORGE,cambrians_to_the_marches_listing_08_1.jpg,1,104,285,265,,copied
+Cambrians To The Marches,9,"LLYN EGNANT, TEIFI POOLS",cambrians_to_the_marches_listing_09_1.jpg,1,104,581,542,,copied
+Cambrians To The Marches,10,"WOLF’S LEAP, RIVER IRFON",cambrians_to_the_marches_listing_10_1.jpg,1,102,284,204,,copied
+Cambrians To The Marches,10,"WOLF’S LEAP, RIVER IRFON",cambrians_to_the_marches_listing_10_2.jpg,2,102,284,205,,copied
+Cambrians To The Marches,10,"WOLF’S LEAP, RIVER IRFON",cambrians_to_the_marches_listing_10_3.jpg,3,104,280,267,,copied
+Cambrians To The Marches,11,"WASHPOOL/PWLL BO, RIVER IRFON",cambrians_to_the_marches_listing_11_1.jpg,1,104,581,542,,copied
+Cambrians To The Marches,13,DYLIFE POOL & FFRWD FAWR,cambrians_to_the_marches_listing_13_1.jpg,1,104,284,263,,copied
+Cambrians To The Marches,15,"LLANDINAM GRAVELS, RIVER SEVERN",cambrians_to_the_marches_listing_15_1.jpg,1,105,284,263,,copied
+Cambrians To The Marches,17,"RHYDWHYMAN, CAERHOWEL",cambrians_to_the_marches_listing_17_1.jpg,1,105,285,263,,copied
+Cambrians To The Marches,19,"PONT MARTEG, RIVER WYE",cambrians_to_the_marches_listing_19_1.jpg,1,105,874,546,,copied
+Cambrians To The Marches,21,"ELAN JUNCTION POOL, RIVER WYE",cambrians_to_the_marches_listing_21_1.jpg,1,103,280,251,,copied
+Cambrians To The Marches,21,"ELAN JUNCTION POOL, RIVER WYE",cambrians_to_the_marches_listing_21_2.jpg,2,105,284,263,,copied
+Cambrians To The Marches,22,CLAERWEN & RHINWNANT VALLEYS,cambrians_to_the_marches_listing_22_1.jpg,1,103,280,209,,copied
+Cambrians To The Marches,23,"ALPINE BRIDGE, RIVER ITHON",cambrians_to_the_marches_listing_23_1.jpg,1,105,284,263,,copied
+Cambrians To The Marches,24,"PEN-DDÔL ROCKS, RIVER WYE",cambrians_to_the_marches_listing_24_1.jpg,1,100,1933,1196,,copied
+Cambrians To The Marches,25,RIVER EDW WEIR,cambrians_to_the_marches_listing_25_1.jpg,1,105,581,542,,copied
+Cambrians To The Marches,26,"FARMERS' WELSH LAVENDER, BUILTH",cambrians_to_the_marches_listing_26_1.jpg,1,106,285,263,,copied
+Cambrians To The Marches,27,"ERWOOD BRIDGE SLIPWAY, RIVER WYE",cambrians_to_the_marches_listing_27_1.jpg,1,106,285,263,,copied
+Cambrians To The Marches,29,"THE WARREN, HAY-ON-WYE",cambrians_to_the_marches_listing_29_1.jpg,1,103,284,204,,copied
+Cambrians To The Marches,29,"THE WARREN, HAY-ON-WYE",cambrians_to_the_marches_listing_29_2.jpg,2,106,874,547,,copied
+Cambrians To The Marches,30,CARDING MILL & LIGHTSPOUT FALLS,cambrians_to_the_marches_listing_30_1.jpg,1,106,285,263,,copied
+Cambrians To The Marches,30,CARDING MILL & LIGHTSPOUT FALLS,cambrians_to_the_marches_listing_30_2.jpg,2,106,280,267,,copied
+Cambrians To The Marches,33,CLUN CASTLE,cambrians_to_the_marches_listing_33_1.jpg,1,106,284,263,,copied
+Cambrians To The Marches,34,"WESTON, RIVER TEME",cambrians_to_the_marches_listing_34_1.jpg,1,106,284,263,,copied
+Cambrians To The Marches,35,"PARSON’S POLE BRIDGE, RIVER TEME",cambrians_to_the_marches_listing_35_1.jpg,1,106,581,542,,copied
+Cambrians To The Marches,36,"LEINTWARDINE, RIVER TEME",cambrians_to_the_marches_listing_36_1.jpg,1,107,284,263,,copied
+Cambrians To The Marches,39,LUDLOW & ASHFORD CARBONELL,cambrians_to_the_marches_listing_39_1.jpg,1,107,284,263,,copied
+Cambrians To The Marches,40,"DOLLEY OLD BRIDGE, RIVER LUGG",cambrians_to_the_marches_listing_40_1.jpg,1,102,284,204,,copied
+Cambrians To The Marches,41,"STAUNTON ON ARROW, RIVER ARROW",cambrians_to_the_marches_listing_41_1.jpg,1,107,282,263,,copied
+Cambrians To The Marches,43,"MORTIMER’S CROSS, RIVER LUGG",cambrians_to_the_marches_listing_43_1.jpg,1,107,284,263,,copied
+Cambrians To The Marches,45,"EYTON, RIVER LUGG",cambrians_to_the_marches_listing_45_1.jpg,1,102,284,205,,copied
+Cambrians To The Marches,45,"EYTON, RIVER LUGG",cambrians_to_the_marches_listing_45_2.jpg,2,107,581,541,,copied
+Cambrians To The Marches,48,RIVER LUGG & BODENHAM LAKE,cambrians_to_the_marches_listing_48_1.jpg,1,107,284,265,,copied
+Cambrians To The Marches,49,"LUGG MEADOWS, HEREFORD",cambrians_to_the_marches_listing_49_1.jpg,1,102,284,205,,copied
+Cornwall,1,BAKER’S PIT LAKE & FOLLY,cornwall_listing_01_1.jpg,1,19,582,542,,copied
+Cornwall,3,CARN MARTH POOL & THEATRE,cornwall_listing_03_1.jpg,1,19,284,263,,copied
+Cornwall,5,"TREMAYNE QUAY, HELFORD",cornwall_listing_05_1.jpg,1,19,284,263,,copied
+Cornwall,7,KENNALL VALE NATURE RESERVE,cornwall_listing_07_1.jpg,1,19,284,265,,copied
+Cornwall,8,ROUNDWOOD QUAY & HILLFORT,cornwall_listing_08_1.jpg,1,19,285,265,,copied
+Cornwall,9,BURNGULLOW COMMON LAKE,cornwall_listing_09_1.jpg,1,19,284,263,,copied
+Cornwall,10,"CARN GREY ROCK & LAKE, TRETHURGY",cornwall_listing_10_1.jpg,1,19,284,262,,copied
+Cornwall,11,"COULSON PARK, LOSTWITHIEL",cornwall_listing_11_1.jpg,1,19,285,263,,copied
+Cornwall,12,"RED MOOR LAKE, TREDINNICK PITS",cornwall_listing_12_1.jpg,1,20,284,263,,copied
+Cornwall,13,RESPRYN BRIDGE DOWNSTREAM,cornwall_listing_13_1.jpg,1,18,284,204,,copied
+Cornwall,14,RESPRYN BRIDGE UPSTREAM,cornwall_listing_14_1.jpg,1,18,284,204,,copied
+Cornwall,14,RESPRYN BRIDGE UPSTREAM,cornwall_listing_14_2.jpg,2,19,581,546,,copied
+Cornwall,18,"DELPHY POOL, BODMIN",cornwall_listing_18_1.jpg,1,20,280,267,,copied
+Cornwall,19,"DELFORD/DELPHI BRIDGE, DE LANK",cornwall_listing_19_1.jpg,1,20,284,263,,copied
+Cornwall,20,CARBILLY QUARRY POOLS,cornwall_listing_20_1.jpg,1,20,581,543,,copied
+Cornwall,24,"GOLITHA FALLS, REDGATE",cornwall_listing_24_1.jpg,1,18,280,209,,copied
+Cornwall,24,"GOLITHA FALLS, REDGATE",cornwall_listing_24_2.jpg,2,18,284,204,,copied
+Cornwall,24,"GOLITHA FALLS, REDGATE",cornwall_listing_24_3.jpg,3,20,581,542,,copied
+Cornwall,25,"GOLDIGGINS QUARRY, MINIONS",cornwall_listing_25_1.jpg,1,20,284,263,,copied
+Cornwall,26,"THE PONY POOL, MINIONS",cornwall_listing_26_1.jpg,1,21,581,542,,copied
+Cornwall,27,CARADON HILL POOL & RUINS,cornwall_listing_27_1.jpg,1,21,284,265,,copied
+Cornwall,27,CARADON HILL POOL & RUINS,cornwall_listing_27_2.jpg,2,21,285,265,,copied
+Cornwall,28,"ROCKY VALLEY, TINTAGEL",cornwall_listing_28_1.jpg,1,21,280,267,,copied
+Cornwall,29,"ST NECTAN’S KIEVE, TINTAGEL",cornwall_listing_29_1.jpg,1,18,284,209,,copied
+Cornwall,29,"ST NECTAN’S KIEVE, TINTAGEL",cornwall_listing_29_2.jpg,2,21,577,546,,copied
+Cornwall,30,CORNISH TIPI HOLIDAYS,cornwall_listing_30_1.jpg,1,18,285,209,,copied
+Cornwall,31,KIT HILL QUARRY,cornwall_listing_31_1.jpg,1,21,582,541,,copied
+Cornwall,32,"COTEHELE, R TAMAR",cornwall_listing_32_1.jpg,1,21,284,263,,copied
+Cornwall,34,ROADFORD LAKE,cornwall_listing_34_1.jpg,1,21,284,263,,copied
+Dartmoor & South Devon,1,"WIDGERY CROSS, R LYD",dartmoor_south_devon_listing_01_1.jpg,1,24,284,204,,copied
+Dartmoor & South Devon,2,"TUCKER’S POOL, R LYD",dartmoor_south_devon_listing_02_1.jpg,1,24,284,204,,copied
+Dartmoor & South Devon,2,"TUCKER’S POOL, R LYD",dartmoor_south_devon_listing_02_2.jpg,2,24,280,209,,copied
+Dartmoor & South Devon,3,"TAVY CLEAVE, R TAVY",dartmoor_south_devon_listing_03_1.jpg,1,25,284,263,,copied
+Dartmoor & South Devon,5,FOGGINTOR QUARRY & SWELLTOR,dartmoor_south_devon_listing_05_1.jpg,1,25,874,546,,copied
+Dartmoor & South Devon,6,CRAZY WELL POOL,dartmoor_south_devon_listing_06_1.jpg,1,26,284,265,,copied
+Dartmoor & South Devon,8,"DOUBLE WATERS, R TAVY",dartmoor_south_devon_listing_08_1.jpg,1,26,284,263,,copied
+Dartmoor & South Devon,9,"DENHAM BRIDGE, R TAVY",dartmoor_south_devon_listing_09_1.jpg,1,26,581,543,,copied
+Dartmoor & South Devon,9,"DENHAM BRIDGE, R TAVY",dartmoor_south_devon_listing_09_2.jpg,2,26,285,263,,copied
+Dartmoor & South Devon,10,"SHAVERCOMBE WATERFALL, R PLYM",dartmoor_south_devon_listing_10_1.jpg,1,26,280,267,,copied
+Dartmoor & South Devon,11,"CADOVER BRIDGE, R PLYM",dartmoor_south_devon_listing_11_1.jpg,1,26,581,542,,copied
+Dartmoor & South Devon,11,"CADOVER BRIDGE, R PLYM",dartmoor_south_devon_listing_11_2.jpg,2,26,284,263,,copied
+Dartmoor & South Devon,12,"BIG POND, CADOVER BRIDGE",dartmoor_south_devon_listing_12_1.jpg,1,26,284,263,,copied
+Dartmoor & South Devon,15,"PILES COPSE, R ERME",dartmoor_south_devon_listing_15_1.jpg,1,22,1932,1196,,copied
+Dartmoor & South Devon,15,"PILES COPSE, R ERME",dartmoor_south_devon_listing_15_2.jpg,2,26,284,263,,copied
+Dartmoor & South Devon,16,LEFTLAKE MIRES POOL,dartmoor_south_devon_listing_16_1.jpg,1,27,284,263,,copied
+Dartmoor & South Devon,17,"RED LAKE, HUNTINGDON WARREN",dartmoor_south_devon_listing_17_1.jpg,1,27,285,263,,copied
+Dartmoor & South Devon,19,"TOPSHAM BRIDGE, AVON",dartmoor_south_devon_listing_19_1.jpg,1,27,581,542,,copied
+Dartmoor & South Devon,19,"TOPSHAM BRIDGE, AVON",dartmoor_south_devon_listing_19_2.jpg,2,27,284,263,,copied
+Dartmoor & South Devon,23,"STAVERTON & STILLPOOL, R DART",dartmoor_south_devon_listing_23_1.jpg,1,27,280,267,,copied
+Dartmoor & South Devon,24,"HEMBURY WOODS, R DART",dartmoor_south_devon_listing_24_1.jpg,1,27,284,263,,copied
+Dartmoor & South Devon,24,"HEMBURY WOODS, R DART",dartmoor_south_devon_listing_24_2.jpg,2,27,284,263,,copied
+Dartmoor & South Devon,25,"LOVER’S LEAP, NEW BRIDGE",dartmoor_south_devon_listing_25_1.jpg,1,27,581,542,,copied
+Dartmoor & South Devon,26,"SPITCHWICK COMMON, NEWBRIDGE",dartmoor_south_devon_listing_26_1.jpg,1,27,284,263,,copied
+Dartmoor & South Devon,27,"HORSESHOE FALLS, R DART",dartmoor_south_devon_listing_27_1.jpg,1,28,284,263,,copied
+Dartmoor & South Devon,28,"WELLSFOOT ISLAND, NEW BRIDGE",dartmoor_south_devon_listing_28_1.jpg,1,28,280,267,,copied
+Dartmoor & South Devon,29,"BELL POOL, R DART",dartmoor_south_devon_listing_29_1.jpg,1,24,284,204,,copied
+Dartmoor & South Devon,29,"BELL POOL, R DART",dartmoor_south_devon_listing_29_2.jpg,2,24,284,204,,copied
+Dartmoor & South Devon,29,"BELL POOL, R DART",dartmoor_south_devon_listing_29_3.jpg,3,28,581,542,,copied
+Dartmoor & South Devon,29,"BELL POOL, R DART",dartmoor_south_devon_listing_29_4.jpg,4,28,284,265,,copied
+Dartmoor & South Devon,30,"SHARRAH POOL, R DART",dartmoor_south_devon_listing_30_1.jpg,1,24,284,207,,copied
+Dartmoor & South Devon,30,"SHARRAH POOL, R DART",dartmoor_south_devon_listing_30_2.jpg,2,28,284,263,,copied
+Dartmoor & South Devon,31,HEXWORTHY BRIDGE & WEEK FORD,dartmoor_south_devon_listing_31_1.jpg,1,28,284,263,,copied
+Dartmoor & South Devon,32,"SWINCOMBE MEET, WEST DART",dartmoor_south_devon_listing_32_1.jpg,1,28,581,543,,copied
+Dartmoor & South Devon,34,EAST DART WATERFALL & SANDY HOLE,dartmoor_south_devon_listing_34_1.jpg,1,28,280,267,,copied
+Dartmoor & South Devon,36,BECKA BROOK LAKES,dartmoor_south_devon_listing_36_1.jpg,1,28,285,263,,copied
+Dartmoor & South Devon,37,HAYTOR QUARRY,dartmoor_south_devon_listing_37_1.jpg,1,29,581,542,,copied
+Dartmoor & South Devon,38,"SHILLEY POOL, THROWLEIGH",dartmoor_south_devon_listing_38_1.jpg,1,29,581,542,,copied
+Dartmoor & South Devon,39,"SCORHILL DOWN, R TEIGN",dartmoor_south_devon_listing_39_1.jpg,1,29,285,267,,copied
+Dartmoor & South Devon,40,CHAGFORD SWIMMING POOL,dartmoor_south_devon_listing_40_1.jpg,1,25,281,207,,copied
+Dartmoor & South Devon,41,"SALMON LEAPS, R TEIGN",dartmoor_south_devon_listing_41_1.jpg,1,25,284,204,,copied
+Dartmoor & South Devon,41,"SALMON LEAPS, R TEIGN",dartmoor_south_devon_listing_41_2.jpg,2,29,284,263,,copied
+Dartmoor & South Devon,41,"SALMON LEAPS, R TEIGN",dartmoor_south_devon_listing_41_3.jpg,3,29,284,263,,copied
+Dartmoor & South Devon,42,"FINGLE BRIDGE, TEIGN",dartmoor_south_devon_listing_42_1.jpg,1,25,284,204,,copied
+Dartmoor & South Devon,42,"FINGLE BRIDGE, TEIGN",dartmoor_south_devon_listing_42_2.jpg,2,29,285,263,,copied
+Dartmoor & South Devon,43,TOPSHAM &TURF LOCK,dartmoor_south_devon_listing_43_1.jpg,1,29,285,263,,copied
+Dartmoor & South Devon,43,TOPSHAM &TURF LOCK,dartmoor_south_devon_listing_43_2.jpg,2,29,285,263,,copied
+Dartmoor & South Devon,46,"COLATON RALEIGH, R OTTER",dartmoor_south_devon_listing_46_1.jpg,1,29,284,263,,copied
+Dartmoor & South Devon,47,"FLUXTON WEIR, TIPTON, R OTTER,",dartmoor_south_devon_listing_47_1.jpg,1,29,285,263,,copied
+"Dorset, Wilts & South Somerset",5,"PARCHEY BRIDGE, CHEDZOY",dorset_wilts_south_somerset_listing_05_1.jpg,1,39,874,547,,copied
+"Dorset, Wilts & South Somerset",6,"LANGPORT, R PARRET",dorset_wilts_south_somerset_listing_06_1.jpg,1,39,285,265,,copied
+"Dorset, Wilts & South Somerset",7,"MUCHELNEY ABBEY, R PARRETT",dorset_wilts_south_somerset_listing_07_1.jpg,1,39,285,265,,copied
+"Dorset, Wilts & South Somerset",10,"WEST LYDFORD WEIRS, R BRUE",dorset_wilts_south_somerset_listing_10_1.jpg,1,38,284,393,,copied
+"Dorset, Wilts & South Somerset",10,"WEST LYDFORD WEIRS, R BRUE",dorset_wilts_south_somerset_listing_10_2.jpg,2,39,577,546,,copied
+"Dorset, Wilts & South Somerset",10,"WEST LYDFORD WEIRS, R BRUE",dorset_wilts_south_somerset_listing_10_3.jpg,3,39,284,263,,copied
+"Dorset, Wilts & South Somerset",12,"NETHERBURY, R BRIT",dorset_wilts_south_somerset_listing_12_1.jpg,1,39,285,265,,copied
+"Dorset, Wilts & South Somerset",16,"WOODSFORD, R FROME",dorset_wilts_south_somerset_listing_16_1.jpg,1,40,581,542,,copied
+"Dorset, Wilts & South Somerset",19,"BOVINGTON, R FROME",dorset_wilts_south_somerset_listing_19_1.jpg,1,39,283,263,,copied
+"Dorset, Wilts & South Somerset",21,"WAREHAM, R FROME",dorset_wilts_south_somerset_listing_21_1.jpg,1,40,285,263,,copied
+"Dorset, Wilts & South Somerset",26,"COLBER BRIDGE, STURMINSTER",dorset_wilts_south_somerset_listing_26_1.jpg,1,38,284,204,,copied
+"Dorset, Wilts & South Somerset",26,"COLBER BRIDGE, STURMINSTER",dorset_wilts_south_somerset_listing_26_2.jpg,2,40,284,263,,copied
+"Dorset, Wilts & South Somerset",26,"COLBER BRIDGE, STURMINSTER",dorset_wilts_south_somerset_listing_26_3.jpg,3,40,581,542,,copied
+"Dorset, Wilts & South Somerset",28,"HAMMOON, R STOUR",dorset_wilts_south_somerset_listing_28_1.jpg,1,40,284,263,,copied
+"Dorset, Wilts & South Somerset",28,"HAMMOON, R STOUR",dorset_wilts_south_somerset_listing_28_2.jpg,2,41,874,546,,copied
+"Dorset, Wilts & South Somerset",30,"WHITE MILL, STURMINSTER MARSHALL",dorset_wilts_south_somerset_listing_30_1.jpg,1,41,284,263,,copied
+"Dorset, Wilts & South Somerset",31,"PAMPHILL, WIMBORNE MINSTER",dorset_wilts_south_somerset_listing_31_1.jpg,1,36,1933,1196,,copied
+"Dorset, Wilts & South Somerset",31,"PAMPHILL, WIMBORNE MINSTER",dorset_wilts_south_somerset_listing_31_2.jpg,2,41,280,267,,copied
+"Dorset, Wilts & South Somerset",33,"LONGBRIDGE DEVERILL, R WYLYE",dorset_wilts_south_somerset_listing_33_1.jpg,1,41,285,262,,copied
+"Dorset, Wilts & South Somerset",34,"HEYTESBURY MILL, R WYLYE",dorset_wilts_south_somerset_listing_34_1.jpg,1,41,874,547,,copied
+"Dorset, Wilts & South Somerset",35,"TISBURY & FONTHILL, R NADDER",dorset_wilts_south_somerset_listing_35_1.jpg,1,38,284,209,,copied
+"Dorset, Wilts & South Somerset",36,"STEEPLE LANGFORD, R WYLYE",dorset_wilts_south_somerset_listing_36_1.jpg,1,42,874,547,,copied
+"Dorset, Wilts & South Somerset",38,FIGHELDEAN & FIFIELD,dorset_wilts_south_somerset_listing_38_1.jpg,1,38,284,209,,copied
+"Dorset, Wilts & South Somerset",38,FIGHELDEAN & FIFIELD,dorset_wilts_south_somerset_listing_38_2.jpg,2,38,280,209,,copied
+"Dorset, Wilts & South Somerset",39,"HAM HATCHES, AMESBURY",dorset_wilts_south_somerset_listing_39_1.jpg,1,42,284,267,,copied
+"Dorset, Wilts & South Somerset",40,"STRATFORD BRIDGE, SALISBURY",dorset_wilts_south_somerset_listing_40_1.jpg,1,42,285,263,,copied
+"Dorset, Wilts & South Somerset",41,"OLD MILL, R NADDER",dorset_wilts_south_somerset_listing_41_1.jpg,1,42,285,263,,copied
+"Dorset, Wilts & South Somerset",42,CHARLTON ALL SAINTS,dorset_wilts_south_somerset_listing_42_1.jpg,1,42,582,542,,copied
+"Dorset, Wilts & South Somerset",43,"DOWNTON & THE MOOT, R AVON",dorset_wilts_south_somerset_listing_43_1.jpg,1,42,285,263,,copied
+"Dorset, Wilts & South Somerset",46,"FORDINGBRIDGE, R AVON",dorset_wilts_south_somerset_listing_46_1.jpg,1,42,285,263,,copied
+East Anglia,4,"BRAMPTON, R GREAT OUSE",east_anglia_listing_04_1.jpg,1,73,581,542,,copied
+East Anglia,5,"HOUGHTON MILL, R GREAT OUSE",east_anglia_listing_05_1.jpg,1,73,284,263,,copied
+East Anglia,8,"UPPER CUTS, SETCHEL FEN",east_anglia_listing_08_1.jpg,1,73,280,267,,copied
+East Anglia,9,"LITTLE THETFORD, OUSE VALLEY WAY",east_anglia_listing_09_1.jpg,1,73,285,263,,copied
+East Anglia,11,"GRANTCHESTER MEADOWS, R CAM",east_anglia_listing_11_1.jpg,1,72,280,209,,copied
+East Anglia,11,"GRANTCHESTER MEADOWS, R CAM",east_anglia_listing_11_2.jpg,2,72,280,209,,copied
+East Anglia,11,"GRANTCHESTER MEADOWS, R CAM",east_anglia_listing_11_3.jpg,3,72,280,209,,copied
+East Anglia,11,"GRANTCHESTER MEADOWS, R CAM",east_anglia_listing_11_4.jpg,4,73,874,546,,copied
+East Anglia,14,"BLOCK FEN, MEPAL",east_anglia_listing_14_1.jpg,1,74,284,263,,copied
+East Anglia,16,"BAWSEY COUNTRY PARK, KING’S LYNN",east_anglia_listing_16_1.jpg,1,74,284,265,,copied
+East Anglia,18,"JUDE'S FERRY, R LARK",east_anglia_listing_18_1.jpg,1,74,581,542,,copied
+East Anglia,22,"LAKENHEATH FEN, R LITTLE OUSE",east_anglia_listing_22_1.jpg,1,74,285,263,,copied
+East Anglia,23,SANTON DOWNHAM & BRANDON LOCK,east_anglia_listing_23_1.jpg,1,74,874,546,,copied
+East Anglia,27,"RINGLAND RIVER GREEN, R WENSUM",east_anglia_listing_27_1.jpg,1,74,285,263,,copied
+East Anglia,31,"ROCKLAND BROAD, R YARE",east_anglia_listing_31_1.jpg,1,75,284,263,,copied
+East Anglia,33,BURGH NEXT AYLSHAM & OXNEAD,east_anglia_listing_33_1.jpg,1,75,581,542,,copied
+East Anglia,36,"COLTISHALL RISING SUN, R BURE",east_anglia_listing_36_1.jpg,1,75,874,546,,copied
+East Anglia,39,"ST BENET'S ABBEY, R BURE",east_anglia_listing_39_1.jpg,1,75,285,263,,copied
+East Anglia,41,"HOW HILL, RIVER ANT",east_anglia_listing_41_1.jpg,1,76,284,265,,copied
+East Anglia,42,"WEAVER’S WAY, R THURNE",east_anglia_listing_42_1.jpg,1,76,581,542,,copied
+East Anglia,44,"MENDHAM, R WAVENEY",east_anglia_listing_44_1.jpg,1,72,284,205,,copied
+East Anglia,44,"MENDHAM, R WAVENEY",east_anglia_listing_44_2.jpg,2,76,285,263,,copied
+East Anglia,45,"HOMERSFIELD, R WAVENEY",east_anglia_listing_45_1.jpg,1,72,284,205,,copied
+East Anglia,45,"HOMERSFIELD, R WAVENEY",east_anglia_listing_45_2.jpg,2,76,285,265,,copied
+East Anglia,47,"OUTNEY COMMON, R WAVENEY",east_anglia_listing_47_1.jpg,1,72,284,205,,copied
+East Anglia,47,"OUTNEY COMMON, R WAVENEY",east_anglia_listing_47_2.jpg,2,76,878,546,,copied
+East Anglia,49,"WAINFORD WEIR, R WAVENEY",east_anglia_listing_49_1.jpg,1,70,1933,1195,,copied
+East Anglia,49,"WAINFORD WEIR, R WAVENEY",east_anglia_listing_49_2.jpg,2,76,284,267,,copied
+Exmoor & North Devon,1,"CULLEVER STEPS, EAST OKEMENT",exmoor_north_devon_listing_01_1.jpg,1,32,284,204,,copied
+Exmoor & North Devon,1,"CULLEVER STEPS, EAST OKEMENT",exmoor_north_devon_listing_01_2.jpg,2,33,284,263,,copied
+Exmoor & North Devon,4,"SHEEPWASH WOODLAND, R TORRIDGE",exmoor_north_devon_listing_04_1.jpg,1,33,874,547,,copied
+Exmoor & North Devon,4,"SHEEPWASH WOODLAND, R TORRIDGE",exmoor_north_devon_listing_04_2.jpg,2,33,284,263,,copied
+Exmoor & North Devon,9,"TORRINGTON COMMON, TORRINGTON",exmoor_north_devon_listing_09_1.jpg,1,34,874,546,,copied
+Exmoor & North Devon,10,"UMBERLEIGH, R TAW",exmoor_north_devon_listing_10_1.jpg,1,32,284,205,,copied
+Exmoor & North Devon,10,"UMBERLEIGH, R TAW",exmoor_north_devon_listing_10_2.jpg,2,34,284,263,,copied
+Exmoor & North Devon,11,"PINKERY POND, CHALLACOMBE",exmoor_north_devon_listing_11_1.jpg,1,34,285,263,,copied
+Exmoor & North Devon,12,"WATERSMEET HOUSE, R EAST LYN",exmoor_north_devon_listing_12_1.jpg,1,34,284,263,,copied
+Exmoor & North Devon,13,"LONG POOL, R EAST LYN",exmoor_north_devon_listing_13_1.jpg,1,32,284,204,,copied
+Exmoor & North Devon,13,"LONG POOL, R EAST LYN",exmoor_north_devon_listing_13_2.jpg,2,34,874,546,,copied
+Exmoor & North Devon,14,"DEER PARK POOL, BADGWORTHY WATER",exmoor_north_devon_listing_14_1.jpg,1,32,284,205,,copied
+Exmoor & North Devon,15,HORNER WATER POOL,exmoor_north_devon_listing_15_1.jpg,1,34,285,265,,copied
+Exmoor & North Devon,16,"COW CASTLE, R BARLE",exmoor_north_devon_listing_16_1.jpg,1,32,284,208,,copied
+Exmoor & North Devon,16,"COW CASTLE, R BARLE",exmoor_north_devon_listing_16_2.jpg,2,35,582,542,,copied
+Exmoor & North Devon,17,"LANDACRE BRIDGE, R BARLE",exmoor_north_devon_listing_17_1.jpg,1,33,284,204,,copied
+Exmoor & North Devon,17,"LANDACRE BRIDGE, R BARLE",exmoor_north_devon_listing_17_2.jpg,2,35,284,263,,copied
+Exmoor & North Devon,17,"LANDACRE BRIDGE, R BARLE",exmoor_north_devon_listing_17_3.jpg,3,35,284,263,,copied
+Exmoor & North Devon,18,"WITHYPOOL, R BARLE",exmoor_north_devon_listing_18_1.jpg,1,30,1933,1195,,copied
+Exmoor & North Devon,18,"WITHYPOOL, R BARLE",exmoor_north_devon_listing_18_2.jpg,2,35,284,263,,copied
+Exmoor & North Devon,19,"TARR STEPS, BARLE",exmoor_north_devon_listing_19_1.jpg,1,33,284,204,,copied
+Exmoor & North Devon,19,"TARR STEPS, BARLE",exmoor_north_devon_listing_19_2.jpg,2,33,283,204,,copied
+Exmoor & North Devon,19,"TARR STEPS, BARLE",exmoor_north_devon_listing_19_3.jpg,3,35,581,542,,copied
+Exmoor & North Devon,21,"WIMBLEBALL LAKE, UPTON",exmoor_north_devon_listing_21_1.jpg,1,35,285,263,,copied
+Exmoor & North Devon,24,"LONGRUN MEADOW, TAUNTON",exmoor_north_devon_listing_24_1.jpg,1,35,280,182,,copied
+Exmoor & North Devon,25,CULMSTOCK & HUNKIN WOOD,exmoor_north_devon_listing_25_1.jpg,1,35,285,263,,copied
+"Hampshire, Surrey & Sussex",3,"CHILBOLTON COW COMMON, R TEST",hampshire_surrey_sussex_listing_03_1.jpg,1,51,1933,1195,,copied
+"Hampshire, Surrey & Sussex",3,"CHILBOLTON COW COMMON, R TEST",hampshire_surrey_sussex_listing_03_2.jpg,2,54,285,263,,copied
+"Hampshire, Surrey & Sussex",5,"HOUGHTON, R TEST",hampshire_surrey_sussex_listing_05_1.jpg,1,53,284,204,,copied
+"Hampshire, Surrey & Sussex",5,"HOUGHTON, R TEST",hampshire_surrey_sussex_listing_05_2.jpg,2,54,543,577,,copied
+"Hampshire, Surrey & Sussex",8,"ST CROSS WINCHESTER, R ITCHEN",hampshire_surrey_sussex_listing_08_1.jpg,1,53,284,204,,copied
+"Hampshire, Surrey & Sussex",9,"TWYFORD, R ITCHEN",hampshire_surrey_sussex_listing_09_1.jpg,1,53,280,209,,copied
+"Hampshire, Surrey & Sussex",9,"TWYFORD, R ITCHEN",hampshire_surrey_sussex_listing_09_2.jpg,2,54,581,541,,copied
+"Hampshire, Surrey & Sussex",11,BOLDERFORD BRIDGE & QUEEN BOWER,hampshire_surrey_sussex_listing_11_1.jpg,1,54,284,263,,copied
+"Hampshire, Surrey & Sussex",18,ODIHAM CASTLE & GREYWELL,hampshire_surrey_sussex_listing_18_1.jpg,1,54,285,263,,copied
+"Hampshire, Surrey & Sussex",19,"TUNDRY POND, DOGMERSFIELD",hampshire_surrey_sussex_listing_19_1.jpg,1,54,285,263,,copied
+"Hampshire, Surrey & Sussex",23,TILFORD GREEN & STOCKBRIDGE POND,hampshire_surrey_sussex_listing_23_1.jpg,1,53,285,207,,copied
+"Hampshire, Surrey & Sussex",25,"GODALMING, R WEY",hampshire_surrey_sussex_listing_25_1.jpg,1,53,284,207,,copied
+"Hampshire, Surrey & Sussex",25,"GODALMING, R WEY",hampshire_surrey_sussex_listing_25_2.jpg,2,55,581,543,,copied
+"Hampshire, Surrey & Sussex",26,"ST CATHERINE’S HILL, R WEY",hampshire_surrey_sussex_listing_26_1.jpg,1,55,285,263,,copied
+"Hampshire, Surrey & Sussex",27,"NEWARK PRIORY, R WEY",hampshire_surrey_sussex_listing_27_1.jpg,1,55,285,263,,copied
+"Hampshire, Surrey & Sussex",28,"BOLDER MERE, OCKHAM COMMON",hampshire_surrey_sussex_listing_28_1.jpg,1,53,284,207,,copied
+"Hampshire, Surrey & Sussex",29,"STEPPING STONES, RIVER MOLE",hampshire_surrey_sussex_listing_29_1.jpg,1,55,284,263,,copied
+"Hampshire, Surrey & Sussex",31,"MIDHURST, R ROTHER",hampshire_surrey_sussex_listing_31_1.jpg,1,55,581,542,,copied
+"Hampshire, Surrey & Sussex",35,HATTERELL BRIDGE & KNEPP,hampshire_surrey_sussex_listing_35_1.jpg,1,55,285,263,,copied
+Highlands & Perthshire,1,"EASDALE ISLAND, SEIL, OBAN",highlands_perthshire_listing_01_1.jpg,1,170,285,263,,copied
+Highlands & Perthshire,2,"EAS FORS, BALLYGOWN, MULL",highlands_perthshire_listing_02_1.jpg,1,170,581,542,,copied
+Highlands & Perthshire,2,"EAS FORS, BALLYGOWN, MULL",highlands_perthshire_listing_02_2.jpg,2,170,284,266,,copied
+Highlands & Perthshire,4,SHIEL OLD BRIDGE,highlands_perthshire_listing_04_1.jpg,1,170,284,263,,copied
+Highlands & Perthshire,5,LOCH MORAR,highlands_perthshire_listing_05_1.jpg,1,170,285,263,,copied
+Highlands & Perthshire,6,"EAS O CHAORAINN, KNOYDART",highlands_perthshire_listing_06_1.jpg,1,170,285,266,,copied
+Highlands & Perthshire,9,"THE WITCH’S CAULDRON, CLUNES",highlands_perthshire_listing_09_1.jpg,1,169,284,204,,copied
+Highlands & Perthshire,9,"THE WITCH’S CAULDRON, CLUNES",highlands_perthshire_listing_09_2.jpg,2,170,577,546,,copied
+Highlands & Perthshire,9,"THE WITCH’S CAULDRON, CLUNES",highlands_perthshire_listing_09_3.jpg,3,170,280,267,,copied
+Highlands & Perthshire,16,GLEN ETIVE,highlands_perthshire_listing_16_1.jpg,1,169,280,209,,copied
+Highlands & Perthshire,16,GLEN ETIVE,highlands_perthshire_listing_16_2.jpg,2,169,280,354,,copied
+Highlands & Perthshire,16,GLEN ETIVE,highlands_perthshire_listing_16_3.jpg,3,169,284,204,,copied
+Highlands & Perthshire,16,GLEN ETIVE,highlands_perthshire_listing_16_4.jpg,4,171,874,546,,copied
+Highlands & Perthshire,16,GLEN ETIVE,highlands_perthshire_listing_16_5.jpg,5,171,284,539,,copied
+Highlands & Perthshire,19,"FALLS OF FALLOCH, CRIANLARICH",highlands_perthshire_listing_19_1.jpg,1,171,874,545,,copied
+Highlands & Perthshire,29,"BRACKLINN FALLS, CALLANDER",highlands_perthshire_listing_29_1.jpg,1,172,284,263,,copied
+Highlands & Perthshire,30,SHERIFF MUIR PARADISE POOLS,highlands_perthshire_listing_30_1.jpg,1,172,284,263,,copied
+Highlands & Perthshire,31,"THE LINN A’ CHULLAICH, COMRIE",highlands_perthshire_listing_31_1.jpg,1,172,581,542,,copied
+Highlands & Perthshire,34,"ABERFELDY, R TAY",highlands_perthshire_listing_34_1.jpg,1,172,874,546,,copied
+Highlands & Perthshire,37,"BIRNAM, R TAY",highlands_perthshire_listing_37_1.jpg,1,172,284,263,,copied
+London & South East England,2,"BENGEO, R BEANE",london_south_east_england_listing_02_1.jpg,1,59,284,263,,copied
+London & South East England,7,"SAWBRIDGEWORTH, R STORT",london_south_east_england_listing_07_1.jpg,1,59,284,262,,copied
+London & South East England,11,"ULTING & HOEMILL BR, R CHELMER",london_south_east_england_listing_11_1.jpg,1,58,284,209,,copied
+London & South East England,11,"ULTING & HOEMILL BR, R CHELMER",london_south_east_england_listing_11_2.jpg,2,59,582,542,,copied
+London & South East England,16,"WISSINGTON, R STOUR",london_south_east_england_listing_16_1.jpg,1,59,581,542,,copied
+London & South East England,18,"DEDHAM VALE, R STOUR",london_south_east_england_listing_18_1.jpg,1,56,1933,1195,,copied
+London & South East England,18,"DEDHAM VALE, R STOUR",london_south_east_england_listing_18_2.jpg,2,58,280,209,,copied
+London & South East England,18,"DEDHAM VALE, R STOUR",london_south_east_england_listing_18_3.jpg,3,59,280,267,,copied
+London & South East England,20,"WEST RESERVOIR, HACKNEY",london_south_east_england_listing_20_1.jpg,1,60,285,263,,copied
+London & South East England,21,"HAMPSTEAD PONDS, THE HEATH",london_south_east_england_listing_21_1.jpg,1,58,284,209,,copied
+London & South East England,21,"HAMPSTEAD PONDS, THE HEATH",london_south_east_england_listing_21_2.jpg,2,60,581,542,,copied
+London & South East England,22,"SERPENTINE LAKE, HYDE PARK",london_south_east_england_listing_22_1.jpg,1,60,284,263,,copied
+London & South East England,27,"EYNSFORD, DARENT",london_south_east_england_listing_27_1.jpg,1,60,284,263,,copied
+London & South East England,32,"ROYAL MILITARY CANAL, BONNINGTON",london_south_east_england_listing_32_1.jpg,1,60,285,267,,copied
+London & South East England,34,"CHARTHAM, R GREAT STOUR",london_south_east_england_listing_34_1.jpg,1,61,285,263,,copied
+London & South East England,35,"FORDWICH, R GREAT STOUR",london_south_east_england_listing_35_1.jpg,1,60,581,542,,copied
+London & South East England,36,WESTBERE MARSHES,london_south_east_england_listing_36_1.jpg,1,61,581,542,,copied
+London & South East England,37,"WICKHAMBREAUX, R LITTLE STOUR",london_south_east_england_listing_37_1.jpg,1,61,284,263,,copied
+London & South East England,39,"BUCKLAND PARK LAKE, THE SHAC",london_south_east_england_listing_39_1.jpg,1,61,280,267,,copied
+London & South East England,42,"POUNDSBRIDGE, R EDEN",london_south_east_england_listing_42_1.jpg,1,61,284,263,,copied
+London & South East England,43,"ENSFIELD BRIDGE, R MEDWAY",london_south_east_england_listing_43_1.jpg,1,58,284,204,,copied
+London & South East England,44,"EAST LOCK, R MEDWAY",london_south_east_england_listing_44_1.jpg,1,61,874,546,,copied
+London & South East England,46,"ARDINGLY LAKE, BALCOMBE",london_south_east_england_listing_46_1.jpg,1,61,285,263,,copied
+London & South East England,50,"WALLERS HAVEN, WARTLING",london_south_east_england_listing_50_1.jpg,1,62,285,263,,copied
+London & South East England,51,"ISFIELD, R OUSE",london_south_east_england_listing_51_1.jpg,1,62,874,546,,copied
+London & South East England,52,"ANCHOR INN, R OUSE",london_south_east_england_listing_52_1.jpg,1,62,285,263,,copied
+London & South East England,53,"BARCOMBE MILLS, R OUSE",london_south_east_england_listing_53_1.jpg,1,62,577,546,,copied
+London & South East England,54,"LITLINGTON, R CUCKMERE",london_south_east_england_listing_54_1.jpg,1,62,285,263,,copied
+London & South East England,55,CUCKMERE MEANDERS,london_south_east_england_listing_55_1.jpg,1,58,284,204,,copied
+London & South East England,56,DARWELL WOODS,london_south_east_england_listing_56_1.jpg,1,62,285,263,,copied
+London & South East England,57,BEWL WATER,london_south_east_england_listing_57_1.jpg,1,62,285,263,,copied
+North Eryri Snowdonia,2,CWM PENNANT POOL,north_eryri_snowdonia_listing_02_1.jpg,1,119,285,265,,copied
+North Eryri Snowdonia,3,PRINCE OF WALES QUARRY,north_eryri_snowdonia_listing_03_1.jpg,1,119,874,547,,copied
+North Eryri Snowdonia,4,DOROTHEA QUARRY LAKE & RUINS,north_eryri_snowdonia_listing_04_1.jpg,1,119,284,263,,copied
+North Eryri Snowdonia,5,MOEL TRYFAN BLUE LAGOON,north_eryri_snowdonia_listing_05_1.jpg,1,119,581,542,,copied
+North Eryri Snowdonia,6,LYNNAU CWM SILYN,north_eryri_snowdonia_listing_06_1.jpg,1,119,285,265,,copied
+North Eryri Snowdonia,8,LLYN NADROEDD & GLANRAFON QUARRY,north_eryri_snowdonia_listing_08_1.jpg,1,119,285,263,,copied
+North Eryri Snowdonia,9,LLYN PADARN SHORE,north_eryri_snowdonia_listing_09_1.jpg,1,119,284,263,,copied
+North Eryri Snowdonia,10,LLYN GLAS & CWM GLAS,north_eryri_snowdonia_listing_10_1.jpg,1,118,284,207,,copied
+North Eryri Snowdonia,10,LLYN GLAS & CWM GLAS,north_eryri_snowdonia_listing_10_2.jpg,2,120,285,263,,copied
+North Eryri Snowdonia,13,"CWM CASEG & LAKE, CARNEDDAU",north_eryri_snowdonia_listing_13_1.jpg,1,120,284,263,,copied
+North Eryri Snowdonia,14,AFON DULYN WATERFALL,north_eryri_snowdonia_listing_14_1.jpg,1,120,284,263,,copied
+North Eryri Snowdonia,16,LLYN GEIRIONYDD & KLONDYKE,north_eryri_snowdonia_listing_16_1.jpg,1,120,874,546,,copied
+North Eryri Snowdonia,17,CORS BODGYNYDD,north_eryri_snowdonia_listing_17_1.jpg,1,120,284,265,,copied
+North Eryri Snowdonia,18,"MINER’S BRIDGE, RIVER LLUGWY",north_eryri_snowdonia_listing_18_1.jpg,1,120,581,542,,copied
+North Eryri Snowdonia,20,"FAIRY GLEN, RIVER CONWY",north_eryri_snowdonia_listing_20_1.jpg,1,121,284,263,,copied
+North Eryri Snowdonia,23,FOEL QUARRY & LLYN Y FOEL,north_eryri_snowdonia_listing_23_1.jpg,1,116,1933,1195,,copied
+North Eryri Snowdonia,23,FOEL QUARRY & LLYN Y FOEL,north_eryri_snowdonia_listing_23_2.jpg,2,121,285,265,,copied
+North Eryri Snowdonia,24,"CYFYNG FALLS, RIVER LLUGWY",north_eryri_snowdonia_listing_24_1.jpg,1,121,284,263,,copied
+North Eryri Snowdonia,25,"LLYN DINAS, BEDDGELERT",north_eryri_snowdonia_listing_25_1.jpg,1,121,284,263,,copied
+North Eryri Snowdonia,26,"CWM LLAN FALLS, WATKIN PATH",north_eryri_snowdonia_listing_26_1.jpg,1,118,284,204,,copied
+North Eryri Snowdonia,26,"CWM LLAN FALLS, WATKIN PATH",north_eryri_snowdonia_listing_26_2.jpg,2,121,284,263,,copied
+North Eryri Snowdonia,28,LLYN GWYNANT & ELEPHANT ROCK,north_eryri_snowdonia_listing_28_1.jpg,1,121,581,542,,copied
+North Eryri Snowdonia,28,LLYN GWYNANT & ELEPHANT ROCK,north_eryri_snowdonia_listing_28_2.jpg,2,121,284,263,,copied
+North Eryri Snowdonia,30,LLYNNAU CERRIG-Y-MYLLT,north_eryri_snowdonia_listing_30_1.jpg,1,122,284,265,,copied
+North Eryri Snowdonia,31,AFON CROESOR WATERFALLS,north_eryri_snowdonia_listing_31_1.jpg,1,118,280,370,,copied
+North Eryri Snowdonia,31,AFON CROESOR WATERFALLS,north_eryri_snowdonia_listing_31_2.jpg,2,121,581,542,,copied
+North Eryri Snowdonia,32,"PONT ABERGLASLYN, NANTMOR",north_eryri_snowdonia_listing_32_1.jpg,1,122,874,546,,copied
+North Eryri Snowdonia,33,"LLYN MAIR, TAN-Y-BWLCH",north_eryri_snowdonia_listing_33_1.jpg,1,122,284,263,,copied
+North Eryri Snowdonia,35,CWMORTHIN WATERFALL & LAKE,north_eryri_snowdonia_listing_35_1.jpg,1,122,284,263,,copied
+North Eryri Snowdonia,36,LLYNNAU DIFFWYS & CLOGWYN-BRÎTH,north_eryri_snowdonia_listing_36_1.jpg,1,118,285,205,,copied
+North Eryri Snowdonia,36,LLYNNAU DIFFWYS & CLOGWYN-BRÎTH,north_eryri_snowdonia_listing_36_2.jpg,2,122,280,267,,copied
+North Eryri Snowdonia,37,AFON GOEDOL WATERFALLS,north_eryri_snowdonia_listing_37_1.jpg,1,122,284,263,,copied
+North Eryri Snowdonia,38,CEUNANT CYNFAL,north_eryri_snowdonia_listing_38_1.jpg,1,122,582,542,,copied
+North Lake District,2,NETHER BECK POOLS,north_lake_district_listing_02_1.jpg,1,145,1933,1196,,copied
+North Lake District,2,NETHER BECK POOLS,north_lake_district_listing_02_2.jpg,2,148,280,267,,copied
+North Lake District,3,"OVERBECK BRIDGE, WASTWATER *",north_lake_district_listing_03_1.jpg,1,148,891,569,,copied
+North Lake District,8,"RIVER COCKER, CRUMMOCK HEAD",north_lake_district_listing_08_1.jpg,1,148,285,263,,copied
+North Lake District,9,"WOODHOUSE BEACH, CRUMMOCK",north_lake_district_listing_09_1.jpg,1,148,874,546,,copied
+North Lake District,10,"SCALE FORCE, CRUMMOCK",north_lake_district_listing_10_1.jpg,1,148,280,267,,copied
+North Lake District,14,WARNSCALE BECK INIFINITY POOL,north_lake_district_listing_14_1.jpg,1,149,577,546,,copied
+North Lake District,16,"ST BEGA'S CHURCH, MIREHOUSE",north_lake_district_listing_16_1.jpg,1,149,284,263,,copied
+North Lake District,17,RIVER CALDEW/BOWSCALE TARN,north_lake_district_listing_17_1.jpg,1,149,284,263,,copied
+North Lake District,20,"CALFCLOSE BAY, DERWENT WATER",north_lake_district_listing_20_1.jpg,1,149,581,542,,copied
+North Lake District,23,"GOWDER DUB, RIVER DERWENT",north_lake_district_listing_23_1.jpg,1,150,285,263,,copied
+North Lake District,24,WATENDLATH TARN,north_lake_district_listing_24_1.jpg,1,150,284,263,,copied
+North Lake District,25,"GALLENY FORCE, STONETHWAITE",north_lake_district_listing_25_1.jpg,1,147,284,204,,copied
+North Lake District,25,"GALLENY FORCE, STONETHWAITE",north_lake_district_listing_25_2.jpg,2,147,280,209,,copied
+North Lake District,25,"GALLENY FORCE, STONETHWAITE",north_lake_district_listing_25_3.jpg,3,150,874,546,,copied
+North Lake District,26,"BLACKMOSS POT, LANGSTRATH",north_lake_district_listing_26_1.jpg,1,147,280,393,,copied
+North Lake District,26,"BLACKMOSS POT, LANGSTRATH",north_lake_district_listing_26_2.jpg,2,150,581,542,,copied
+North Lake District,29,THIRLMERE & INFINITY POOL,north_lake_district_listing_29_1.jpg,1,150,284,262,,copied
+North Lake District,31,AIRA BECK WATERFALLS,north_lake_district_listing_31_1.jpg,1,150,284,265,,copied
+North Lake District,32,"KAILPOT CRAG, HOWTOWN",north_lake_district_listing_32_1.jpg,1,147,284,204,,copied
+North Lake District,32,"KAILPOT CRAG, HOWTOWN",north_lake_district_listing_32_2.jpg,2,151,285,263,,copied
+North Lake District,34,SILVER BAY & LINGY HOLM ISLAND,north_lake_district_listing_34_1.jpg,1,147,285,204,,copied
+North Lake District,34,SILVER BAY & LINGY HOLM ISLAND,north_lake_district_listing_34_2.jpg,2,151,581,542,,copied
+North Lake District,37,"RED TARN, HELVELLYN",north_lake_district_listing_37_1.jpg,1,151,285,263,,copied
+North Lake District,41,SMALL WATER & ROCK SHELTERS,north_lake_district_listing_41_1.jpg,1,151,284,263,,copied
+North Lake District,42,"RIVER LOWTHER, ASKHAM",north_lake_district_listing_42_1.jpg,1,151,285,263,,copied
+North Lake District,43,SWINDALE BECK WATERFALLS,north_lake_district_listing_43_1.jpg,1,147,284,205,,copied
+North Lake District,43,SWINDALE BECK WATERFALLS,north_lake_district_listing_43_2.jpg,2,151,581,542,,copied
+North Lake District,43,SWINDALE BECK WATERFALLS,north_lake_district_listing_43_3.jpg,3,151,284,263,,copied
+North Wales & Cheshire,1,"RHAEADR DU, LLENNYRCH",north_wales_cheshire_listing_01_1.jpg,1,111,581,542,,copied
+North Wales & Cheshire,1,"RHAEADR DU, LLENNYRCH",north_wales_cheshire_listing_01_2.jpg,2,111,284,265,,copied
+North Wales & Cheshire,2,"LLYN TECHWYN ISAF, LLANDECWYN",north_wales_cheshire_listing_02_1.jpg,1,108,1932,1195,,copied
+North Wales & Cheshire,3,LLYN EIDDEW-BACH & TARNS,north_wales_cheshire_listing_03_1.jpg,1,110,284,209,,copied
+North Wales & Cheshire,3,LLYN EIDDEW-BACH & TARNS,north_wales_cheshire_listing_03_2.jpg,2,110,284,209,,copied
+North Wales & Cheshire,3,LLYN EIDDEW-BACH & TARNS,north_wales_cheshire_listing_03_3.jpg,3,111,874,547,,copied
+North Wales & Cheshire,5,"LLYN DU, RHINOG FAWR",north_wales_cheshire_listing_05_1.jpg,1,111,285,263,,copied
+North Wales & Cheshire,6,AFON CWMNANTCOL POOLS,north_wales_cheshire_listing_06_1.jpg,1,111,280,267,,copied
+North Wales & Cheshire,7,"LLYN GELLI-GAIN, TRAWSFYNYDD",north_wales_cheshire_listing_07_1.jpg,1,110,284,204,,copied
+North Wales & Cheshire,7,"LLYN GELLI-GAIN, TRAWSFYNYDD",north_wales_cheshire_listing_07_2.jpg,2,111,284,263,,copied
+North Wales & Cheshire,8,PISTYLL CAIN & GOLD MINE,north_wales_cheshire_listing_08_1.jpg,1,112,874,546,,copied
+North Wales & Cheshire,9,CWM CAMLAN FALLS,north_wales_cheshire_listing_09_1.jpg,1,112,280,267,,copied
+North Wales & Cheshire,12,"BLUE LAKE, GOLWERN QUARRY",north_wales_cheshire_listing_12_1.jpg,1,112,284,263,,copied
+North Wales & Cheshire,13,LLYNNAU CREGENNEN & ARTHOG FALLS,north_wales_cheshire_listing_13_1.jpg,1,112,874,546,,copied
+North Wales & Cheshire,14,PENRHYN-GWYN WATERFALLS,north_wales_cheshire_listing_14_1.jpg,1,112,284,542,,copied
+North Wales & Cheshire,16,"LLYN CAU, CADER IDRIS",north_wales_cheshire_listing_16_1.jpg,1,113,280,267,,copied
+North Wales & Cheshire,18,TAL-Y-LLYN & LLYN MWYNGIL,north_wales_cheshire_listing_18_1.jpg,1,113,874,544,,copied
+North Wales & Cheshire,20,"PONT RHYDYGWIAL, RIVER DOVEY",north_wales_cheshire_listing_20_1.jpg,1,113,284,263,,copied
+North Wales & Cheshire,23,ST DYFNOG’S WELL,north_wales_cheshire_listing_23_1.jpg,1,113,581,542,,copied
+North Wales & Cheshire,30,"LLYN TEGID/BALA, LLANGOWER",north_wales_cheshire_listing_30_1.jpg,1,114,874,546,,copied
+North Wales & Cheshire,32,"CARROG BRIDGE, RIVER DEE",north_wales_cheshire_listing_32_1.jpg,1,114,581,542,,copied
+North Wales & Cheshire,34,"HORSESHOE FALLS, RIVER DEE",north_wales_cheshire_listing_34_1.jpg,1,114,284,265,,copied
+North Wales & Cheshire,35,"CYSYLLTAU BRIDGE, RIVER DEE",north_wales_cheshire_listing_35_1.jpg,1,114,284,263,,copied
+North Wales & Cheshire,40,PISTYLL RHAEADR & LLYN LLUNCAWS,north_wales_cheshire_listing_40_1.jpg,1,115,581,542,,copied
+North Wales & Cheshire,40,PISTYLL RHAEADR & LLYN LLUNCAWS,north_wales_cheshire_listing_40_2.jpg,2,115,284,263,,copied
+North Wales & Cheshire,43,"DOLANOG FALLS, RIVER VYRNWY",north_wales_cheshire_listing_43_1.jpg,1,115,284,263,,copied
+North Wales & Cheshire,44,"NEWBRIDGE, RIVER BANWY",north_wales_cheshire_listing_44_1.jpg,1,115,284,263,,copied
+North Wales & Cheshire,45,"BRONIARTH BRIDGE, MEIFOD",north_wales_cheshire_listing_45_1.jpg,1,115,285,263,,copied
+North Wales & Cheshire,47,"MELVERLEY, RIVER VYRNWY",north_wales_cheshire_listing_47_1.jpg,1,115,285,263,,copied
+North Wales & Cheshire,48,"ROYAL HILL, RIVER SEVERN",north_wales_cheshire_listing_48_1.jpg,1,115,284,263,,copied
+North Wales & Cheshire,48,"ROYAL HILL, RIVER SEVERN",north_wales_cheshire_listing_48_2.jpg,2,115,581,542,,copied
+North Wales & Cheshire,52,"IRONBRIDGE, RIVER SEVERN",north_wales_cheshire_listing_52_1.jpg,1,115,284,263,,copied
+North West Highlands,1,"RHA BURN & FAERIE GLEN, UIG",north_west_highlands_listing_01_1.jpg,1,181,284,205,,copied
+North West Highlands,1,"RHA BURN & FAERIE GLEN, UIG",north_west_highlands_listing_01_2.jpg,2,182,280,267,,copied
+North West Highlands,2,LOCH SHIANTA,north_west_highlands_listing_02_1.jpg,1,182,285,263,,copied
+North West Highlands,3,LOWER LEALT FALLS,north_west_highlands_listing_03_1.jpg,1,182,581,542,,copied
+North West Highlands,5,"FAERIE POOLS, GLEN BRITTLE",north_west_highlands_listing_05_1.jpg,1,179,1933,1196,,copied
+North West Highlands,5,"FAERIE POOLS, GLEN BRITTLE",north_west_highlands_listing_05_2.jpg,2,182,577,546,,copied
+North West Highlands,10,TORRIN POOLS,north_west_highlands_listing_10_1.jpg,1,182,280,265,,copied
+North West Highlands,13,"COIRE DHUINNID, LOCH DUICH",north_west_highlands_listing_13_1.jpg,1,182,284,263,,copied
+North West Highlands,14,FALLS OF GLOMACH,north_west_highlands_listing_14_1.jpg,1,182,284,263,,copied
+North West Highlands,15,STRATHCARRON GORGE & COULAGS,north_west_highlands_listing_15_1.jpg,1,183,581,542,,copied
+North West Highlands,15,STRATHCARRON GORGE & COULAGS,north_west_highlands_listing_15_2.jpg,2,183,284,263,,copied
+North West Highlands,20,FALLS OF KIRKAIG,north_west_highlands_listing_20_1.jpg,1,183,285,263,,copied
+North West Highlands,21,WAILING WIDOW / ALLT CHRANAIDH,north_west_highlands_listing_21_1.jpg,1,183,280,267,,copied
+North West Highlands,23,LOCH BEINN A MHEADHOIN,north_west_highlands_listing_23_1.jpg,1,181,284,204,,copied
+North West Highlands,23,LOCH BEINN A MHEADHOIN,north_west_highlands_listing_23_2.jpg,2,183,874,546,,copied
+North West Highlands,24,"PLODDA FALLS, GLEN AFFRIC",north_west_highlands_listing_24_1.jpg,1,181,284,204,,copied
+North West Highlands,24,"PLODDA FALLS, GLEN AFFRIC",north_west_highlands_listing_24_2.jpg,2,183,284,263,,copied
+North West Highlands,25,"DOG FALLS, GLEN AFFRIC",north_west_highlands_listing_25_1.jpg,1,181,284,204,,copied
+North West Highlands,25,"DOG FALLS, GLEN AFFRIC",north_west_highlands_listing_25_2.jpg,2,183,284,263,,copied
+North West Highlands,26,RIVER BRAN & LOCH A'CHUILINN,north_west_highlands_listing_26_1.jpg,1,184,581,542,,copied
+North West Highlands,26,RIVER BRAN & LOCH A'CHUILINN,north_west_highlands_listing_26_2.jpg,2,184,284,263,,copied
+North West Highlands,29,LOCH ACHILTY,north_west_highlands_listing_29_1.jpg,1,184,285,263,,copied
+North West Highlands,32,"URQUHART CASTLE, LOCH NESS",north_west_highlands_listing_32_1.jpg,1,181,284,204,,copied
+North West Highlands,32,"URQUHART CASTLE, LOCH NESS",north_west_highlands_listing_32_2.jpg,2,184,874,546,,copied
+North West Highlands,33,"INVERMORISTON, LOCH NESS",north_west_highlands_listing_33_1.jpg,1,184,284,263,,copied
+North West Highlands,36,FALLS OF FOYERS & LOCH NESS,north_west_highlands_listing_36_1.jpg,1,184,284,263,,copied
+Peak District & East Midlands,5,FAIR NOOK SPRING,peak_district_east_midlands_listing_05_1.jpg,1,87,874,546,,copied
+Peak District & East Midlands,6,LONGWOOD COMPENSATION RESERVOIR,peak_district_east_midlands_listing_06_1.jpg,1,87,285,263,,copied
+Peak District & East Midlands,7,"DIGLEY RESERVOIR, HOLMFIRTH",peak_district_east_midlands_listing_07_1.jpg,1,87,285,263,,copied
+Peak District & East Midlands,8,"‘BOB’ LAKE, PUGNEY’S COUNTRY PARK",peak_district_east_midlands_listing_08_1.jpg,1,87,285,263,,copied
+Peak District & East Midlands,9,"THE CRUX, WILDBOAR CLOUGH",peak_district_east_midlands_listing_09_1.jpg,1,87,285,263,,copied
+Peak District & East Midlands,10,MIDDLE BLACK CLOUGH,peak_district_east_midlands_listing_10_1.jpg,1,87,581,544,,copied
+Peak District & East Midlands,14,FAIRBROOK WATERFALLS,peak_district_east_midlands_listing_14_1.jpg,1,88,282,265,,copied
+Peak District & East Midlands,15,BLACKDEN BROOK WATERFALL,peak_district_east_midlands_listing_15_1.jpg,1,88,581,545,,copied
+Peak District & East Midlands,16,SLIPPERY STONES,peak_district_east_midlands_listing_16_1.jpg,1,84,1933,1196,,copied
+Peak District & East Midlands,19,RIVELIN VALLEY TRAIL,peak_district_east_midlands_listing_19_1.jpg,1,88,284,265,,copied
+Peak District & East Midlands,22,BAMFORD MILL,peak_district_east_midlands_listing_22_1.jpg,1,88,582,542,,copied
+Peak District & East Midlands,23,"PEAKSHOLE, HOPE VALLEY",peak_district_east_midlands_listing_23_1.jpg,1,88,280,267,,copied
+Peak District & East Midlands,25,PADLEY GORGE,peak_district_east_midlands_listing_25_1.jpg,1,89,581,544,,copied
+Peak District & East Midlands,26,"CALVER BRIDGE, RIVER DERWENT",peak_district_east_midlands_listing_26_1.jpg,1,89,285,263,,copied
+Peak District & East Midlands,29,"CHATSWORTH, RIVER DERWENT",peak_district_east_midlands_listing_29_1.jpg,1,86,284,204,,copied
+Peak District & East Midlands,29,"CHATSWORTH, RIVER DERWENT",peak_district_east_midlands_listing_29_2.jpg,2,86,284,204,,copied
+Peak District & East Midlands,29,"CHATSWORTH, RIVER DERWENT",peak_district_east_midlands_listing_29_3.jpg,3,89,284,261,,copied
+Peak District & East Midlands,31,CHEE DALE,peak_district_east_midlands_listing_31_1.jpg,1,89,284,265,,copied
+Peak District & East Midlands,33,"MONSAL DALE, RIVER WYE",peak_district_east_midlands_listing_33_1.jpg,1,86,284,204,,copied
+Peak District & East Midlands,33,"MONSAL DALE, RIVER WYE",peak_district_east_midlands_listing_33_2.jpg,2,89,577,546,,copied
+Peak District & East Midlands,35,"LATHKILL DALE, MONYASH",peak_district_east_midlands_listing_35_1.jpg,1,89,581,542,,copied
+Peak District & East Midlands,39,"PANNIERS POOL, THREE SHIRE HEADS",peak_district_east_midlands_listing_39_1.jpg,1,90,874,546,,copied
+Peak District & East Midlands,39,"PANNIERS POOL, THREE SHIRE HEADS",peak_district_east_midlands_listing_39_2.jpg,2,90,284,263,,copied
+Peak District & East Midlands,39,"PANNIERS POOL, THREE SHIRE HEADS",peak_district_east_midlands_listing_39_3.jpg,3,90,284,263,,copied
+Peak District & East Midlands,40,"WINCLE, RIVER DANE",peak_district_east_midlands_listing_40_1.jpg,1,90,581,543,,copied
+Peak District & East Midlands,44,MERMAID’S POOL / BLAKE MERE,peak_district_east_midlands_listing_44_1.jpg,1,86,284,207,,copied
+Peak District & East Midlands,45,PIKE POOL,peak_district_east_midlands_listing_45_1.jpg,1,90,874,546,,copied
+Peak District & East Midlands,46,"STEPPING STONES, DOVEDALE",peak_district_east_midlands_listing_46_1.jpg,1,86,284,205,,copied
+Peak District & East Midlands,46,"STEPPING STONES, DOVEDALE",peak_district_east_midlands_listing_46_2.jpg,2,91,581,542,,copied
+Peak District & East Midlands,47,"OKEOVER BRIDGE, RIVER DOVE",peak_district_east_midlands_listing_47_1.jpg,1,86,284,204,,copied
+Peak District & East Midlands,47,"OKEOVER BRIDGE, RIVER DOVE",peak_district_east_midlands_listing_47_2.jpg,2,91,284,263,,copied
+Peak District & East Midlands,52,HORKSTOW BRIDGE,peak_district_east_midlands_listing_52_1.jpg,1,91,280,267,,copied
+Peak District & East Midlands,60,HOVERINGHAM LAKES SAILING CLUB,peak_district_east_midlands_listing_60_1.jpg,1,91,581,542,,copied
+Pennines & York Moors,1,"CRAMMEL LINN, R IRTHING",pennines_york_moors_listing_01_1.jpg,1,155,581,542,,copied
+Pennines & York Moors,5,"CAWFIELD QUARRY, HADRIAN'S WALL",pennines_york_moors_listing_05_1.jpg,1,155,284,263,,copied
+Pennines & York Moors,7,"PLANKEY MILL, R ALLEN",pennines_york_moors_listing_07_1.jpg,1,155,280,267,,copied
+Pennines & York Moors,8,"CHOLLERFORD, R NORTH TYNE",pennines_york_moors_listing_08_1.jpg,1,154,280,209,,copied
+Pennines & York Moors,8,"CHOLLERFORD, R NORTH TYNE",pennines_york_moors_listing_08_2.jpg,2,154,284,204,,copied
+Pennines & York Moors,22,"LOW FORCE, R TEES",pennines_york_moors_listing_22_1.jpg,1,156,874,546,,copied
+Pennines & York Moors,22,"LOW FORCE, R TEES",pennines_york_moors_listing_22_2.jpg,2,156,284,263,,copied
+Pennines & York Moors,26,"EGGLESTONE ABBEY BRIDGE, R TEES",pennines_york_moors_listing_26_1.jpg,1,156,874,546,,copied
+Pennines & York Moors,34,"COD BECK, OSMOTHERLEY",pennines_york_moors_listing_34_1.jpg,1,157,581,542,,copied
+Pennines & York Moors,34,"COD BECK, OSMOTHERLEY",pennines_york_moors_listing_34_2.jpg,2,157,284,263,,copied
+Pennines & York Moors,37,GORMIRE LAKE,pennines_york_moors_listing_37_1.jpg,1,157,874,546,,copied
+Pennines & York Moors,37,GORMIRE LAKE,pennines_york_moors_listing_37_2.jpg,2,157,284,263,,copied
+Pennines & York Moors,40,HOB HOLE,pennines_york_moors_listing_40_1.jpg,1,157,284,263,,copied
+Pennines & York Moors,43,"LEALHOLM, R ESK",pennines_york_moors_listing_43_1.jpg,1,158,581,542,,copied
+Pennines & York Moors,46,FALLING FOSS,pennines_york_moors_listing_46_1.jpg,1,152,1933,1196,,copied
+Pennines & York Moors,46,FALLING FOSS,pennines_york_moors_listing_46_2.jpg,2,158,284,263,,copied
+Pennines & York Moors,47,NELLY AYRE FOSS,pennines_york_moors_listing_47_1.jpg,1,158,284,263,,copied
+Pennines & York Moors,50,THOMASON FOSS,pennines_york_moors_listing_50_1.jpg,1,158,581,543,,copied
+Pennines & York Moors,50,THOMASON FOSS,pennines_york_moors_listing_50_2.jpg,2,158,280,267,,copied
+Pennines & York Moors,52,"SINNINGTON, R SEVEN",pennines_york_moors_listing_52_1.jpg,1,158,284,263,,copied
+River Thames & Oxfordshire,4,"ASTHALL, R WINDRUSH",river_thames_oxfordshire_listing_04_1.jpg,1,66,284,263,,copied
+River Thames & Oxfordshire,5,"MINSTER LOVELL HALL, RIVER WINDRUSH",river_thames_oxfordshire_listing_05_1.jpg,1,66,280,267,,copied
+River Thames & Oxfordshire,6,"STONESFIELD, RIVER EVENLODE",river_thames_oxfordshire_listing_06_1.jpg,1,66,284,263,,copied
+River Thames & Oxfordshire,8,LECHLADE-ON-THAMES,river_thames_oxfordshire_listing_08_1.jpg,1,65,284,207,,copied
+River Thames & Oxfordshire,8,LECHLADE-ON-THAMES,river_thames_oxfordshire_listing_08_2.jpg,2,65,284,205,,copied
+River Thames & Oxfordshire,8,LECHLADE-ON-THAMES,river_thames_oxfordshire_listing_08_3.jpg,3,66,581,542,,copied
+River Thames & Oxfordshire,9,"CHEESE WHARF, RIVER THAMES",river_thames_oxfordshire_listing_09_1.jpg,1,66,581,542,,copied
+River Thames & Oxfordshire,10,"BUSCOT WEIR, R THAMES",river_thames_oxfordshire_listing_10_1.jpg,1,63,1933,1196,,copied
+River Thames & Oxfordshire,10,"BUSCOT WEIR, R THAMES",river_thames_oxfordshire_listing_10_2.jpg,2,65,284,204,,copied
+River Thames & Oxfordshire,10,"BUSCOT WEIR, R THAMES",river_thames_oxfordshire_listing_10_3.jpg,3,66,280,267,,copied
+River Thames & Oxfordshire,12,GRAFTON LOCK TO RUSHEY LOCK,river_thames_oxfordshire_listing_12_1.jpg,1,66,284,263,,copied
+River Thames & Oxfordshire,13,"CHIMNEY MEADOWS, R THAMES",river_thames_oxfordshire_listing_13_1.jpg,1,65,284,207,,copied
+River Thames & Oxfordshire,13,"CHIMNEY MEADOWS, R THAMES",river_thames_oxfordshire_listing_13_2.jpg,2,66,284,263,,copied
+River Thames & Oxfordshire,15,"SWINFORD BRIDGE, R THAMES",river_thames_oxfordshire_listing_15_1.jpg,1,67,284,263,,copied
+River Thames & Oxfordshire,16,"PORT MEADOW, R THAMES",river_thames_oxfordshire_listing_16_1.jpg,1,65,284,204,,copied
+River Thames & Oxfordshire,16,"PORT MEADOW, R THAMES",river_thames_oxfordshire_listing_16_2.jpg,2,67,874,546,,copied
+River Thames & Oxfordshire,16,"PORT MEADOW, R THAMES",river_thames_oxfordshire_listing_16_3.jpg,3,67,284,263,,copied
+River Thames & Oxfordshire,17,"PARSON’S PLEASURE, R CHERWELL",river_thames_oxfordshire_listing_17_1.jpg,1,67,284,263,,copied
+River Thames & Oxfordshire,19,"APPLEFORD, R THAMES",river_thames_oxfordshire_listing_19_1.jpg,1,67,285,263,,copied
+River Thames & Oxfordshire,20,"CLIFTON HAMPDEN, R THAMES",river_thames_oxfordshire_listing_20_1.jpg,1,65,284,204,,copied
+River Thames & Oxfordshire,23,PANGBOURNE MEADOWS & GORING,river_thames_oxfordshire_listing_23_1.jpg,1,67,874,546,,copied
+River Thames & Oxfordshire,25,"AXFORD, R KENNET",river_thames_oxfordshire_listing_25_1.jpg,1,68,285,263,,copied
+River Thames & Oxfordshire,26,"MARSH BENHAM, R KENNET",river_thames_oxfordshire_listing_26_1.jpg,1,68,285,263,,copied
+River Thames & Oxfordshire,27,WOOLHAMPTON LAKE & R KENNET,river_thames_oxfordshire_listing_27_1.jpg,1,68,285,263,,copied
+River Thames & Oxfordshire,28,"SULHAMSTEAD, R KENNET",river_thames_oxfordshire_listing_28_1.jpg,1,68,581,542,,copied
+River Thames & Oxfordshire,32,HUGHENDEN STREAM,river_thames_oxfordshire_listing_32_1.jpg,1,68,284,263,,copied
+River Thames & Oxfordshire,36,"ASTON FERRY & HENLEY, R THAMES",river_thames_oxfordshire_listing_36_1.jpg,1,68,581,542,,copied
+River Thames & Oxfordshire,37,"HURLEY ISLAND, THAMES",river_thames_oxfordshire_listing_37_1.jpg,1,69,874,546,,copied
+River Thames & Oxfordshire,44,DENHAM LOCK WOODS,river_thames_oxfordshire_listing_44_1.jpg,1,69,284,265,,copied
+River Thames & Oxfordshire,50,WRAYSBURY & HORTON LAKES,river_thames_oxfordshire_listing_50_1.jpg,1,69,285,267,,copied
+River Thames & Oxfordshire,54,"HEATH POND, CROWTHORNE",river_thames_oxfordshire_listing_54_1.jpg,1,69,284,263,,copied
+South Lake District,1,TONGUE POT & ESK FALLS,south_lake_district_listing_01_1.jpg,1,140,874,546,,copied
+South Lake District,1,TONGUE POT & ESK FALLS,south_lake_district_listing_01_2.jpg,2,140,284,263,,copied
+South Lake District,1,TONGUE POT & ESK FALLS,south_lake_district_listing_01_3.jpg,3,140,280,267,,copied
+South Lake District,1,TONGUE POT & ESK FALLS,south_lake_district_listing_01_4.jpg,4,140,284,541,,copied
+South Lake District,3,"GILL FORCE, RIVER ESK",south_lake_district_listing_03_1.jpg,1,139,284,204,,copied
+South Lake District,4,STANLEY FORCE & DALEGARTH BRIDGE,south_lake_district_listing_04_1.jpg,1,137,1932,1196,,copied
+South Lake District,6,"BIRKS BRIDGE, DUDDON",south_lake_district_listing_06_1.jpg,1,140,577,546,,copied
+South Lake District,9,"ULPHA BRIDGE, DUDDON",south_lake_district_listing_09_1.jpg,1,139,284,204,,copied
+South Lake District,9,"ULPHA BRIDGE, DUDDON",south_lake_district_listing_09_2.jpg,2,141,874,546,,copied
+South Lake District,12,DUDDON BRIDGE,south_lake_district_listing_12_1.jpg,1,139,284,204,,copied
+South Lake District,13,HODGE CLOSE QUARRY,south_lake_district_listing_13_1.jpg,1,139,284,204,,copied
+South Lake District,13,HODGE CLOSE QUARRY,south_lake_district_listing_13_2.jpg,2,141,284,263,,copied
+South Lake District,14,HOLME FELL LAKE,south_lake_district_listing_14_1.jpg,1,141,874,546,,copied
+South Lake District,17,TRANEARTH/BANISHEAD QUARRY,south_lake_district_listing_17_1.jpg,1,141,581,542,,copied
+South Lake District,17,TRANEARTH/BANISHEAD QUARRY,south_lake_district_listing_17_2.jpg,2,141,285,263,,copied
+South Lake District,21,"PEEL ISLAND, CONISTON",south_lake_district_listing_21_1.jpg,1,139,284,204,,copied
+South Lake District,21,"PEEL ISLAND, CONISTON",south_lake_district_listing_21_2.jpg,2,139,280,209,,copied
+South Lake District,21,"PEEL ISLAND, CONISTON",south_lake_district_listing_21_3.jpg,3,142,874,546,,copied
+South Lake District,23,HIGH WRAY BAY/WRAY CASTLE,south_lake_district_listing_23_1.jpg,1,142,284,263,,copied
+South Lake District,26,ESTHWAITE WATER,south_lake_district_listing_26_1.jpg,1,142,874,547,,copied
+South Lake District,31,HIGH DAM & BOBBIN MILL,south_lake_district_listing_31_1.jpg,1,143,285,261,,copied
+South Lake District,33,STICKLE GHYLL,south_lake_district_listing_33_1.jpg,1,143,284,542,,copied
+South Lake District,38,RYDAL WATER,south_lake_district_listing_38_1.jpg,1,143,581,542,,copied
+South Lake District,38,RYDAL WATER,south_lake_district_listing_38_2.jpg,2,143,284,263,,copied
+South Lake District,40,"STOCKGHYLL FORCE, AMBLESIDE",south_lake_district_listing_40_1.jpg,1,144,284,263,,copied
+South Lake District,41,LOUGHRIGG TARN,south_lake_district_listing_41_1.jpg,1,144,581,543,,copied
+South Lake District,42,"ELTERWATER, RIVER BRATHAY",south_lake_district_listing_42_1.jpg,1,144,284,263,,copied
+South Lake District,45,"ROMAN FORT, BRATHAY PARK",south_lake_district_listing_45_1.jpg,1,144,284,263,,copied
+South Lake District,47,"CLEFT GHYLL, SADGILL",south_lake_district_listing_47_1.jpg,1,144,280,268,,copied
+South Lake District,47,"CLEFT GHYLL, SADGILL",south_lake_district_listing_47_2.jpg,2,144,285,267,,copied
+South Lake District,52,"WILSON PLACE, RIVER KENT",south_lake_district_listing_52_1.jpg,1,144,285,263,,copied
+Southern Midlands,5,"TRIMPLEY, RIVER SEVERN",southern_midlands_listing_05_1.jpg,1,80,284,261,,copied
+Southern Midlands,9,"KINGSWOOD COMMON, RIVER TEME",southern_midlands_listing_09_1.jpg,1,80,581,542,,copied
+Southern Midlands,10,"BRANSFORD, RIVER TEME",southern_midlands_listing_10_1.jpg,1,80,284,263,,copied
+Southern Midlands,13,"PERSHORE OLD BRIDGE, RIVER AVON",southern_midlands_listing_13_1.jpg,1,80,284,265,,copied
+Southern Midlands,15,"MARLCLIFF, BIDFORD-ON-AVON",southern_midlands_listing_15_1.jpg,1,80,284,263,,copied
+Southern Midlands,16,WELFORD-ON-AVON,southern_midlands_listing_16_1.jpg,1,80,285,263,,copied
+Southern Midlands,18,STRATFORD & ALVESTON,southern_midlands_listing_18_1.jpg,1,79,284,205,,copied
+Southern Midlands,18,STRATFORD & ALVESTON,southern_midlands_listing_18_2.jpg,2,79,280,209,,copied
+Southern Midlands,18,STRATFORD & ALVESTON,southern_midlands_listing_18_3.jpg,3,80,284,263,,copied
+Southern Midlands,19,"HAMPTON LUCY, RIVER AVON",southern_midlands_listing_19_1.jpg,1,79,284,207,,copied
+Southern Midlands,23,"ESSEX BRIDGE, RIVER TRENT",southern_midlands_listing_23_1.jpg,1,81,581,543,,copied
+Southern Midlands,24,BROCTON QUARRY POOLS,southern_midlands_listing_24_1.jpg,1,81,284,263,,copied
+Southern Midlands,25,"STONYBROOK POOL, CANNOCK CHASE",southern_midlands_listing_25_1.jpg,1,81,284,263,,copied
+Southern Midlands,32,"TUTBURY CASTLE, RIVER DOVE",southern_midlands_listing_32_1.jpg,1,81,581,542,,copied
+Southern Midlands,32,"TUTBURY CASTLE, RIVER DOVE",southern_midlands_listing_32_2.jpg,2,81,284,263,,copied
+Southern Midlands,36,"THORTIT LAKE, OAKTHORPE",southern_midlands_listing_36_1.jpg,1,82,284,263,,copied
+Southern Midlands,37,"ANCHOR CHURCH, RIVER TRENT",southern_midlands_listing_37_1.jpg,1,77,1933,1195,,copied
+Southern Midlands,42,NORMANTON ON SOAR,southern_midlands_listing_42_1.jpg,1,82,280,267,,copied
+Southern Midlands,44,"STANFORD, RIVER SOAR",southern_midlands_listing_44_1.jpg,1,82,284,263,,copied
+Southern Midlands,46,BARROW UPON SOAR,southern_midlands_listing_46_1.jpg,1,82,581,542,,copied
+Southern Midlands,51,"COTTINGHAM, RIVER WELLAND",southern_midlands_listing_51_1.jpg,1,82,581,542,,copied
+Southern Midlands,53,RUTLAND WATER BEACH,southern_midlands_listing_53_1.jpg,1,79,285,205,,copied
+Southern Midlands,58,"WADENHOE, R NENE",southern_midlands_listing_58_1.jpg,1,83,580,542,,copied
+Southern Midlands,63,"PAVENHAM, GREAT OUSE",southern_midlands_listing_63_1.jpg,1,83,581,542,,copied
+Southern Midlands,65,"OLNEY, GREAT OUSE",southern_midlands_listing_65_1.jpg,1,79,284,205,,copied
+Southern Midlands,65,"OLNEY, GREAT OUSE",southern_midlands_listing_65_2.jpg,2,83,284,263,,copied
+West Wales To Brecon Beacons,1,"SEALYHAM WOODS, LAKE & RAVINE",west_wales_to_brecon_beacons_listing_01_1.jpg,1,95,280,267,,copied
+West Wales To Brecon Beacons,2,"ROSEBUSH QUARRY, MYNYDD PRESELI",west_wales_to_brecon_beacons_listing_02_1.jpg,1,95,581,544,,copied
+West Wales To Brecon Beacons,4,"NEVERN, R NEYFER",west_wales_to_brecon_beacons_listing_04_1.jpg,1,95,284,263,,copied
+West Wales To Brecon Beacons,5,"TEIFI GORGE, CILGERRAN",west_wales_to_brecon_beacons_listing_05_1.jpg,1,95,874,546,,copied
+West Wales To Brecon Beacons,6,FFYNONE WOOD WATERFALLS,west_wales_to_brecon_beacons_listing_06_1.jpg,1,96,581,543,,copied
+West Wales To Brecon Beacons,7,"CENARTH, RIVER TEIFI",west_wales_to_brecon_beacons_listing_07_1.jpg,1,95,284,263,,copied
+West Wales To Brecon Beacons,7,"CENARTH, RIVER TEIFI",west_wales_to_brecon_beacons_listing_07_2.jpg,2,95,284,263,,copied
+West Wales To Brecon Beacons,11,ABERGORLECH & TALLEY ABBEY,west_wales_to_brecon_beacons_listing_11_1.jpg,1,96,284,263,,copied
+West Wales To Brecon Beacons,12,CASTELL DRYSLWYN,west_wales_to_brecon_beacons_listing_12_1.jpg,1,96,284,265,,copied
+West Wales To Brecon Beacons,17,LLYN Y FAN FAWR & STREAM,west_wales_to_brecon_beacons_listing_17_1.jpg,1,94,284,207,,copied
+West Wales To Brecon Beacons,17,LLYN Y FAN FAWR & STREAM,west_wales_to_brecon_beacons_listing_17_2.jpg,2,94,280,209,,copied
+West Wales To Brecon Beacons,20,HENRHYD FALLS,west_wales_to_brecon_beacons_listing_20_1.jpg,1,96,285,263,,copied
+West Wales To Brecon Beacons,21,SGWD GWLADUS & EINION GAM,west_wales_to_brecon_beacons_listing_21_1.jpg,1,92,1933,1196,,copied
+West Wales To Brecon Beacons,21,SGWD GWLADUS & EINION GAM,west_wales_to_brecon_beacons_listing_21_2.jpg,2,96,284,263,,copied
+West Wales To Brecon Beacons,22,NEDD FECHAN WATERFALLS,west_wales_to_brecon_beacons_listing_22_1.jpg,1,96,581,542,,copied
+West Wales To Brecon Beacons,22,NEDD FECHAN WATERFALLS,west_wales_to_brecon_beacons_listing_22_2.jpg,2,97,874,546,,copied
+West Wales To Brecon Beacons,23,DDINAS SILICA MINE & SYCHRYD FALLS,west_wales_to_brecon_beacons_listing_23_1.jpg,1,96,285,262,,copied
+West Wales To Brecon Beacons,25,"YSTRADFELLTE FALLS, AFON MELLTE",west_wales_to_brecon_beacons_listing_25_1.jpg,1,94,285,204,,copied
+West Wales To Brecon Beacons,25,"YSTRADFELLTE FALLS, AFON MELLTE",west_wales_to_brecon_beacons_listing_25_2.jpg,2,97,284,263,,copied
+West Wales To Brecon Beacons,26,LLYN CWM LLWCH & CORN DU,west_wales_to_brecon_beacons_listing_26_1.jpg,1,97,284,263,,copied
+West Wales To Brecon Beacons,27,NANT SERE WATERFALLS & WOODS,west_wales_to_brecon_beacons_listing_27_1.jpg,1,94,284,403,,copied
+West Wales To Brecon Beacons,27,NANT SERE WATERFALLS & WOODS,west_wales_to_brecon_beacons_listing_27_2.jpg,2,97,581,542,,copied
+West Wales To Brecon Beacons,28,"BLAEN-Y-GLYN FALLS, CAERFANELL",west_wales_to_brecon_beacons_listing_28_1.jpg,1,98,581,542,,copied
+West Wales To Brecon Beacons,28,"BLAEN-Y-GLYN FALLS, CAERFANELL",west_wales_to_brecon_beacons_listing_28_2.jpg,2,98,284,263,,copied
+West Wales To Brecon Beacons,28,"BLAEN-Y-GLYN FALLS, CAERFANELL",west_wales_to_brecon_beacons_listing_28_3.jpg,3,98,284,263,,copied
+West Wales To Brecon Beacons,29,TALYBONT RESERVOIR,west_wales_to_brecon_beacons_listing_29_1.jpg,1,97,284,263,,copied
+West Wales To Brecon Beacons,30,PONT-SARN BLUE POOL,west_wales_to_brecon_beacons_listing_30_1.jpg,1,97,285,263,,copied
+West Wales To Brecon Beacons,33,"LLANGYNIDR, RIVER USK",west_wales_to_brecon_beacons_listing_33_1.jpg,1,94,284,207,,copied
+West Wales To Brecon Beacons,33,"LLANGYNIDR, RIVER USK",west_wales_to_brecon_beacons_listing_33_2.jpg,2,94,280,209,,copied
+West Wales To Brecon Beacons,33,"LLANGYNIDR, RIVER USK",west_wales_to_brecon_beacons_listing_33_3.jpg,3,98,874,546,,copied
+West Wales To Brecon Beacons,34,"CRICKHOWELL, RIVER USK",west_wales_to_brecon_beacons_listing_34_1.jpg,1,98,284,263,,copied
+West Wales To Brecon Beacons,35,"UPPER CWM BRIDGE, LLANBEDR",west_wales_to_brecon_beacons_listing_35_1.jpg,1,99,284,263,,copied
+West Wales To Brecon Beacons,37,PWLL-Y-WRACH WATERFALL,west_wales_to_brecon_beacons_listing_37_1.jpg,1,99,284,263,,copied
+West Wales To Brecon Beacons,38,"LLANWENARTH, RIVER USK",west_wales_to_brecon_beacons_listing_38_1.jpg,1,99,581,542,,copied
+West Wales To Brecon Beacons,38,"LLANWENARTH, RIVER USK",west_wales_to_brecon_beacons_listing_38_2.jpg,2,99,284,263,,copied
+West Wales To Brecon Beacons,39,KEEPER’S POND & PUNCHBOWL,west_wales_to_brecon_beacons_listing_39_1.jpg,1,98,581,542,,copied
+West Wales To Brecon Beacons,40,"PUNCHBOWL LAKE, BLORENGE",west_wales_to_brecon_beacons_listing_40_1.jpg,1,98,284,263,,copied
+West Wales To Brecon Beacons,41,"ST CADOC’S AT THE BRYN, RIVER USK",west_wales_to_brecon_beacons_listing_41_1.jpg,1,99,284,263,,copied
+West Wales To Brecon Beacons,42,"CLYTHA, RIVER USK",west_wales_to_brecon_beacons_listing_42_1.jpg,1,99,581,542,,copied
+West Wales To Brecon Beacons,44,"DIPPING BRIDGE, MERTHYR MAWR",west_wales_to_brecon_beacons_listing_44_1.jpg,1,99,285,265,,copied
+West Wales To Brecon Beacons,45,RHONDDA FAWR WATERFALLS,west_wales_to_brecon_beacons_listing_45_1.jpg,1,99,284,263,,copied
+West Wales To Brecon Beacons,46,RHONDDA FACH WATERFALL,west_wales_to_brecon_beacons_listing_46_1.jpg,1,99,285,263,,copied
+Wharfedale & Bowland,1,"CROOK O’LUNE, CATON",wharfedale_bowland_listing_01_1.jpg,1,126,285,263,,copied
+Wharfedale & Bowland,7,"SLAIDBURN, RIVER HODDER",wharfedale_bowland_listing_07_1.jpg,1,126,284,265,,copied
+Wharfedale & Bowland,8,"DUNSOP BR & WHITEWELL, R HODDER",wharfedale_bowland_listing_08_1.jpg,1,126,581,542,,copied
+Wharfedale & Bowland,12,"MARLES WOOD, R RIBBLE",wharfedale_bowland_listing_12_1.jpg,1,127,581,542,,copied
+Wharfedale & Bowland,13,"STAINFORTH FORCE, R RIBBLE",wharfedale_bowland_listing_13_1.jpg,1,127,285,263,,copied
+Wharfedale & Bowland,13,"STAINFORTH FORCE, R RIBBLE",wharfedale_bowland_listing_13_2.jpg,2,127,581,542,,copied
+Wharfedale & Bowland,13,"STAINFORTH FORCE, R RIBBLE",wharfedale_bowland_listing_13_3.jpg,3,127,282,263,,copied
+Wharfedale & Bowland,14,CATRIGG FORCE,wharfedale_bowland_listing_14_1.jpg,1,127,284,263,,copied
+Wharfedale & Bowland,15,JANET’S FOSS,wharfedale_bowland_listing_15_1.jpg,1,127,581,542,,copied
+Wharfedale & Bowland,17,"GHAISTRILL’S STRID, GRASSINGTON",wharfedale_bowland_listing_17_1.jpg,1,128,285,263,,copied
+Wharfedale & Bowland,17,"GHAISTRILL’S STRID, GRASSINGTON",wharfedale_bowland_listing_17_2.jpg,2,128,284,263,,copied
+Wharfedale & Bowland,18,GRASSINGTON WEIR & LINTON FALLS,wharfedale_bowland_listing_18_1.jpg,1,125,284,204,,copied
+Wharfedale & Bowland,18,GRASSINGTON WEIR & LINTON FALLS,wharfedale_bowland_listing_18_2.jpg,2,125,284,204,,copied
+Wharfedale & Bowland,18,GRASSINGTON WEIR & LINTON FALLS,wharfedale_bowland_listing_18_3.jpg,3,127,284,263,,copied
+Wharfedale & Bowland,18,GRASSINGTON WEIR & LINTON FALLS,wharfedale_bowland_listing_18_4.jpg,4,128,284,263,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_1.jpg,1,123,1933,1196,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_2.jpg,2,125,284,204,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_3.jpg,3,125,284,204,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_4.jpg,4,125,284,205,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_5.jpg,5,128,581,542,,copied
+Wharfedale & Bowland,19,"LOUP SCAR, R WHARFE, BURNSALL",wharfedale_bowland_listing_19_6.jpg,6,128,280,267,,copied
+Wharfedale & Bowland,20,"APPLETREEWICK, R WHARFE",wharfedale_bowland_listing_20_1.jpg,1,125,284,205,,copied
+Wharfedale & Bowland,20,"APPLETREEWICK, R WHARFE",wharfedale_bowland_listing_20_2.jpg,2,128,874,546,,copied
+Wharfedale & Bowland,20,"APPLETREEWICK, R WHARFE",wharfedale_bowland_listing_20_3.jpg,3,128,284,263,,copied
+Wharfedale & Bowland,23,"BELOW THE STRID, R WHARFE",wharfedale_bowland_listing_23_1.jpg,1,126,284,204,,copied
+Wharfedale & Bowland,23,"BELOW THE STRID, R WHARFE",wharfedale_bowland_listing_23_2.jpg,2,126,284,205,,copied
+Wharfedale & Bowland,23,"BELOW THE STRID, R WHARFE",wharfedale_bowland_listing_23_3.jpg,3,129,284,263,,copied
+Wharfedale & Bowland,24,"BOLTON ABBEY, R WHARFE",wharfedale_bowland_listing_24_1.jpg,1,126,284,204,,copied
+Wharfedale & Bowland,24,"BOLTON ABBEY, R WHARFE",wharfedale_bowland_listing_24_2.jpg,2,129,874,546,,copied
+Wharfedale & Bowland,25,"ADDINGHAM, R WHARFE",wharfedale_bowland_listing_25_1.jpg,1,129,284,263,,copied
+Wharfedale & Bowland,28,POOLS ABOVE HOW STEAN GORGE,wharfedale_bowland_listing_28_1.jpg,1,129,284,263,,copied
+Wharfedale & Bowland,34,"GOIT STOCK FALLS, HARDEN BECK",wharfedale_bowland_listing_34_1.jpg,1,129,284,263,,copied
+Wharfedale & Bowland,36,"LUMB HOLE, CRIMSWORTH DEAN BECK",wharfedale_bowland_listing_36_1.jpg,1,129,284,265,,copied
+Wharfedale & Bowland,37,GADDINGS DAM,wharfedale_bowland_listing_37_1.jpg,1,129,285,263,,copied
+Wye Valley & Somerset Avon,2,SKENFRITH CASTLE,wye_valley_somerset_avon_listing_02_1.jpg,1,46,874,547,,copied
+Wye Valley & Somerset Avon,3,"TREGATE BRIDGE, RIVER MONNOW",wye_valley_somerset_avon_listing_03_1.jpg,1,46,284,263,,copied
+Wye Valley & Somerset Avon,5,SELLACK BOAT & HOARWITHY,wye_valley_somerset_avon_listing_05_1.jpg,1,46,285,263,,copied
+Wye Valley & Somerset Avon,6,"BACKNEY COMMON, RIVER WYE",wye_valley_somerset_avon_listing_06_1.jpg,1,45,284,204,,copied
+Wye Valley & Somerset Avon,7,"KERNE BRIDGE, R WYE",wye_valley_somerset_avon_listing_07_1.jpg,1,46,285,263,,copied
+Wye Valley & Somerset Avon,8,"LOWER LYDBROOK PARK, R WYE",wye_valley_somerset_avon_listing_08_1.jpg,1,46,581,541,,copied
+Wye Valley & Somerset Avon,9,SYMONDS YAT EAST & BIBLINS,wye_valley_somerset_avon_listing_09_1.jpg,1,45,284,205,,copied
+Wye Valley & Somerset Avon,11,LOWER REDBROOK & BOAT INN,wye_valley_somerset_avon_listing_11_1.jpg,1,47,581,543,,copied
+Wye Valley & Somerset Avon,12,"BIGSWEIR BRIDGE, R WYE",wye_valley_somerset_avon_listing_12_1.jpg,1,46,284,263,,copied
+Wye Valley & Somerset Avon,13,LIVOX QUARRY WALK TO WYE GORGE,wye_valley_somerset_avon_listing_13_1.jpg,1,47,284,263,,copied
+Wye Valley & Somerset Avon,17,ST ANTHONY’S WELL,wye_valley_somerset_avon_listing_17_1.jpg,1,47,280,267,,copied
+Wye Valley & Somerset Avon,19,"ASHLEWORTH QUAY, RIVER SEVERN",wye_valley_somerset_avon_listing_19_1.jpg,1,47,582,542,,copied
+Wye Valley & Somerset Avon,28,"LITTLE SOMERFORD, R AVON",wye_valley_somerset_avon_listing_28_1.jpg,1,48,581,542,,copied
+Wye Valley & Somerset Avon,30,"LACOCK ABBEY, AVON",wye_valley_somerset_avon_listing_30_1.jpg,1,48,285,263,,copied
+Wye Valley & Somerset Avon,31,"WHADDON, R AVON",wye_valley_somerset_avon_listing_31_1.jpg,1,48,581,542,,copied
+Wye Valley & Somerset Avon,31,"WHADDON, R AVON",wye_valley_somerset_avon_listing_31_2.jpg,2,48,284,263,,copied
+Wye Valley & Somerset Avon,33,BRADFORD-ON-AVON SAILING CLUB,wye_valley_somerset_avon_listing_33_1.jpg,1,48,284,262,,copied
+Wye Valley & Somerset Avon,34,BRADFORD-ON-AVON TITHE BARN,wye_valley_somerset_avon_listing_34_1.jpg,1,48,284,263,,copied
+Wye Valley & Somerset Avon,35,"AVONCLIFF WEIR, BRADFORD ON AVON",wye_valley_somerset_avon_listing_35_1.jpg,1,48,285,263,,copied
+Wye Valley & Somerset Avon,36,WELLOW BROOK,wye_valley_somerset_avon_listing_36_1.jpg,1,48,284,263,,copied
+Wye Valley & Somerset Avon,37,"FARLEIGH HUNGERFORD, R FROME",wye_valley_somerset_avon_listing_37_1.jpg,1,43,1933,1196,,copied
+Wye Valley & Somerset Avon,37,"FARLEIGH HUNGERFORD, R FROME",wye_valley_somerset_avon_listing_37_2.jpg,2,45,284,205,,copied
+Wye Valley & Somerset Avon,37,"FARLEIGH HUNGERFORD, R FROME",wye_valley_somerset_avon_listing_37_3.jpg,3,49,284,263,,copied
+Wye Valley & Somerset Avon,37,"FARLEIGH HUNGERFORD, R FROME",wye_valley_somerset_avon_listing_37_4.jpg,4,49,285,263,,copied
+Wye Valley & Somerset Avon,38,"TELLISFORD, R FROME",wye_valley_somerset_avon_listing_38_1.jpg,1,45,284,204,,copied
+Wye Valley & Somerset Avon,38,"TELLISFORD, R FROME",wye_valley_somerset_avon_listing_38_2.jpg,2,49,285,263,,copied
+Wye Valley & Somerset Avon,39,LULLINGTON & ORCHARDLEIGH,wye_valley_somerset_avon_listing_39_1.jpg,1,49,582,542,,copied
+Wye Valley & Somerset Avon,40,"DUNDAS AQUEDUCT, AVON",wye_valley_somerset_avon_listing_40_1.jpg,1,49,284,263,,copied
+Wye Valley & Somerset Avon,41,"WARLEIGH WEIR, CLAVERTON",wye_valley_somerset_avon_listing_41_1.jpg,1,45,284,204,,copied
+Wye Valley & Somerset Avon,41,"WARLEIGH WEIR, CLAVERTON",wye_valley_somerset_avon_listing_41_2.jpg,2,49,874,546,,copied
+Wye Valley & Somerset Avon,47,"WOOLLARD, R CHEW",wye_valley_somerset_avon_listing_47_1.jpg,1,50,284,263,,copied
+Wye Valley & Somerset Avon,48,"PUBLOW BRIDGE, R CHEW",wye_valley_somerset_avon_listing_48_1.jpg,1,50,284,263,,copied
+Wye Valley & Somerset Avon,49,"PENSFORD WEIR, R CHEW",wye_valley_somerset_avon_listing_49_1.jpg,1,50,284,263,,copied
+Wye Valley & Somerset Avon,51,LITTON RESERVOIR,wye_valley_somerset_avon_listing_51_1.jpg,1,50,582,542,,copied
+Wye Valley & Somerset Avon,53,BABYLON BROOK/STRODE WATERFALL,wye_valley_somerset_avon_listing_53_1.jpg,1,50,280,267,,copied
+Wye Valley & Somerset Avon,54,"BLAGDON LAKE, BUTCOMBE",wye_valley_somerset_avon_listing_54_1.jpg,1,50,581,542,,copied
+Yorkshire Dales,4,"ULDALE FALL, R RAWTHEY",yorkshire_dales_listing_04_1.jpg,1,133,285,265,,copied
+Yorkshire Dales,5,IBBETH PERIL & HELL’S CAULDRON,yorkshire_dales_listing_05_1.jpg,1,133,284,263,,copied
+Yorkshire Dales,6,GASTACK BECK WATERFALL,yorkshire_dales_listing_06_1.jpg,1,133,874,546,,copied
+Yorkshire Dales,7,"STENKRITH BRIDGE, R EDEN",yorkshire_dales_listing_07_1.jpg,1,133,280,267,,copied
+Yorkshire Dales,8,"CATAGILL SCAR, R EDEN",yorkshire_dales_listing_08_1.jpg,1,133,581,542,,copied
+Yorkshire Dales,9,"HELL GILL, GARSDALE HEAD",yorkshire_dales_listing_09_1.jpg,1,132,581,420,,copied
+Yorkshire Dales,9,"HELL GILL, GARSDALE HEAD",yorkshire_dales_listing_09_2.jpg,2,132,280,420,,copied
+Yorkshire Dales,9,"HELL GILL, GARSDALE HEAD",yorkshire_dales_listing_09_3.jpg,3,133,280,267,,copied
+Yorkshire Dales,9,"HELL GILL, GARSDALE HEAD",yorkshire_dales_listing_09_4.jpg,4,133,284,263,,copied
+Yorkshire Dales,11,"WAIN WATH FORCE, KELD",yorkshire_dales_listing_11_1.jpg,1,130,1933,1196,,copied
+Yorkshire Dales,12,STONESDALE BECK & GILLS,yorkshire_dales_listing_12_1.jpg,1,134,284,265,,copied
+Yorkshire Dales,13,"CURRACK FORCE, STONESDALE BECK",yorkshire_dales_listing_13_1.jpg,1,134,280,267,,copied
+Yorkshire Dales,14,KISDON FORCE & PARK LODGE,yorkshire_dales_listing_14_1.jpg,1,132,284,204,,copied
+Yorkshire Dales,14,KISDON FORCE & PARK LODGE,yorkshire_dales_listing_14_2.jpg,2,132,284,205,,copied
+Yorkshire Dales,14,KISDON FORCE & PARK LODGE,yorkshire_dales_listing_14_3.jpg,3,134,581,542,,copied
+Yorkshire Dales,14,KISDON FORCE & PARK LODGE,yorkshire_dales_listing_14_4.jpg,4,134,284,263,,copied
+Yorkshire Dales,15,SWINNER GILL CANYON & POOLS,yorkshire_dales_listing_15_1.jpg,1,134,280,267,,copied
+Yorkshire Dales,15,SWINNER GILL CANYON & POOLS,yorkshire_dales_listing_15_2.jpg,2,134,285,263,,copied
+Yorkshire Dales,17,GUNNERSIDE GILL,yorkshire_dales_listing_17_1.jpg,1,134,284,265,,copied
+Yorkshire Dales,19,"RICHMOND FOSS, R SWALE",yorkshire_dales_listing_19_1.jpg,1,135,284,263,,copied
+Yorkshire Dales,22,COTTER FORCE,yorkshire_dales_listing_22_1.jpg,1,135,581,542,,copied
+Yorkshire Dales,23,"AYSGILL FORCE, GAYLE",yorkshire_dales_listing_23_1.jpg,1,135,285,263,,copied
+Yorkshire Dales,24,HARDRAW FORCE,yorkshire_dales_listing_24_1.jpg,1,135,284,263,,copied
+Yorkshire Dales,28,"LOWER AYSGARTH, R URE",yorkshire_dales_listing_28_1.jpg,1,135,581,542,,copied
+Yorkshire Dales,29,"CAULDRON FALLS, WEST BURTON",yorkshire_dales_listing_29_1.jpg,1,135,283,262,,copied
+Yorkshire Dales,30,"REDMIRE FALLS, R URE",yorkshire_dales_listing_30_1.jpg,1,136,284,262,,copied
+Yorkshire Dales,33,"DEVIL’S BRIDGE, KIRKBY LONSDALE",yorkshire_dales_listing_33_1.jpg,1,136,284,263,,copied
+Yorkshire Dales,36,"COW DUB WATERFALL, EASE GILL",yorkshire_dales_listing_36_1.jpg,1,136,280,267,,copied
+Yorkshire Dales,37,"THORNTON FORCE, R TWISS",yorkshire_dales_listing_37_1.jpg,1,132,284,205,,copied
+Yorkshire Dales,37,"THORNTON FORCE, R TWISS",yorkshire_dales_listing_37_2.jpg,2,136,284,263,,copied
+Yorkshire Dales,40,"BEEZLEY FALLS, INGLETON",yorkshire_dales_listing_40_1.jpg,1,132,284,204,,copied
+Yorkshire Dales,43,CRAY GILL AND CROOK GILL FALLS,yorkshire_dales_listing_43_1.jpg,1,136,285,263,,copied
+Yorkshire Dales,46,"SKIRFARE BRIDGE, R SKIRFARE",yorkshire_dales_listing_46_1.jpg,1,136,581,542,,copied
