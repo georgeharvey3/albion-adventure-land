@@ -9,6 +9,8 @@
 // map and the store initialise — an async read would paint the default view
 // first and then jump.
 
+import { BASEMAP_IDS, type BasemapId } from '../map/basemaps';
+
 const KEY = 'albion:view';
 
 export interface MapView {
@@ -25,9 +27,11 @@ export interface ViewState {
   map: MapView | null;
   tab: SheetTab | null;
   selectedSiteId: string | null;
+  /** Street or satellite tiles. Null means the street default. */
+  basemap: BasemapId | null;
 }
 
-const EMPTY: ViewState = { map: null, tab: null, selectedSiteId: null };
+const EMPTY: ViewState = { map: null, tab: null, selectedSiteId: null, basemap: null };
 
 function validMap(v: unknown): v is MapView {
   if (!v || typeof v !== 'object') return false;
@@ -65,6 +69,7 @@ export function loadViewState(): ViewState {
         // The site id is only checked for shape here; whether it still exists
         // is settled once the site data has loaded (see the store's init).
         selectedSiteId: typeof parsed.selectedSiteId === 'string' ? parsed.selectedSiteId : null,
+        basemap: BASEMAP_IDS.includes(parsed.basemap as BasemapId) ? (parsed.basemap as BasemapId) : null,
       };
     }
   } catch {

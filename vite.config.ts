@@ -84,6 +84,21 @@ export default defineConfig(({ command }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            // The satellite basemap — Esri imagery plus its two transparent
+            // reference layers (labels and roads) — cached on the same terms as
+            // the street tiles, so either layer works offline once it has been
+            // seen. One cache covers all three services: they are requested
+            // together and are only useful together. The entry cap is per tile,
+            // and a hybrid view costs three tiles where street costs one.
+            urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'satellite-tiles',
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),

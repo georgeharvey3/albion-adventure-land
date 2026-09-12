@@ -7,6 +7,7 @@ import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
 import { loadViewState, saveViewState } from '../state/viewState';
+import { basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
@@ -105,6 +106,7 @@ export function MapView() {
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const locateBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
+  const basemapRef = useRef<L.LayerGroup | null>(null);
   const outingFitKeyRef = useRef<string | null>(null);
   const journeyFitKeyRef = useRef<string | null>(null);
   const markersRef = useRef(new Map<string, { marker: L.CircleMarker; view: FilteredSiteView }>());
@@ -137,10 +139,8 @@ export function MapView() {
     // below throw it away once the site data lands.
     if (saved) didFitRef.current = true;
     mapRef.current = map;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    let basemapId: BasemapId = loadViewState().basemap ?? 'street';
+    basemapRef.current = createBasemap(basemapId).addTo(map);
 
     // Dedicated panes for the "you are here" marker. The accuracy ring sits
     // *below* the site pins (it's a translucent wash — it must not tint them),
@@ -191,6 +191,43 @@ export function MapView() {
       },
     });
     map.addControl(new Ctl());
+
+    // Basemap switcher. Street tiles carry the lanes and place names that get
+    // you there; satellite imagery answers what the place looks like when you
+    // arrive — how big that pool really is, where a track pulls in, how much
+    // tree cover sits over a fall. The choice is remembered across launches,
+    // and the service worker caches both providers, so a region browsed on
+    // either layer stays available with no signal.
+    const BasemapCtl = L.Control.extend({
+      options: { position: 'topleft' as L.ControlPosition },
+      onAdd() {
+        const btn = L.DomUtil.create('button', 'drop-pin-btn basemap-btn');
+        btn.type = 'button';
+        btn.innerHTML = iconMarkup('layers', 20);
+        // The label names where the tap goes, not where you are — the pressed
+        // state carries "you are on satellite" on its own.
+        const paint = () => {
+          const next: BasemapId = basemapId === 'street' ? 'satellite' : 'street';
+          btn.title = `Switch to ${basemapLabel(next).toLowerCase()} tiles`;
+          btn.setAttribute('aria-label', btn.title);
+          btn.classList.toggle('active', basemapId === 'satellite');
+        };
+        paint();
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, 'click', () => {
+          basemapId = basemapId === 'street' ? 'satellite' : 'street';
+          // Add the replacement before removing the old one: dropping the only
+          // tile layer first flashes the bare container between the two.
+          const prev = basemapRef.current;
+          basemapRef.current = createBasemap(basemapId).addTo(map);
+          if (prev) map.removeLayer(prev);
+          saveViewState({ basemap: basemapId });
+          paint();
+        });
+        return btn;
+      },
+    });
+    map.addControl(new BasemapCtl());
 
     // "Zoom to me" control — bottom right, in thumb reach on a phone. It only
     // recentres; it never asks for a fix, so it is hidden until a location
