@@ -35,6 +35,7 @@ Requires: pdfplumber, Pillow      (pip install pdfplumber Pillow)
 
 import argparse
 import csv
+import io
 import os
 import re
 import sys
@@ -301,8 +302,26 @@ def _indexed_palette(cs):
     return ncomp, pal
 
 
-def save_image(im, dest):
-    """Write the embedded image, preferring a byte-for-byte JPEG copy."""
+def _write_jpeg(img, dest, max_px, quality):
+    """Write a Pillow image as a JPEG, no larger than max_px on its long side."""
+    if max_px and max(img.size) > max_px:
+        scale = max_px / max(img.size)
+        img = img.resize((max(1, round(img.width * scale)),
+                          max(1, round(img.height * scale))), Image.LANCZOS)
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    img.save(dest, "JPEG", quality=quality, optimize=True, progressive=True)
+
+
+def save_image(im, dest, max_px=None, quality=95):
+    """
+    Write the embedded image, preferring a byte-for-byte JPEG copy.
+
+    max_px caps the long side of the picture in pixels. A book printed at a
+    high resolution gives pictures of several megabytes each, which is more
+    than a phone on a rural road can download. Leave it at None to keep every
+    picture at the size the book holds.
+    """
     st = im["stream"]
     try:
         filters = [f[0].name for f in st.get_filters()]
@@ -310,9 +329,21 @@ def save_image(im, dest):
         filters = []
 
     if filters == ["DCTDecode"]:                       # already a JPEG
+        raw = st.get_rawdata()
+        if max_px:
+            img = Image.open(io.BytesIO(raw))
+            if max(img.size) > max_px:
+                _write_jpeg(img, dest, max_px, quality)
+                return "re-encoded (smaller)"
         with open(dest, "wb") as f:
-            f.write(st.get_rawdata())
+            f.write(raw)
         return "copied"
+
+    if filters == ["JPXDecode"]:                       # JPEG 2000
+        # No browser but Safari shows JPEG 2000, so the codestream is decoded
+        # and written again as a JPEG. Pillow needs openjpeg for this.
+        _write_jpeg(Image.open(io.BytesIO(st.get_rawdata())), dest, max_px, quality)
+        return "re-encoded (jpeg 2000)"
 
     w, h = im["srcsize"]
     if not w or not h:
@@ -331,7 +362,7 @@ def save_image(im, dest):
             img = img.convert("RGB")
         else:                                          # CMYK palette
             img = img.convert("RGB")
-        img.save(dest, "JPEG", quality=95)
+        _write_jpeg(img, dest, max_px, quality)
         return "re-encoded (indexed)"
 
     ncomp = {"DeviceGray": 1, "DeviceRGB": 3, "DeviceCMYK": 4}
@@ -347,9 +378,7 @@ def save_image(im, dest):
         raise ValueError(f"unrecognised image data ({filters}, {len(raw)} bytes for {w}x{h})")
 
     img = Image.frombytes(mode, (w, h), raw[:w * h * {"L": 1, "RGB": 3, "CMYK": 4}[mode]])
-    if mode == "CMYK":
-        img = img.convert("RGB")
-    img.save(dest, "JPEG", quality=95)
+    _write_jpeg(img, dest, max_px, quality)
     return "re-encoded"
 
 
