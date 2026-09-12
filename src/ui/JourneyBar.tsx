@@ -1,6 +1,7 @@
 import { useStore } from '../state/store';
 import { DETOUR_BUDGETS } from '../geo/corridor';
 import { formatDistance, haversine } from '../geo/haversine';
+import { FlagIcon, MapPinIcon } from './icons';
 
 // The From → To bar (issue #14). ONE control, sitting above the tabs, that
 // turns the whole app from a point query into a corridor query:
@@ -42,14 +43,16 @@ export function JourneyBar() {
   return (
     <div className="journey-bar">
       <div className="journey-ends">
-        <span className="journey-from">📍 {fromLabel}</span>
+        <span className="journey-from">
+          <MapPinIcon /> {fromLabel}
+        </span>
         {destination ? (
           <>
             <span className="journey-arrow" aria-hidden="true">
               →
             </span>
             <span className="journey-to" title={destination.label}>
-              🏁 {destination.label}
+              <FlagIcon /> {destination.label}
             </span>
             <button
               className="journey-clear"

@@ -5,6 +5,7 @@ import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site } from '../data/types';
 import { formatDistance } from '../geo/haversine';
 import { formatDetour, formatProgress } from '../geo/corridor';
 import { SiteBody } from './SiteDetail';
+import { CheckIcon, ListIcon, MapIcon, MapPinIcon, StarIcon } from './icons';
 
 // Near me now (spec F4): every visible site sorted by haversine distance from
 // the current position, respecting the active type filter. Tap a row to open it
@@ -134,7 +135,7 @@ export function NearMeList() {
         {!position && (
           <p className="hint">
             {geoError ?? 'Finding your location… '}
-            {' '}Use the 📍 button on the map to drop a manual location.
+            {' '}Use the <MapPinIcon /> button on the map to drop a manual location.
           </p>
         )}
         {position && !destination && (
@@ -154,7 +155,7 @@ export function NearMeList() {
           }}
           aria-pressed={browse}
         >
-          {browse ? '🗺 Map' : '☰ Browse'}
+          {browse ? <MapIcon /> : <ListIcon />} {browse ? 'Map' : 'Browse'}
         </button>
       </div>
       {routeMode && (
@@ -217,8 +218,9 @@ export function NearMeList() {
                 <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
                 <span className="row-main">
                   <span className="row-name">
-                    {visited && '✓ '}
-                    {wishlisted && !visited && '★ '}
+                    {visited && <CheckIcon />}
+                    {wishlisted && !visited && <StarIcon filled />}
+                    {(visited || wishlisted) && ' '}
                     {site.name}
                   </span>
                   <span className="row-sub">
@@ -255,8 +257,9 @@ export function NearMeList() {
                 <RowThumb site={site} />
                 <span className="row-main">
                   <span className="row-name">
-                    {visited && '✓ '}
-                    {wishlisted && !visited && '★ '}
+                    {visited && <CheckIcon />}
+                    {wishlisted && !visited && <StarIcon filled />}
+                    {(visited || wishlisted) && ' '}
                     {site.name}
                   </span>
                   <span className="row-sub">

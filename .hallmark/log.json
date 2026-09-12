@@ -1,0 +1,13 @@
+[
+  {
+    "date": "2026-09-12",
+    "scope": "app",
+    "macrostructure": "Map/Diagram (shell) + Index-First (lists) + Long Document (write-ups)",
+    "theme": "Almanac",
+    "theme_axes": "light / classical-serif / chromatic-green",
+    "enrichment": "none",
+    "designed_as_app": true,
+    "design_system": "design.md",
+    "brief": "Albion Adventure Land · offline-first PWA for visiting curated sites across Britain"
+  }
+]

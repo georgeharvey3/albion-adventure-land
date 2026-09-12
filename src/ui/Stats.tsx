@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useStore } from '../state/store';
 import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
 import type { Site } from '../data/types';
+import { BanIcon, CheckIcon, StarIcon } from './icons';
 
 // The "Saved" tab: the two lists that make this a collection rather than a
 // viewer — places you want to visit (wishlist) and a log of the ones you have,
@@ -61,7 +62,7 @@ export function Stats() {
       <h3 className="stats-heading">Wishlist ({wishlistSites.length})</h3>
       {wishlistSites.length === 0 ? (
         <p className="hint">
-          No saved places yet. Tap ★ on a site to add it to your wishlist.
+          No saved places yet. Tap <StarIcon /> on a site to add it to your wishlist.
         </p>
       ) : (
         <ul>
@@ -73,7 +74,9 @@ export function Stats() {
             >
               <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
               <span className="row-main">
-                <span className="row-name">★ {site.name}</span>
+                <span className="row-name">
+                  <StarIcon filled /> {site.name}
+                </span>
                 <span className="row-sub">
                   {SITE_TYPE_LABELS[site.category]}
                   {site.county ? ` · ${site.county}` : ''}
@@ -99,7 +102,9 @@ export function Stats() {
             >
               <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
               <span className="row-main">
-                <span className="row-name">✓ {site.name}</span>
+                <span className="row-name">
+                  <CheckIcon /> {site.name}
+                </span>
                 <span className="row-sub">
                   {SITE_TYPE_LABELS[site.category]}
                   {site.county ? ` · ${site.county}` : ''}
@@ -123,7 +128,9 @@ export function Stats() {
               >
                 <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
                 <span className="row-main">
-                  <span className="row-name">🚫 {site.name}</span>
+                  <span className="row-name">
+                    <BanIcon /> {site.name}
+                  </span>
                   <span className="row-sub">
                     {SITE_TYPE_LABELS[site.category]}
                     {site.county ? ` · ${site.county}` : ''}

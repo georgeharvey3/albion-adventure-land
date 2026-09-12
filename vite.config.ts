@@ -29,8 +29,8 @@ export default defineConfig(({ command }) => ({
         name: 'Albion Adventure Land',
         short_name: 'Albion',
         description: 'Offline-first companion for visiting curated sites across Britain.',
-        theme_color: '#1f6b4f',
-        background_color: '#f7f5f0',
+        theme_color: '#216448',
+        background_color: '#f2f6f4',
         display: 'standalone',
         // All manifest URLs are left relative so they resolve against the
         // manifest's own location (the Pages subpath), not the domain root.
@@ -54,7 +54,10 @@ export default defineConfig(({ command }) => ({
         // first load. They are runtime-cached instead (see below), so a picture
         // stays offline after it is seen once. The app is fully functional
         // without them.
-        globPatterns: ['**/*.{js,css,html,svg,json}'],
+        // woff2 is in the list because the serif and mono faces are self-hosted
+        // (src/fonts). Without it a device with no signal falls back to its own
+        // serif and monospace defaults, which is a different page.
+        globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
         // sites.json is the whole dataset and must be precached for offline-first
         // (see spec §9) — it has already grown past Workbox's 2 MiB default as
         // sources were added. Raise the ceiling with headroom for dataset growth.

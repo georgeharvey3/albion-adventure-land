@@ -1,4 +1,5 @@
 import { useStore } from '../state/store';
+import { CheckIcon, FlagIcon, MapPinIcon } from './icons';
 import {
   SITE_TYPES,
   SITE_TYPE_COLORS,
@@ -144,7 +145,8 @@ export function Outing() {
                   <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
                   <span className="row-main">
                     <span className="row-name">
-                      {site.id in visited && '✓ '}
+                      {site.id in visited && <CheckIcon />}
+                      {site.id in visited && ' '}
                       {site.name}
                     </span>
                     <span className="row-sub">{SITE_TYPE_LABELS[site.category]}</span>
@@ -169,7 +171,7 @@ export function Outing() {
             {destination && (
               <li className="row trip-destination">
                 <span className="stop-num" aria-hidden="true">
-                  🏁
+                  <FlagIcon />
                 </span>
                 <span className="row-main">
                   <span className="row-name">{destination.label}</span>
@@ -332,7 +334,7 @@ export function Outing() {
 
         {!position && (
           <p className="hint">
-            No location yet — allow GPS or use the 📍 button on the map to drop an
+            No location yet — allow GPS or use the <MapPinIcon /> button on the map to drop an
             "I am here" pin.
           </p>
         )}

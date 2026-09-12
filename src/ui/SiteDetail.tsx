@@ -4,6 +4,7 @@ import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site, type SiteImage } from '.
 import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
 import { Lightbox } from './Lightbox';
+import { BanIcon, CheckIcon, ClockIcon, FlagIcon, StarIcon } from './icons';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
@@ -152,9 +153,21 @@ export function SiteBody({
           <h2 className="card-title">{site.name}</h2>
         </>
       )}
-      {visited && <div className="badge visited">✓ Visited {visited.visitedAt.slice(0, 10)}</div>}
-      {wishlisted && !visited && <div className="badge wish">★ Wishlist</div>}
-      {hidden && <div className="badge">🚫 Hidden</div>}
+      {visited && (
+        <div className="badge visited">
+          <CheckIcon /> Visited {visited.visitedAt.slice(0, 10)}
+        </div>
+      )}
+      {wishlisted && !visited && (
+        <div className="badge wish">
+          <StarIcon filled /> Wishlist
+        </div>
+      )}
+      {hidden && (
+        <div className="badge">
+          <BanIcon /> Hidden
+        </div>
+      )}
       {parent && (
         <p className="card-listing">
           Part of{' '}
@@ -163,7 +176,11 @@ export function SiteBody({
           </button>
         </p>
       )}
-      {site.walkTime && <p className="card-meta">🚶 Walk in: {site.walkTime}</p>}
+      {site.walkTime && (
+        <p className="card-meta">
+          <ClockIcon /> Walk in: {site.walkTime}
+        </p>
+      )}
       {site.access && <p className="card-meta">Access: {site.access}</p>}
       {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
       {site.description && (
@@ -242,21 +259,22 @@ export function SiteBody({
           </button>
         )}
         <button className="btn" onClick={() => toggleWishlist(site.id)}>
-          {wishlisted ? '★ On wishlist' : '☆ Wishlist'}
+          {wishlisted ? <StarIcon filled /> : <StarIcon />}{' '}
+          {wishlisted ? 'On wishlist' : 'Wishlist'}
         </button>
         <button className="btn" onClick={() => toggleHidden(site.id)}>
-          {hidden ? '🚫 Unhide' : '🚫 Hide'}
+          <BanIcon /> {hidden ? 'Unhide' : 'Hide'}
         </button>
         {/* The common road-trip entry point (issue #14): "I'm driving to this
             castle — what's on the way?" Needs no position of its own; the
             journey's From end is whatever anchor the app already has. */}
         {isDestination ? (
           <button className="btn dest on" onClick={() => setDestination(null)}>
-            🏁 Destination
+            <FlagIcon /> Destination
           </button>
         ) : (
           <button className="btn dest" onClick={() => setDestinationFromSite(site.id)}>
-            🏁 Set as destination
+            <FlagIcon /> Set as destination
           </button>
         )}
         {/* Trip = today's ordered subset. Adding needs a position to order the
@@ -271,7 +289,7 @@ export function SiteBody({
           </button>
         ) : inTrip ? (
           <button className="btn trip on" onClick={() => removeFromTrip(site.id)}>
-            ✓ In trip
+            <CheckIcon /> In trip
           </button>
         ) : (
           <button
