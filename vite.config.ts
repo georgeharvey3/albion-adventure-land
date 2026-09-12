@@ -67,7 +67,7 @@ export default defineConfig(({ command }) => ({
             handler: 'CacheFirst',
             options: {
               cacheName: 'site-pictures',
-              expiration: { maxEntries: 1200, maxAgeSeconds: 60 * 60 * 24 * 180 },
+              expiration: { maxEntries: 2500, maxAgeSeconds: 60 * 60 * 24 * 180 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

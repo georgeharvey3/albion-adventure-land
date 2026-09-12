@@ -267,10 +267,14 @@ export function ingest(
   }
 
   // Resolve the `main` point's stable id for each listing, so sub-features can
-  // link back to the full write-up (and a main can list its features).
+  // link back to the full write-up (and a main can list its features). A source
+  // with no structural role column (e.g. the swims CSV) has one point per
+  // listing, so that point is the listing's main point.
+  const flat = !mapping.columns.role;
   const mainIdByListing = new Map<string, string>();
   for (const { site, role } of entries) {
-    if (role === 'main' && site.listingId) mainIdByListing.set(site.listingId, site.id);
+    if (!site.listingId || mainIdByListing.has(site.listingId)) continue;
+    if (role === 'main' || flat) mainIdByListing.set(site.listingId, site.id);
   }
 
   // Pass 2: attach parentId (only to non-main points whose listing has a main)
