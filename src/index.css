@@ -14,7 +14,7 @@
  *
  * The one rule that holds it together: ONE SERIF, TWO JOBS — Cardo sets the
  * name of a place and the prose that describes it, and nothing else. Every
- * other string is the mono face, which carries exactly two roles — figures
+ * other string is the UI face, which carries exactly two roles — figures
  * and uppercase labels.
  */
 
@@ -27,8 +27,8 @@
    Cardo ships at 400 only — deliberately. Never set a weight above 400 on any
    Cardo element, place name or prose, or the browser synthesises the bold and
    the letterforms break. Size and colour carry the hierarchy instead. The two
-   chrome labels that wanted a 600 (.btn, .layer-name) are on the mono face for
-   this reason: mono is variable 400 to 700 and takes a real weight. */
+   chrome labels that wanted a 600 (.btn, .layer-name) are on the UI face for
+   this reason: it is variable 400 to 700 and takes a real weight. */
 
 @font-face {
   font-family: "Cardo";
@@ -56,23 +56,27 @@
     U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* The UI face is a sans and not a mono. A monospace face set every button,
+   label and figure in the app, which read as a code listing rather than as the
+   chrome of a guidebook. Instrument Sans keeps the figure role because it
+   carries a real `tnum` feature — see the `font-variant-numeric` call sites. */
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Instrument Sans";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("./fonts/jetbrains-mono-latin.woff2") format("woff2");
+  src: url("./fonts/instrument-sans-latin.woff2") format("woff2");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Instrument Sans";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("./fonts/jetbrains-mono-latin-ext.woff2") format("woff2");
+  src: url("./fonts/instrument-sans-latin-ext.woff2") format("woff2");
   unicode-range:
     U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
     U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
@@ -165,16 +169,16 @@ body,
   width: 100%;
   background: var(--color-water);
   /* Leaflet's own attribution and control text. Chrome, not prose, so it takes
-     the mono face rather than inheriting the serif. */
-  font-family: var(--font-mono);
+     the UI face rather than inheriting the serif. */
+  font-family: var(--font-ui);
 }
 
 /* Leaflet hard-sets `font: bold 18px 'Lucida Console', Monaco, monospace` on
    its own zoom buttons, which puts a face on the page that this system never
-   chose. The `+` and the `−` take the mono face like every other control. */
+   chose. The `+` and the `−` take the UI face like every other control. */
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
 }
 
 .drop-pin-btn {
@@ -228,14 +232,14 @@ body,
   border-bottom: var(--rule-hairline) solid var(--color-rule);
 }
 /* The tab strip is the app's only navigation, so it takes the label register
-   rather than the body one — mono, small, tracked. */
+   rather than the body one — the UI face, small, tracked. */
 .tab {
   flex: 1;
   min-width: 0;
   padding: var(--space-sm) var(--space-2xs);
   border: none;
   background: none;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -324,7 +328,7 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Category and county. The mono label register — one of the two jobs the mono
+/* Category and county. The label register — one of the two jobs the UI
    face holds. Caps and letter-spacing make this string about a tenth wider than
    the sentence case it replaced, so unlike the old rule it needs the ellipsis:
    "Burial chambers · Dumfries and Galloway" does not fit a phone row. */
@@ -334,7 +338,7 @@ body,
 }
 .row-sub {
   min-width: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 400;
   letter-spacing: var(--tracking-label);
@@ -350,9 +354,9 @@ body,
   white-space: normal;
   overflow: visible;
 }
-/* A figure. The mono face's other job. */
+/* A figure. The UI face's other job. */
 .row-dist {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--color-ink);
@@ -411,7 +415,7 @@ body,
   opacity: 0.3;
 }
 .chip-count {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   color: var(--color-muted);
   font-variant-numeric: tabular-nums;
@@ -439,7 +443,7 @@ body,
 }
 /* Mono, not the serif: this label carries a 600 and Cardo has no bold. */
 .layer-name {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-weight: 600;
 }
@@ -448,7 +452,7 @@ body,
 }
 .layer-count {
   margin-left: auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   color: var(--color-muted);
   font-variant-numeric: tabular-nums;
@@ -569,7 +573,7 @@ body,
   border-top: var(--rule-hairline) solid var(--color-rule);
 }
 .tags-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 400;
   letter-spacing: var(--tracking-label);
@@ -601,7 +605,7 @@ body,
   border: none;
   background: none;
   padding: var(--space-3xs) 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -665,7 +669,7 @@ body,
   border-radius: var(--radius-sm);
   background: var(--color-accent);
   color: var(--color-accent-ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -700,7 +704,7 @@ body,
   border-radius: var(--radius-sm);
   background: var(--color-accent);
   color: var(--color-accent-ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -716,7 +720,7 @@ body,
   margin: var(--space-2xs) var(--space-3xs) var(--space-sm);
 }
 .stats-big {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xl);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -724,7 +728,7 @@ body,
   margin-right: var(--space-xs);
 }
 .stats-pct {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--color-muted);
@@ -748,7 +752,7 @@ body,
 }
 .stats-heading {
   margin: var(--space-md) var(--space-3xs) var(--space-2xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   color: var(--color-muted);
@@ -783,7 +787,7 @@ body,
   color: var(--color-muted);
 }
 .stats-count {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
   color: var(--color-muted);
@@ -827,7 +831,7 @@ body,
   display: flex;
   align-items: center;
   gap: var(--space-2xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -902,7 +906,7 @@ body,
   width: auto;
 }
 .card-shot figcaption {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   color: var(--color-muted);
   margin-top: var(--space-2xs);
@@ -930,7 +934,7 @@ body,
   background: none;
   padding: var(--space-3xs) 0;
   margin: 0 0 var(--space-2xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -951,7 +955,7 @@ body,
 .card-listing-label {
   display: block;
   margin-bottom: var(--space-3xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -980,7 +984,7 @@ body,
 }
 .badge {
   display: inline-block;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -1016,7 +1020,7 @@ body,
   border-radius: var(--radius-md);
   background: var(--color-paper-2);
   /* Mono, not the serif: the label carries a 600 and Cardo has no bold. */
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--color-ink);
@@ -1071,7 +1075,7 @@ body,
   border-radius: var(--radius-sm);
   background: var(--color-accent);
   color: var(--color-accent-ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1113,7 +1117,7 @@ body,
 }
 .outing-finder > summary {
   padding: var(--space-xs) var(--space-3xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -1154,7 +1158,7 @@ body,
   border: none;
   background: var(--color-paper-2);
   color: var(--color-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -1205,7 +1209,7 @@ body,
 }
 .journey-from {
   flex: 0 0 auto;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -1230,7 +1234,7 @@ body,
   background: var(--color-paper);
   color: var(--color-accent);
   border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -1259,7 +1263,7 @@ body,
   margin-left: auto;
 }
 .journey-budget {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -1277,7 +1281,7 @@ body,
   padding: var(--space-3xs) var(--space-2xs);
 }
 .journey-length {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   color: var(--color-muted);
   font-variant-numeric: tabular-nums;
@@ -1309,7 +1313,7 @@ body,
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-3xs);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-variant-numeric: tabular-nums;
 }
 .row-detour {
@@ -1518,7 +1522,7 @@ body,
   top: max(var(--space-sm), env(safe-area-inset-top));
   left: var(--space-sm);
   z-index: 2;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
   font-variant-numeric: tabular-nums;
@@ -1609,7 +1613,7 @@ body,
   border: var(--rule-hairline) solid var(--color-edge);
   border-radius: var(--radius-sm);
   background: var(--color-paper-2);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);
@@ -1744,7 +1748,7 @@ body,
   cursor: default;
 }
 .row-nav-dir {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: var(--tracking-label);

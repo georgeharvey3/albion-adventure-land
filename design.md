@@ -35,7 +35,7 @@ belongs to one macrostructure family.
 - **Index** — Index-First (13). The surface is a list. Hairlines divide the
   rows. The rows are the buttons. No hero, no cards, no reveal.
   - **Stat-Led knob** (04), reserved. The Saved surface is styled to lead with
-    one large figure in tabular mono, with the list under it as the qualifier.
+    one large tabular figure, with the list under it as the qualifier.
     The markup for that figure does not exist yet: `Stats.tsx` renders only the
     wishlist, the visited log, and the hidden list. The rules `.stats-total`,
     `.stats-big`, `.stats-pct`, `.stats-bar`, `.stats-bar-fill` and
@@ -46,8 +46,8 @@ belongs to one macrostructure family.
 
 ## Theme
 
-Almanac. Light cool paper, mono labels, dense rows, tabular figures, hairline
-dividers, outlined controls.
+Almanac. Light cool paper, uppercase labels, dense rows, tabular figures,
+hairline dividers, outlined controls.
 
 The accent is the same forest green the app shipped with. The neutrals now lean
 cool and green, because a warm neutral under a green accent reads as an error
@@ -82,8 +82,9 @@ Two web fonts and no system stack. The fonts are self-hosted under `src/fonts`
 and the service worker precaches them, because the app must work with no signal.
 
 - **Display and body** — Cardo 400. Self-hosted, Latin and Latin Extended.
-- **Mono** — JetBrains Mono, variable 400 to 700. Self-hosted, Latin and Latin
-  Extended.
+- **UI** — Instrument Sans, variable 400 to 700. Self-hosted, Latin and Latin
+  Extended. The face is a sans, not a mono. It keeps the figure role because it
+  carries a real `tnum` feature, so a column of distances still aligns.
 
 The tokens `--font-display` and `--font-body` hold the same value. They stay two
 names because they are two meanings. A later change to the prose face must not
@@ -94,7 +95,7 @@ move the place names with it.
 **One serif, two jobs: the name of a place, and the prose that describes it.**
 
 A site name, a listing name, a journey endpoint, and a trip stop use Cardo. The
-write-up below the name uses Cardo too. Every other string uses the mono face.
+write-up below the name uses Cardo too. Every other string uses the UI face.
 This rule is what makes the app read as a guidebook instead of a list of
 records.
 
@@ -102,7 +103,7 @@ The system stack was the one part of the page that no one chose. A description
 in the default font of the device reads as unstyled text beside a serif name.
 The serif takes the prose for this reason.
 
-### The mono face has two roles
+### The UI face has two roles
 
 1. **Figures** — distances, counts, percentages, detour figures, stop numerals,
    trip length. Always with `font-variant-numeric: tabular-nums`.
@@ -111,9 +112,9 @@ The serif takes the prose for this reason.
    weight above 400, because Cardo has no bold. The button label and the layer
    name are the two that do.
 
-Do not use the mono face for a third role. A third role makes it a second body
+Do not use the UI face for a third role. A third role makes it a second body
 font, which is slop. The tag chips stay on the serif for this reason: they are
-400, and mono makes the tag block 29 percent taller on a phone.
+400, and the UI face makes the tag block taller on a phone.
 
 ### Controls
 
@@ -132,7 +133,7 @@ place name or prose: the browser synthesizes the bold and the letterforms break.
 Size and color carry the hierarchy instead.
 
 Two chrome labels want a 600, the button label and the layer name. Both use the
-mono face, which is variable 400 to 700 and takes a real weight.
+UI face, which is variable 400 to 700 and takes a real weight.
 
 ### Scale
 
@@ -143,8 +144,8 @@ The body step is the one exception to the ratio. Cardo has a small x-height, so
 
 | Token        | Size      | Use                                                    |
 | ------------ | --------- | ------------------------------------------------------ |
-| `--text-2xs` | 0.694rem  | Mono labels in caps only                               |
-| `--text-xs`  | 0.833rem  | Figures, captions, secondary text, mono control labels |
+| `--text-2xs` | 0.694rem  | UI labels in caps only                                 |
+| `--text-xs`  | 0.833rem  | Figures, captions, secondary text, control labels      |
 | `--text-md`  | 1.0625rem | Body prose, site names                                 |
 | `--text-lg`  | 1.2rem    | The card title                                         |
 | `--text-xl`  | 1.44rem   | Reserved                                               |
@@ -258,7 +259,7 @@ are layout properties and each frame costs a reflow. Use `transform` and
 
 - The serif face, and the rule that it sets place names and prose only.
 - The accent color and its 3 percent budget.
-- The mono face and its two roles.
+- The UI face and its two roles.
 - The hairline divider. No surface draws a card border around a list.
 - The focus ring.
 - The spacing scale.
@@ -311,7 +312,7 @@ imports it at the top of `src/index.css`.
   --color-accent-ink: oklch(99.2% 0.004 160);
   --font-display: "Cardo", ui-serif, Georgia, serif;
   --font-body: "Cardo", ui-serif, Georgia, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: "Instrument Sans", system-ui, -apple-system, sans-serif;
   --spacing-sm: 0.75rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
@@ -333,7 +334,7 @@ imports it at the top of `src/index.css`.
   },
   "font": {
     "display": { "$value": "Cardo", "$type": "fontFamily" },
-    "mono": { "$value": "JetBrains Mono", "$type": "fontFamily" }
+    "ui": { "$value": "Instrument Sans", "$type": "fontFamily" }
   },
   "space": {
     "sm": { "$value": "0.75rem", "$type": "dimension" },

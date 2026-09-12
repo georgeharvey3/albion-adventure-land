@@ -59,20 +59,24 @@
 
   /* --- Type ---------------------------------------------------------------
      Two web fonts (self-hosted, see src/index.css @font-face) and no system
-     stack. One serif does two jobs, place names and prose; the mono face
-     carries exactly two roles, figures and uppercase labels.
+     stack. One serif does two jobs, place names and prose; the UI face carries
+     exactly two roles, figures and uppercase labels.
+
+     The UI face is a sans, not a mono. It keeps the figure role because it
+     carries a real `tnum` feature, so `font-variant-numeric: tabular-nums`
+     still aligns a column of distances.
 
      --font-display and --font-body hold the same value on purpose. They are
      two meanings, not one: a later change to the prose face must not drag the
      place names with it. Keep both names at the call site. */
   --font-display: "Cardo", ui-serif, Georgia, "Times New Roman", serif;
   --font-body: "Cardo", ui-serif, Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* 1.2 ratio from a 16px base. The body step is the one exception: Cardo has
      a small x-height, so 16px of it reads a size below 16px of a sans. 17px
      puts the prose back where the scale intends it. */
-  --text-2xs: 0.694rem; /* 11.1px — uppercase mono labels only */
+  --text-2xs: 0.694rem; /* 11.1px — uppercase UI labels only  */
   --text-xs: 0.833rem; /* 13.3px — figures, captions          */
   --text-md: 1.0625rem; /* 17px   — body prose, place names    */
   --text-lg: 1.2rem; /* 19.2px — layer names, card title    */
