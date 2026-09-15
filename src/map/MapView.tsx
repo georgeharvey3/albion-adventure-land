@@ -122,6 +122,7 @@ export function MapView() {
   const destination = useStore((s) => s.destination);
   const detourBudget = useStore((s) => s.detourBudget);
   const pickingDestination = useStore((s) => s.pickingDestination);
+  const focus = useStore((s) => s.focus);
   const setDestination = useStore((s) => s.setDestination);
 
   // One-time map init.
@@ -523,6 +524,16 @@ export function MapView() {
     const btn = locateBtnRef.current;
     if (btn) btn.hidden = !position;
   }, [position]);
+
+  // Move the map where a search result asked (issue #28). Keyed on the nonce,
+  // not the coordinates, so picking the same place twice still recentres — and
+  // so this never competes with the user's own panning in between.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focus) return;
+    map.setView([focus.lat, focus.lng], focus.zoom ?? map.getZoom());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.nonce]);
 
   // Pan to a site selected from the list.
   useEffect(() => {

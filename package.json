@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "ingest": "tsx scripts/ingest.ts",
+    "gazetteer": "tsx scripts/build-gazetteer.ts",
     "scrape:camra": "tsx scripts/scrape-camra.ts",
     "dev": "vite",
     "build": "npm run ingest && tsc -b && vite build",

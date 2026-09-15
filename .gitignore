@@ -30,3 +30,8 @@ __pycache__/
 # the app uses.
 /pdfs/
 .venv*/
+
+# Raw GeoNames extracts for `npm run gazetteer` (tens of MB). The BUILT
+# dictionary, public/data/places.json, is what is committed — like the geocode
+# cache, it is the artefact, not the source.
+data/gazetteer/

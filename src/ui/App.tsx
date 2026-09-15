@@ -8,6 +8,7 @@ import { SiteDetail } from './SiteDetail';
 import { Outing } from './Outing';
 import { Stats } from './Stats';
 import { JourneyBar } from './JourneyBar';
+import { SearchOverlay } from './SearchOverlay';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 
 const TABS: { id: SheetTab; label: string }[] = [
@@ -129,6 +130,10 @@ export function App() {
           </div>
         )}
       </div>
+
+      {/* Full-height, above everything: search needs the vertical room, and the
+          sheet behind it is exactly what the results are going to change. */}
+      <SearchOverlay />
     </div>
   );
 }
