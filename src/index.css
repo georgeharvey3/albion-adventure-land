@@ -1805,3 +1805,227 @@ body,
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Location search (issue #28)
+
+   The journey bar's two ends became buttons, so they need the UA button styling
+   stripped back to the inline text they were before — they must keep reading as
+   part of a sentence ("Here → Dunnottar Castle"), not as two more controls in a
+   row that already has several. */
+.journey-from,
+.journey-to {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+}
+/* A dotted underline is the whole affordance: enough to say "this is tappable"
+   without boxing a label that sits mid-sentence. */
+.journey-from:hover,
+.journey-to:hover,
+.journey-from:focus-visible,
+.journey-to:focus-visible {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+/* A searched anchor is not a measured one, so it is coloured like a value the
+   user chose rather than like the ambient "HERE" label. */
+.journey-from.searched {
+  color: var(--color-ink);
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--text-xs);
+}
+
+/* The overlay itself: full-height, because results need vertical room and
+   because what's behind it is exactly what picking a result will change. */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-search);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-paper);
+}
+.search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.search-for {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.search-close {
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  line-height: 1;
+  padding: var(--space-2xs);
+  cursor: pointer;
+}
+
+.search-field {
+  position: relative;
+  padding: var(--space-sm);
+}
+.search-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-xs) var(--space-xl) var(--space-xs) var(--space-sm);
+  font-family: var(--font-display);
+  /* 17px minimum: anything smaller and iOS Safari zooms the page on focus,
+     which on a phone in a lay-by is genuinely disorienting. */
+  font-size: var(--text-md);
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+}
+/* Chromium draws its own clear button inside type="search", which lands right
+   next to ours. Ours stays: it is sized for a thumb and matches the rest of the
+   UI. */
+.search-field input::-webkit-search-cancel-button,
+.search-field input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-field input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+.search-clear {
+  position: absolute;
+  right: calc(var(--space-sm) + var(--space-2xs));
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: var(--space-2xs);
+}
+
+.search-shortcuts {
+  display: flex;
+  gap: var(--space-2xs);
+  padding: 0 var(--space-sm) var(--space-xs);
+}
+.search-shortcuts button {
+  border: var(--rule-hairline) solid var(--color-edge);
+  background: var(--color-paper-2);
+  color: var(--color-accent);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  padding: var(--space-2xs) var(--space-xs);
+  cursor: pointer;
+}
+
+.search-results {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-md);
+}
+.search-section {
+  margin: var(--space-sm) var(--space-sm) var(--space-2xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.search-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.search-result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  border: 0;
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+  background: none;
+  /* A comfortable tap target: this list is used one-handed, in a car, by
+     someone who is not looking very hard. */
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+}
+.search-result:hover,
+.search-result:focus-visible {
+  background: var(--color-accent-soft);
+}
+.search-result-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.search-result-label {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  color: var(--color-ink);
+}
+.search-result-detail {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  color: var(--color-muted);
+}
+.search-result-meta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.search-result-badge {
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: var(--rule-hairline) solid var(--color-edge);
+  border-radius: var(--radius-sm);
+  padding: 1px var(--space-3xs);
+}
+
+.search-hint,
+.search-status {
+  margin: var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  line-height: var(--leading-prose);
+}
+.search-attribution {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm) calc(var(--space-2xs) + env(safe-area-inset-bottom));
+  border-top: var(--rule-hairline) solid var(--color-rule);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  color: var(--color-muted);
+}

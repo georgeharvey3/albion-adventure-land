@@ -128,6 +128,10 @@
   --z-sheet: 500;
   --z-card: 600;
   --z-overlay: 700;
+  /* Above Leaflet's own control layer, which hard-codes z-index 1000 and would
+     otherwise punch the zoom buttons and attribution through a full-screen
+     overlay. Still below the lightbox. */
+  --z-search: 1100;
   --z-lightbox: 1200;
 
   /* One shadow per role. Anything that is not floating over the map gets a

@@ -61,8 +61,10 @@ fully offline. See spec §4 and §7.
   refs instead of lat/lng). Handle this with a **per-source `SourceMapping`
   config**, not bespoke parsers. One mapping file per CSV under
   `src/data/mappings/`. Postcode-only sources (CAMRA) are geocoded at build time
-  (`scripts/geocode.ts`, cached in `data/geocode-cache.json`) — runtime never
-  geocodes.
+  (`scripts/geocode.ts`, cached in `data/geocode-cache.json`) — **ingest never
+  geocodes at runtime.** (Location search does call a geocoder at runtime, but
+  only ever to *add* results on top of a shipped offline dictionary — see below.
+  Site data is still built offline, always.)
 - **Use Papa Parse, never naive splitting.** The real data has multi-line
   description fields with embedded commas and newlines — `cut`/`split(',')` will
   corrupt rows. (You can see this in `magical_britain_master.csv`.)
@@ -75,7 +77,29 @@ fully offline. See spec §4 and §7.
   **Log rows that fail validation; never drop them silently.** Unnamed /
   uncoordinated rows are the classic import failure — flag them.
 - Only build the OSGB→WGS84 step if a source actually needs it (this CSV carries
-  both lat/lng and `os_grid_ref`, so conversion is currently unnecessary).
+  both lat/lng and `os_grid_ref`, so ingest still doesn't need it). It now exists
+  anyway, in `src/geo/osgb.ts`, because **location search** accepts typed grid
+  references — but ingest does not use it.
+
+## Location search (issue #28)
+
+Search is **offline-first in the same way the rest of the app is**, and the
+layering is the feature — don't collapse it:
+
+- `public/data/places.json` is a **shipped, precached dictionary** (~250 KB:
+  GB settlements, national parks, landmarks, and outward postcode codes), built
+  by `npm run gazetteer` and **committed**. It is not rebuilt by `npm run build`.
+- `searchLocal()` answers from that dictionary + the site data + typed
+  coordinates/grid refs. **It never touches the network, and it is the whole
+  feature offline.**
+- `searchOnline()` (Photon, postcodes.io) is a **pure enhancement**: every
+  failure path returns `[]`, never throws, and never blocks a render. Results it
+  finds are cached to IndexedDB so the offline set grows with use.
+- The rule to preserve: **losing signal must change how many results appear,
+  never whether search works.** If a change would make search depend on the
+  network, it's wrong.
+- Place data is GeoNames (CC BY 4.0). The attribution string is baked into
+  `places.json` and rendered in the overlay — don't strip it.
 
 ## Build order (each phase independently shippable)
 

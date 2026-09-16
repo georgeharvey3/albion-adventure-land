@@ -22,12 +22,23 @@ import {
   type VisitLog,
 } from './db';
 import { loadViewState, saveViewState } from './viewState';
+import type { SearchResult, SearchTarget } from '../search/types';
 
 export interface Position {
   lat: number;
   lng: number;
   accuracy: number; // metres
   manual: boolean; // true if dropped by the user (geolocation fallback)
+  /**
+   * Set only when the anchor came from a search (issue #28) — "Aviemore"
+   * rather than "Here". Its presence is what tells the journey bar it is
+   * showing a planned-from place instead of the user's real position.
+   *
+   * Deliberately NOT persisted (see viewState): a searched origin surviving a
+   * cold start would mean arriving in the field with the app still anchored to
+   * last night's sofa plan. Every session opens on your real location.
+   */
+  label?: string;
 }
 
 // Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps
@@ -35,9 +46,12 @@ export interface Position {
 // a point into a corridor and every distance-aware surface reinterprets itself.
 // A null destination means point mode — today's app, unchanged.
 //
-// Destinations come from a map tap or from a site already in the dataset:
-// runtime geocoding is off the table (CLAUDE.md — build-time and cached only),
-// so there is no free-text "Fort William" box. `siteId` records which site the
+// Destinations come from a map tap, from a site already in the dataset, or —
+// since issue #28 — from the search box. That last one revised the original
+// rule here: free-text search is now served by a SHIPPED OFFLINE DICTIONARY
+// (public/data/places.json), with a runtime geocoder layered on top purely as
+// an enhancement. The architecture's "no runtime geocoding dependency" still
+// holds; search simply no longer needs one. `siteId` records which site the
 // destination came from, so the site card can show "✓ Destination".
 export interface Destination {
   lat: number;
@@ -124,6 +138,10 @@ interface AppState {
   // Geolocation (the journey's FROM end).
   position: Position | null;
   geoError: string | null;
+  // The last real GPS fix, recorded even while a manual pin or a searched
+  // anchor is in charge of `position`. It is what "Back to my location"
+  // restores, instantly — see useMyLocation.
+  livePosition: Position | null;
 
   // Journey (issue #14). Null destination === point mode, i.e. today's app.
   destination: Destination | null;
@@ -131,6 +149,15 @@ interface AppState {
   routeSort: RouteSort;
   // True while the map is armed to take the next tap as the destination.
   pickingDestination: boolean;
+
+  // Location search (issue #28). Non-null means the search overlay is open and
+  // filling THAT end of the journey — which is why picking a result needs no
+  // "start or destination?" follow-up question.
+  searchTarget: SearchTarget | null;
+
+  // A one-shot request for the map to move somewhere, consumed by MapView.
+  // `nonce` exists so picking the same result twice still moves the map.
+  focus: { lat: number; lng: number; zoom?: number; nonce: number } | null;
 
   // UI: the site shown in the detail card (map popup / list tap). In browse
   // mode this same id is the row expanded in place, so leaving browse mode
@@ -170,6 +197,10 @@ interface AppState {
   setDetourBudget: (metres: number) => void;
   setRouteSort: (sort: RouteSort) => void;
   setPickingDestination: (on: boolean) => void;
+  openSearch: (target: SearchTarget) => void;
+  closeSearch: () => void;
+  applySearchResult: (result: SearchResult) => void;
+  useMyLocation: () => void;
 }
 
 // Re-order an outing's stops against the CURRENT journey and refresh the
@@ -229,11 +260,15 @@ export const useStore = create<AppState>((set, get) => ({
 
   position: null,
   geoError: null,
+  livePosition: null,
 
   destination: null,
   detourBudget: DEFAULT_DETOUR_BUDGET,
   routeSort: 'progress',
   pickingDestination: false,
+
+  searchTarget: null,
+  focus: null,
 
   // Restored from the last session so reopening the app brings back the card
   // you were reading. Set synchronously here, before the map mounts: that keeps
@@ -539,9 +574,18 @@ export const useStore = create<AppState>((set, get) => ({
   // downstream (near-me list, distances). Ignore fixes that moved less than
   // 25 m — a threshold below anything that changes a displayed distance.
   setLivePosition: (position) => {
-    const current = get().position;
+    const { position: current, livePosition } = get();
+    // Movement gate, measured against the last recorded FIX rather than the
+    // displayed anchor, so it still works while a manual pin is in charge.
+    if (livePosition && haversine(livePosition, position) < 25) return;
+
+    // Record the real fix unconditionally. A manual pin or a searched anchor
+    // suppresses it from `position`, but "Back to my location" needs something
+    // to go back TO — without this it could only clear the anchor and wait for
+    // the next fix, which on a stationary device may be a long time coming.
+    set({ livePosition: position });
+
     if (current?.manual) return;
-    if (current && haversine(current, position) < 25) return;
     set({ position, geoError: null });
   },
   setGeoError: (geoError) => set({ geoError }),
@@ -590,4 +634,72 @@ export const useStore = create<AppState>((set, get) => ({
     set({ detourBudget, outingFailure: null, outingShownIds: [] }),
   setRouteSort: (routeSort) => set({ routeSort }),
   setPickingDestination: (pickingDestination) => set({ pickingDestination }),
+
+  // Opening search disarms the map picker: they are two ways of answering the
+  // same question, and leaving the map in crosshair mode behind a full-screen
+  // overlay would strand it there.
+  openSearch: (searchTarget) => set({ searchTarget, pickingDestination: false }),
+  closeSearch: () => set({ searchTarget: null }),
+
+  // Apply a picked result to whichever end the search was opened for. The
+  // target is what makes this unambiguous — there is no prompt after the fact.
+  applySearchResult: (result) => {
+    const { searchTarget } = get();
+    if (!searchTarget) return;
+
+    if (searchTarget === 'destination') {
+      get().setDestination({
+        lat: result.lat,
+        lng: result.lng,
+        label: result.label,
+        ...(result.siteId ? { siteId: result.siteId } : {}),
+      });
+    } else {
+      // manual: true pins it against watchPosition, exactly like a dropped pin —
+      // a GPS fix must not silently drag the anchor off the place you are
+      // planning around. accuracy 0 because this is an exact chosen point, not
+      // a measurement with error.
+      get().setPosition({
+        lat: result.lat,
+        lng: result.lng,
+        accuracy: 0,
+        manual: true,
+        label: result.label,
+      });
+    }
+
+    // A site result sets the end AND opens its card: one tap, both intents, and
+    // the only way to look a site up by name without the box needing a mode.
+    if (result.siteId) get().setSelected(result.siteId);
+
+    set({
+      searchTarget: null,
+      focus: { lat: result.lat, lng: result.lng, zoom: 12, nonce: Date.now() },
+    });
+  },
+
+  // Undo a searched or dropped anchor and go back to the real one.
+  //
+  // Restores the last recorded fix SYNCHRONOUSLY rather than clearing the
+  // anchor and waiting: dropping to null would put the bar into "Locating…"
+  // until the next fix, and watchPosition only reports when something changes —
+  // so a stationary phone, or a getCurrentPosition that times out, would strand
+  // the user there. Clearing `manual` also reopens the gate in setLivePosition,
+  // so subsequent fixes flow again; the one-shot request below just refreshes
+  // it sooner, and costs nothing if it fails.
+  useMyLocation: () => {
+    set({ position: get().livePosition, geoError: null });
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        get().setLivePosition({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          manual: false,
+        }),
+      () => get().setGeoError('Location unavailable — drop a pin or search for a place.'),
+      { enableHighAccuracy: true, timeout: 20000 },
+    );
+  },
 }));

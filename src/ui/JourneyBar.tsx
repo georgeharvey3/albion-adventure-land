@@ -17,12 +17,19 @@ import { FlagIcon, MapPinIcon } from './icons';
 // `From` is always the existing anchor (live GPS, or a dropped pin), so route
 // mode costs the user ONE input rather than two.
 //
-// DESTINATION ENTRY — no free-text search. Runtime geocoding is ruled out by
-// the architecture (build-time only, cached), so you can't type "Fort William".
-// A destination comes from a map tap or from a site already in the dataset
-// ("Set as destination" on any site card), which covers the road-trip intent
-// that motivated this. Adding free-text would mean shipping an offline place
-// index or an online-only lookup — neither is in scope here.
+// ENTERING EITHER END — issue #28 replaced the rule that used to live here
+// ("no free-text search; runtime geocoding is ruled out"). It was right that an
+// online-only lookup was unacceptable, and wrong that the only alternative was
+// no search: the app now SHIPS an offline place dictionary
+// (public/data/places.json, ~250 KB, precached), so search works with no signal
+// and a runtime geocoder only ever adds rows on top.
+//
+// So BOTH ends are now tappable and open the search overlay. The From end
+// tapping through to search is what lets you plan from the sofa — "I'll be in
+// Aviemore tomorrow, what's near there?" — and it reads "Aviemore" rather than
+// "Here" so the app never pretends a planned anchor is a measured one. Map-tap
+// picking and "Set as destination" on a site card both still work; search is an
+// addition, not a replacement.
 
 function budgetLabel(metres: number): string {
   return metres < 1000 ? `${metres} m` : `${Math.round(metres / 1000)} km`;
@@ -36,24 +43,50 @@ export function JourneyBar() {
   const setDestination = useStore((s) => s.setDestination);
   const setDetourBudget = useStore((s) => s.setDetourBudget);
   const setPickingDestination = useStore((s) => s.setPickingDestination);
+  const openSearch = useStore((s) => s.openSearch);
+  const useMyLocation = useStore((s) => s.useMyLocation);
 
-  const fromLabel = !position ? 'Locating…' : position.manual ? 'Dropped pin' : 'Here';
+  // A searched anchor says where it is; a dropped pin and live GPS keep the
+  // labels they always had.
+  const fromLabel = position?.label ?? (!position ? 'Locating…' : position.manual ? 'Dropped pin' : 'Here');
+  // Only a SEARCHED anchor gets the reset button. A dropped pin already has one
+  // (the map's drop-pin control doubles as "clear"), and live GPS has nothing
+  // to reset to.
+  const searchedFrom = !!position?.label;
   const journeyLength = position && destination ? haversine(position, destination) : null;
 
   return (
     <div className="journey-bar">
       <div className="journey-ends">
-        <span className="journey-from">
+        <button
+          className={searchedFrom ? 'journey-from searched' : 'journey-from'}
+          onClick={() => openSearch('origin')}
+          title="Search for somewhere to start from"
+        >
           <MapPinIcon /> {fromLabel}
-        </span>
+        </button>
+        {searchedFrom && (
+          <button
+            className="journey-clear"
+            onClick={useMyLocation}
+            aria-label="Back to my location"
+            title="Back to my location"
+          >
+            ⟲
+          </button>
+        )}
         {destination ? (
           <>
             <span className="journey-arrow" aria-hidden="true">
               →
             </span>
-            <span className="journey-to" title={destination.label}>
+            <button
+              className="journey-to"
+              onClick={() => openSearch('destination')}
+              title={`${destination.label} — tap to change`}
+            >
               <FlagIcon /> {destination.label}
-            </span>
+            </button>
             <button
               className="journey-clear"
               onClick={() => setDestination(null)}
@@ -66,12 +99,13 @@ export function JourneyBar() {
         ) : (
           <button
             className={pickingDestination ? 'journey-add picking' : 'journey-add'}
-            onClick={() => setPickingDestination(!pickingDestination)}
-            disabled={!position}
+            onClick={() =>
+              pickingDestination ? setPickingDestination(false) : openSearch('destination')
+            }
             title={
-              position
-                ? 'Pick a destination on the map'
-                : 'Waiting for a location to travel from'
+              pickingDestination
+                ? 'Tap the map to set your destination, or tap here to cancel'
+                : 'Search for a destination'
             }
             aria-pressed={pickingDestination}
           >
