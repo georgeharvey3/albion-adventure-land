@@ -2,6 +2,10 @@
 # data/ are what is committed — this copy is a build output, like dist/.
 public/images/
 
+# Chrome profile used by `npm run scrape:ukc` — holds the Cloudflare clearance
+# cookie, nothing the build needs.
+data/.ukc-profile/
+
 node_modules/
 dist/
 dist-ssr/

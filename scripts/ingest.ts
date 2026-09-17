@@ -6,9 +6,11 @@ import {
   ingest,
   ingestPubs,
   parseImages,
+  imagesBySiteId,
   type Geocoder,
   type RawRow,
   type PubEnrichment,
+  type CragPhotoCache,
 } from '../src/data/ingest.ts';
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
 import { camraMapping } from '../src/data/mappings/camra.ts';
@@ -75,6 +77,57 @@ function loadPubEnrichment(): Record<string, PubEnrichment> {
   return JSON.parse(readFileSync(file, 'utf8')) as Record<string, PubEnrichment>;
 }
 
+// Scraped pictures, copied the same way as the guidebook ones but driven by a
+// scraper cache instead of a companion CSV — neither pubs nor scrambles have a
+// listing number to join on (see scripts/scrape-camra.ts, scripts/scrape-ukc.ts).
+// A file the cache names but the folder does not hold is reported, not skipped
+// silently: the cache and the folder are written together and must agree.
+function copyScrapedImages(
+  label: string,
+  srcDir: string,
+  baseUrl: string,
+  images: readonly SiteImage[],
+): void {
+  if (!images.length) return;
+  const from = resolve(root, srcDir);
+  const outDir = resolve(root, 'public', baseUrl);
+  mkdirSync(outDir, { recursive: true });
+
+  let copied = 0;
+  const missing: string[] = [];
+  const done = new Set<string>();
+  for (const image of images) {
+    const fileName = image.url.slice(image.url.lastIndexOf('/') + 1);
+    if (done.has(fileName)) continue; // several sites can share one file
+    done.add(fileName);
+    const src = resolve(from, fileName);
+    if (!existsSync(src)) {
+      missing.push(fileName);
+      continue;
+    }
+    copyFileSync(src, resolve(outDir, fileName));
+    copied++;
+  }
+
+  console.log(`  copied ${copied} ${label} picture files → public/${baseUrl}/`);
+  if (missing.length) {
+    console.warn(`  ⚠ ${missing.length} ${label} picture file(s) named in the cache are not in ${srcDir}:`);
+    for (const f of missing) console.warn(`    - ${f}`);
+  }
+}
+
+// Scramble pictures scraped from UKClimbing by scripts/scrape-ukc.ts. Absent on
+// a fresh checkout — scrambles just stay picture-free until `npm run scrape:ukc`
+// is run, so the build never depends on it (as with the pub enrichment).
+function loadCragPhotos(): CragPhotoCache {
+  const file = resolve(root, 'data/ukc-photos.json');
+  if (!existsSync(file)) {
+    console.log('  (no data/ukc-photos.json — run `npm run scrape:ukc` to picture scrambles)');
+    return { crags: {}, routes: {} };
+  }
+  return JSON.parse(readFileSync(file, 'utf8')) as CragPhotoCache;
+}
+
 // A source's companion pictures CSV, when it declares one. Absent file is a
 // hard error, not a silent skip: the mapping named it, so a missing file is a
 // mistake worth failing the build over.
@@ -126,6 +179,17 @@ async function main(): Promise<void> {
   let totalRejected = 0;
   let totalSkipped = 0;
   const pubEnrichment = loadPubEnrichment();
+  copyScrapedImages(
+    'pub',
+    'data/camra-images',
+    'images/camra',
+    Object.values(pubEnrichment).flatMap((e) => e.images ?? []),
+  );
+  // Site-keyed pictures, addressed to one stable site id each rather than to a
+  // listing. Only the scrambles have them today; the map is global because the
+  // ids are, so ingest() can be handed the same one for every source.
+  const siteImages = imagesBySiteId(loadCragPhotos());
+  copyScrapedImages('scramble', 'data/ukc-images', 'images/ukc', [...siteImages.values()].flat());
 
   for (const { csv, mapping } of SOURCES) {
     console.log(`\nIngesting ${csv} …`);
@@ -136,7 +200,7 @@ async function main(): Promise<void> {
     const { sites, rejected, skippedNonCollectible } =
       mapping.coords === 'geocode_postcode'
         ? ingestPubs(rows, mapping, await buildGeocoder(rows, mapping), pubEnrichment)
-        : ingest(rows, mapping, images);
+        : ingest(rows, mapping, images, siteImages);
 
     for (const s of sites) {
       if (seen.has(s.id)) continue; // cross-source dedupe by stable id

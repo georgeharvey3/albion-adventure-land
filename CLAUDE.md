@@ -76,6 +76,31 @@ fully offline. See spec §4 and §7.
   (lat/lng present and in range) → dedupe by `id` → emit normalized JSON.
   **Log rows that fail validation; never drop them silently.** Unnamed /
   uncoordinated rows are the classic import failure — flag them.
+- Pub enrichment is a separate, manual step: `npm run scrape:camra` reads each
+  pub's page on the CAMRA site and writes the description, the source link and
+  the first three gallery pictures to `data/camra-descriptions.json`, keyed by
+  the stable pub id. The pictures are downscaled to 720 px and written to
+  `data/camra-images/`; `npm run ingest` copies them to `public/images/camra/`.
+  Pubs have no listing number, so they use this map instead of a companion
+  images CSV. The scraper is resumable and the build never depends on it — a
+  fresh checkout without the cache gives sparse pub cards.
+- Scramble pictures are the same kind of step: `npm run scrape:ukc` visits each
+  route's crag page on UKClimbing, downscales the pictures to 720 px, and writes
+  them to `data/ukc-images/`. The index is `data/ukc-photos.json`, keyed by the
+  stable site id. Two facts about UKClimbing drive the design. It sits behind a
+  Cloudflare challenge that plain `fetch` and headless Chrome never pass, so the
+  scraper drives a real, headed Chrome through Playwright and needs a display
+  (`DISPLAY`, or Xvfb). That Chrome must also start without Playwright's usual
+  `--enable-automation` flag: the flag sets `navigator.webdriver`, and that one
+  value decides whether the page loads or an interactive checkbox appears that
+  no synthetic click can tick. `img.ukclimbing.com` also refuses every request the
+  script makes itself, so the script takes the bytes out of the image responses
+  that the crag page loads. Pictures belong to the crag, not to the route, and
+  routes at one crag share a picture — the per-route galleries sit behind
+  `/logbook/crag_photos.php`, which answers 403. The scraper is resumable, keeps
+  its Chrome profile in `data/.ukc-profile/` for the clearance cookie, and reads
+  one page at a time with a delay: this is somebody else's website. `npm run ingest` copies the
+  files to `public/images/ukc/`, and the build never depends on the cache.
 - Only build the OSGB→WGS84 step if a source actually needs it (this CSV carries
   both lat/lng and `os_grid_ref`, so ingest still doesn't need it). It now exists
   anyway, in `src/geo/osgb.ts`, because **location search** accepts typed grid
