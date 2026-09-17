@@ -13,6 +13,12 @@ import { FlagIcon, MapPinIcon } from './icons';
 // and it fills THAT end — which is why there is no "start or destination?"
 // question after picking a result.
 //
+// IT IS A PANEL OVER THE APP, NOT A SCREEN. It used to be full-height, and that
+// was wrong: naming a place is one step of a journey you are already looking at,
+// so taking the map and the other end away made it read as leaving the app. The
+// panel now sits in the sheet's own footprint and is only as tall as its
+// results, with a scrim carrying the modality the full screen used to.
+//
 // THE TWO-PASS RENDER IS THE POINT. Local results (the shipped dictionary, the
 // app's own sites, coordinates, postcode districts) paint synchronously on every
 // keystroke. Online results are merged in later, if they arrive at all. Nothing
@@ -49,7 +55,7 @@ export function SearchOverlay() {
   const destination = useStore((s) => s.destination);
   const closeSearch = useStore((s) => s.closeSearch);
   const applySearchResult = useStore((s) => s.applySearchResult);
-  const setPickingDestination = useStore((s) => s.setPickingDestination);
+  const setPicking = useStore((s) => s.setPicking);
   const useMyLocation = useStore((s) => s.useMyLocation);
 
   const [query, setQuery] = useState('');
@@ -138,6 +144,27 @@ export function SearchOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local, online, query, near?.lat, near?.lng]);
 
+  // The panel is pinned to the bottom of the LAYOUT viewport, which the phone
+  // keyboard covers rather than shrinks. Publish how much of the screen the
+  // keyboard is eating so the panel can sit on top of it; 0 when there is no
+  // keyboard, and never set at all where the API is missing.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!target || !vv) return;
+    const apply = () => {
+      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb-inset', `${Math.round(covered)}px`);
+    };
+    apply();
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    return () => {
+      vv.removeEventListener('resize', apply);
+      vv.removeEventListener('scroll', apply);
+      document.documentElement.style.removeProperty('--kb-inset');
+    };
+  }, [target]);
+
   useEffect(() => {
     if (!target) return;
     const onKey = (e: KeyboardEvent) => {
@@ -169,7 +196,10 @@ export function SearchOverlay() {
           : 'Nothing found — you’re offline, so only saved places are searchable.';
 
   return (
-    <div className="search-overlay" role="dialog" aria-modal="true" aria-label="Search for a place">
+    <>
+      {/* Tapping past the panel is "never mind" — the same thing the ✕ does. */}
+      <div className="search-scrim" onClick={closeSearch} aria-hidden="true" />
+      <div className="search-overlay" role="dialog" aria-modal="true" aria-label="Search for a place">
       <header className="search-head">
         <span className="search-for">
           {isOrigin ? <MapPinIcon /> : <FlagIcon />}
@@ -200,10 +230,18 @@ export function SearchOverlay() {
         )}
       </div>
 
-      {/* The alternatives that don't involve typing. Both existed before search
-          did, and both are still the fastest route for their own case. */}
+      {/* The alternatives that don't involve typing. Each existed before search
+          did, and each is still the fastest route for its own case.
+
+          "Pick on the map" is offered at BOTH ends. It was only on the
+          destination end, which made the origin look like the lesser end — you
+          could always drop an origin pin, but only through the map's own
+          control, which a user in the search panel has no reason to look for.
+          The gesture is the same one either way; only the end it fills
+          differs. "Use my location" stays origin-only, because a destination
+          where you already are is not a journey. */}
       <div className="search-shortcuts">
-        {isOrigin ? (
+        {isOrigin && (
           <button
             onClick={() => {
               useMyLocation();
@@ -212,25 +250,18 @@ export function SearchOverlay() {
           >
             📍 Use my location
           </button>
-        ) : (
-          <button
-            onClick={() => {
-              setPickingDestination(true);
-              closeSearch();
-            }}
-          >
-            🗺 Pick on the map
-          </button>
         )}
+        <button
+          onClick={() => {
+            setPicking(target);
+            closeSearch();
+          }}
+        >
+          🗺 Pick on the map
+        </button>
       </div>
 
       <div className="search-results">
-        {!typed && (
-          <p className="search-hint">
-            Type a town, one of your sites, a postcode, or coordinates — "57.14, -2.10" and
-            "NN 166 712" both work.
-          </p>
-        )}
 
         {typed && !grouped.length && !searching && <p className="search-hint">{emptyMessage}</p>}
 
@@ -268,7 +299,8 @@ export function SearchOverlay() {
       </div>
 
       {gazetteer?.attribution && <p className="search-attribution">{gazetteer.attribution}</p>}
-    </div>
+      </div>
+    </>
   );
 }
 

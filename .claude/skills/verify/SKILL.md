@@ -35,8 +35,8 @@ await ctx.setGeolocation({ latitude: 54.44, longitude: -2.99, accuracy: 12 });
 
 ## Gotchas
 
-- **Default tab is "Filters"**, not "Near me" — click
-  `.tabs button:has-text("Near me")` before asserting on `.list ul li` rows.
+- **Default tab is "Filters"**, not "Nearby" — click
+  `.tabs button:has-text("Nearby")` before asserting on `.list ul li` rows.
 - Site pins are **canvas-drawn** (no marker DOM). To "click a pin", select a
   site from the list first (map pans to it), then click the map centre — or
   click known pixel coords. Assert selection via `.list ul li.selected`.

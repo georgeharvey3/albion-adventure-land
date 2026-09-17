@@ -12,7 +12,7 @@ import { SearchOverlay } from './SearchOverlay';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 
 const TABS: { id: SheetTab; label: string }[] = [
-  { id: 'near', label: 'Near me' },
+  { id: 'near', label: 'Nearby' },
   { id: 'filters', label: 'Filters' },
   { id: 'outing', label: 'Outing' },
   { id: 'stats', label: 'Saved' },
@@ -131,8 +131,8 @@ export function App() {
         )}
       </div>
 
-      {/* Full-height, above everything: search needs the vertical room, and the
-          sheet behind it is exactly what the results are going to change. */}
+      {/* A panel over the sheet's own footprint, not a full screen: you are
+          naming one end of a journey you can still see. */}
       <SearchOverlay />
     </div>
   );

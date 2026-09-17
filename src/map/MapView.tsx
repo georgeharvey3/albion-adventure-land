@@ -102,7 +102,6 @@ export function MapView() {
   const meLayerRef = useRef<L.LayerGroup | null>(null);
   const outingLayerRef = useRef<L.LayerGroup | null>(null);
   const corridorLayerRef = useRef<L.LayerGroup | null>(null);
-  const droppingRef = useRef(false);
   const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const locateBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
@@ -121,7 +120,7 @@ export function MapView() {
   const outing = useStore((s) => s.outing);
   const destination = useStore((s) => s.destination);
   const detourBudget = useStore((s) => s.detourBudget);
-  const pickingDestination = useStore((s) => s.pickingDestination);
+  const picking = useStore((s) => s.picking);
   const focus = useStore((s) => s.focus);
   const setDestination = useStore((s) => s.setDestination);
 
@@ -174,19 +173,19 @@ export function MapView() {
         L.DomEvent.on(btn, 'click', () => {
           // With a manual pin active, the button clears it and hands control
           // back to live GPS (the watcher repopulates position on its next
-          // fix). Otherwise it toggles "drop a pin" mode.
-          if (useStore.getState().position?.manual) {
-            setPosition(null);
-            droppingRef.current = false;
-            btn.classList.remove('active');
-            map.getContainer().style.cursor = '';
+          // fix). Otherwise it arms the picker on the ORIGIN end — the same
+          // armed state the search panel's "Pick on the map" produces, so the
+          // two routes into this gesture cannot disagree.
+          const { position: current, picking: armed, setPicking } = useStore.getState();
+          if (current?.manual) {
+            // Back to the live fix, not to nothing: clearing to null left the
+            // bar reading "Locating…" until watchPosition next reported, which
+            // on a stationary phone can be a long wait. `useMyLocation` restores
+            // the last recorded fix synchronously and re-requests one.
+            useStore.getState().useMyLocation();
             return;
           }
-          droppingRef.current = !droppingRef.current;
-          // Only one thing can claim the next tap.
-          if (droppingRef.current) useStore.getState().setPickingDestination(false);
-          btn.classList.toggle('active', droppingRef.current);
-          map.getContainer().style.cursor = droppingRef.current ? 'crosshair' : '';
+          setPicking(armed === 'origin' ? null : 'origin');
         });
         return btn;
       },
@@ -256,26 +255,19 @@ export function MapView() {
     map.addControl(new LocateCtl());
 
     map.on('click', (e: L.LeafletMouseEvent) => {
-      // Dropping an "I am here" pin wins if both modes are somehow armed; the
-      // journey picker below is disarmed whenever this one is turned on.
-      if (droppingRef.current) {
-        setPosition({ lat: e.latlng.lat, lng: e.latlng.lng, accuracy: 0, manual: true });
-        droppingRef.current = false;
-        dropBtnRef.current?.classList.remove('active');
-        map.getContainer().style.cursor = '';
+      const { picking: armed } = useStore.getState();
+      if (!armed) return;
+      const { lat, lng } = e.latlng;
+      // Origin: a dropped "I am here" pin, which carries no label — the bar
+      // calls it "Dropped pin" and the marker is the teardrop, both of which
+      // say more than a pair of coordinates would.
+      if (armed === 'origin') {
+        setPosition({ lat, lng, accuracy: 0, manual: true });
         return;
       }
-      // Journey destination (issue #14). No reverse geocoding is available
-      // offline, so an arbitrary map point is labelled by its coordinates.
-      if (useStore.getState().pickingDestination) {
-        const { lat, lng } = e.latlng;
-        setDestination({
-          lat,
-          lng,
-          label: `${lat.toFixed(3)}, ${lng.toFixed(3)}`,
-        });
-        map.getContainer().style.cursor = '';
-      }
+      // Destination (issue #14). No reverse geocoding is available offline, so
+      // an arbitrary map point is labelled by its coordinates.
+      setDestination({ lat, lng, label: `${lat.toFixed(3)}, ${lng.toFixed(3)}` });
     });
 
     // Remember the viewport. `moveend` covers zooms too and only fires once a
@@ -457,19 +449,13 @@ export function MapView() {
     }
   }, [position, destination, detourBudget]);
 
-  // Crosshair while the journey picker is armed. Arming it also cancels the
-  // "I am here" drop mode so a single tap can only mean one thing.
+  // Crosshair while either end is armed. One flag, one cursor: the state that
+  // says a tap is spoken for is the same state that draws it.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (!pickingDestination) {
-      if (!droppingRef.current) map.getContainer().style.cursor = '';
-      return;
-    }
-    droppingRef.current = false;
-    dropBtnRef.current?.classList.remove('active');
-    map.getContainer().style.cursor = 'crosshair';
-  }, [pickingDestination]);
+    map.getContainer().style.cursor = picking ? 'crosshair' : '';
+  }, [picking]);
 
   // Live / manual location marker + accuracy ring. Deliberately NOT a
   // circleMarker: as a coloured dot it was indistinguishable from a folklore
@@ -507,17 +493,22 @@ export function MapView() {
       .addTo(layer);
   }, [position]);
 
-  // Reflect the manual-pin state on the drop-pin button: lit + a "clear" title
-  // so the button doubles as the way to resume live location.
+  // The drop-pin button carries two states, and both are read from the store
+  // rather than tracked here: lit while it is waiting for your tap, and lit
+  // with a "clear" title once a manual pin is what the app is using. Arming
+  // the origin from the search panel therefore lights this button too.
   useEffect(() => {
     const btn = dropBtnRef.current;
     if (!btn) return;
     const manual = !!position?.manual;
-    btn.classList.toggle('active', manual);
-    btn.title = manual
-      ? 'Clear manual pin (resume live location)'
-      : 'Drop a manual "I am here" pin';
-  }, [position?.manual]);
+    const armed = picking === 'origin';
+    btn.classList.toggle('active', manual || armed);
+    btn.title = armed
+      ? 'Tap the map to set where you are (tap here to cancel)'
+      : manual
+        ? 'Clear manual pin (resume live location)'
+        : 'Drop a manual "I am here" pin';
+  }, [position?.manual, picking]);
 
   // The zoom-to-me control is only useful once there is a location to zoom to.
   useEffect(() => {
