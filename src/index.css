@@ -1181,86 +1181,130 @@ body,
 }
 
 /* --- Journey bar -----------------------------------------------------------
-   From → To. Sits above the tabs and stays put when the sheet collapses — the
-   anchor governs every tab, so it must not go with the body. */
+   Origin → Destination. Sits above the tabs and stays put when the sheet
+   collapses — the anchor governs every tab, so it must not go with the body.
+
+   The two ends are one component rendered twice, and the rules below say so:
+   a single `.journey-field` box, a single `.journey-tap` target, one label
+   step and one value step. The bar reads as a journey because the two halves
+   match, not because an arrow sits between them. Only `.empty` and `.picking`
+   differ, and each states something true about the destination.
+
+   Height is the constraint this layout buys back: the pair sits on ONE line
+   above the tabs, so the map keeps the room it had. That is why the reset sits
+   inside its field rather than beside it. */
 .journey-bar {
   flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2xs) var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
+  flex-direction: column;
   border-bottom: var(--rule-hairline) solid var(--color-rule);
   background: var(--color-paper-2);
-  font-size: var(--text-xs);
 }
 .journey-ends {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
   gap: var(--space-2xs);
-  min-width: 0;
-  flex: 1 1 auto;
+  padding: var(--space-xs) var(--space-sm);
 }
-.journey-from,
-.journey-to {
+.journey-field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+}
+/* Dashed is the whole empty state: the field is there, the journey end is not.
+   A field that vanished until you needed it is what made the old bar read as
+   two unrelated controls. */
+.journey-field.empty {
+  border-style: dashed;
+}
+/* Armed for a map tap. The fill is the same accent band a selected row takes,
+   so "this control is waiting on you" reads the same way it does everywhere
+   else in the app. */
+.journey-field.picking {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.journey-tap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+/* The reset sits IN the field, over its own corner, because the pair has to
+   hold one line at 320 px and a sibling button would eat a third of an end.
+   `.has-reset` keeps the value clear of it. */
+.journey-field.has-reset .journey-tap {
+  padding-right: 1.4rem;
+}
+.journey-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+/* Both values are place names, so both take the display face — the end you
+   typed and the end the GPS gave you are the same kind of thing. */
+.journey-value {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.2;
+  color: var(--color-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.journey-from {
-  flex: 0 0 auto;
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+.journey-value.unset {
   color: var(--color-muted);
-}
-/* The destination is a place name, so it takes the display face. */
-.journey-to {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: 400;
+  font-style: italic;
 }
 .journey-arrow {
-  flex: 0 0 auto;
+  align-self: center;
   color: var(--color-muted);
-}
-.journey-clear,
-.journey-add {
-  flex: 0 0 auto;
-  border: var(--rule-hairline) solid var(--color-edge);
-  background: var(--color-paper);
-  color: var(--color-accent);
-  border-radius: var(--radius-sm);
   font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  font-weight: 500;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  padding: var(--space-2xs) var(--space-xs);
-  cursor: pointer;
-  white-space: nowrap;
+  font-size: var(--text-xs);
 }
-.journey-clear {
-  padding: var(--space-3xs) var(--space-2xs);
+.journey-reset {
+  position: absolute;
+  top: var(--space-3xs);
+  right: var(--space-3xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
   color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  line-height: 1;
+  cursor: pointer;
 }
-.journey-add.picking {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-ink);
-}
-.journey-add:disabled {
-  opacity: 0.4;
-  cursor: default;
+.journey-reset:hover,
+.journey-reset:focus-visible {
+  color: var(--color-ink);
+  background: var(--color-paper-3);
 }
 .journey-controls {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  margin-left: auto;
+  padding: 0 var(--space-sm) var(--space-xs);
 }
 .journey-budget {
   font-family: var(--font-ui);
@@ -1281,6 +1325,7 @@ body,
   padding: var(--space-3xs) var(--space-2xs);
 }
 .journey-length {
+  margin-left: auto;
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
   color: var(--color-muted);
@@ -1288,8 +1333,8 @@ body,
   white-space: nowrap;
 }
 .journey-hint {
-  flex: 1 0 100%;
   margin: 0;
+  padding: 0 var(--space-sm) var(--space-xs);
   font-size: var(--text-xs);
   color: var(--color-muted);
 }
@@ -1628,6 +1673,83 @@ body,
   background: var(--color-accent-soft);
 }
 
+/* --- Site finder -----------------------------------------------------------
+   The magnifier joins the list header's control group beside Browse, and costs
+   no height until it is opened — which is the whole reason the finder lives on
+   this surface rather than in the app chrome. The open field takes its own row
+   under the header, and its results stand in for the list. */
+.finder-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.7rem;
+  padding: 0;
+  border: var(--rule-hairline) solid var(--color-edge);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.finder-toggle.on {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.finder-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-top: var(--space-xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+}
+/* A place name, so the display face — the same choice the journey ends make. */
+.finder-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  color: var(--color-ink);
+}
+.finder-field input::placeholder {
+  color: var(--color-muted);
+  font-style: italic;
+}
+/* Safari paints its own round cancel button inside a type=search; the row has
+   its own close control and two of them read as a mistake. */
+.finder-field input::-webkit-search-decoration,
+.finder-field input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.finder-close {
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+/* Results reuse the map-mode row: same swatch, same visited and wishlist marks,
+   same trailing distance, so a result looks like the row it is about to
+   become. They keep that shape in browse mode too — a lookup is transient, and
+   the full browse row is what you get once you pick one. */
+.finder-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.finder-empty {
+  padding-top: var(--space-sm);
+}
+
 /* A browse row is a disclosure: the header is a real button (keyboard-operable,
    unlike the map-mode row) and the write-up opens underneath it. */
 .row.browse {
@@ -1809,46 +1931,49 @@ body,
 /* ---------------------------------------------------------------------------
    Location search (issue #28)
 
-   The journey bar's two ends became buttons, so they need the UA button styling
-   stripped back to the inline text they were before — they must keep reading as
-   part of a sentence ("Here → Dunnottar Castle"), not as two more controls in a
-   row that already has several. */
-.journey-from,
-.journey-to {
-  border: 0;
-  background: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-  cursor: pointer;
-}
-/* A dotted underline is the whole affordance: enough to say "this is tappable"
-   without boxing a label that sits mid-sentence. */
-.journey-from:hover,
-.journey-to:hover,
-.journey-from:focus-visible,
-.journey-to:focus-visible {
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-}
-/* A searched anchor is not a measured one, so it is coloured like a value the
-   user chose rather than like the ambient "HERE" label. */
-.journey-from.searched {
-  color: var(--color-ink);
-  text-transform: none;
-  letter-spacing: normal;
-  font-size: var(--text-xs);
-}
+   Both journey ends open this overlay, which is why they are boxed fields
+   rather than inline text: a control that leads somewhere has to look like a
+   control. The field styling lives with the journey bar above; what is left
+   here is the overlay itself. */
 
-/* The overlay itself: full-height, because results need vertical room and
-   because what's behind it is exactly what picking a result will change. */
-.search-overlay {
+/* The overlay is a PANEL, not a screen. It used to take the whole viewport,
+   which made filling in one end of the journey feel like leaving the app — you
+   lost the map, the other end, and any sense of where the places being listed
+   actually are. It now sits in the sheet's own footprint (bottom on a phone,
+   the right-hand column on a desktop) and grows only as far as its results:
+   two matches make a short panel, not an empty screen.
+
+   The scrim over the rest is what keeps it modal — a tap anywhere outside is
+   the same "never mind" the ✕ is. */
+.search-scrim {
   position: fixed;
   inset: 0;
   z-index: var(--z-search);
+  background: var(--ink-scrim-2);
+}
+.search-overlay {
+  position: fixed;
+  z-index: var(--z-search);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* The on-screen keyboard: a fixed panel is pinned to the LAYOUT viewport, so
+     on a phone the keyboard would sit on top of the field you are typing in.
+     `--kb-inset` is written from the visual viewport (see SearchOverlay), and
+     is 0 whenever there is no keyboard or no API. */
+  bottom: var(--kb-inset, 0px);
+  /* Content-height, capped. `min()` against the viewport is what stops a long
+     result list from creeping back to full screen; `svh` because the mobile
+     URL bar must not push the field off the bottom. */
+  max-height: min(60svh, 32rem);
   display: flex;
   flex-direction: column;
   background: var(--color-paper);
+  border-top: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: var(--shadow-float);
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
 }
 .search-head {
   display: flex;
@@ -1937,11 +2062,20 @@ body,
   cursor: pointer;
 }
 
+/* `0 1 auto`, not `1 1 auto`: the list takes the room it needs and no more, so
+   a panel holding three results is three results tall. It only scrolls once the
+   panel has hit its cap. */
 .search-results {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-md);
+  padding-bottom: var(--space-2xs);
+}
+/* Nothing typed yet, so there is nothing to scroll — but the hint must not be
+   the only thing holding the panel open either. */
+.search-results:empty {
+  display: none;
 }
 .search-section {
   margin: var(--space-sm) var(--space-sm) var(--space-2xs);
@@ -2023,9 +2157,30 @@ body,
 .search-attribution {
   flex: 0 0 auto;
   margin: 0;
-  padding: var(--space-2xs) var(--space-sm) calc(var(--space-2xs) + env(safe-area-inset-bottom));
+  padding: var(--space-2xs) var(--space-sm);
   border-top: var(--rule-hairline) solid var(--color-rule);
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
   color: var(--color-muted);
+}
+
+/* On a desktop the sheet is a 380px right-hand column, so the panel takes that
+   same column: the search sits where the results are going to land, and the map
+   keeps the rest of the window. */
+@media (min-width: 760px) {
+  .search-overlay {
+    left: auto;
+    top: 0;
+    bottom: auto;
+    right: 0;
+    width: 380px;
+    max-height: min(80svh, 40rem);
+    /* Flush with the column it belongs to. A floating card here cut the
+       journey bar in half, which read as a misplaced dialog rather than as
+       the panel of the sheet it is filling in. */
+    border: 0;
+    border-left: var(--rule-hairline) solid var(--color-rule-strong);
+    border-bottom: var(--rule-hairline) solid var(--color-rule-strong);
+    border-radius: 0;
+  }
 }

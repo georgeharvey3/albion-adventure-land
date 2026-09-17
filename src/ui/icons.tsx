@@ -20,7 +20,7 @@
  * set — one stroke voice per project.
  */
 
-const VIEWBOX = '0 0 24 24';
+const VIEWBOX = "0 0 24 24";
 
 /**
  * The inner markup of each Lucide source file, verbatim. Held as strings so the
@@ -43,6 +43,8 @@ const PATHS = {
   layers:
     '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
   star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+  /* The site finder's magnifier. */
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
 } as const;
 
 type IconName = keyof typeof PATHS;
@@ -55,14 +57,19 @@ export type IconProps = {
   className?: string;
 };
 
-function Icon({ name, size = 16, filled = false, className }: IconProps & { name: IconName }) {
+function Icon({
+  name,
+  size = 16,
+  filled = false,
+  className,
+}: IconProps & { name: IconName }) {
   return (
     <svg
-      className={className ? `icon ${className}` : 'icon'}
+      className={className ? `icon ${className}` : "icon"}
       width={size}
       height={size}
       viewBox={VIEWBOX}
-      fill={filled ? 'currentColor' : 'none'}
+      fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="square"
@@ -86,6 +93,7 @@ export const ListIcon = (p: IconProps) => <Icon name="list" {...p} />;
 export const CheckIcon = (p: IconProps) => <Icon name="check" {...p} />;
 export const StarIcon = (p: IconProps) => <Icon name="star" {...p} />;
 export const LayersIcon = (p: IconProps) => <Icon name="layers" {...p} />;
+export const SearchIcon = (p: IconProps) => <Icon name="search" {...p} />;
 
 /**
  * The same icon as a standalone SVG string, for the two places that build their

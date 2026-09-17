@@ -1,16 +1,22 @@
-import { create } from 'zustand';
-import type { Site, SiteCategory, ParentCategory } from '../data/types';
-import { SITE_TYPES, resolveOutingSlots, outingSlotResolver, tagKey } from '../data/types';
-import { buildRarityIndex, type RarityIndex } from '../geo/rarity';
+import { create } from "zustand";
+import type { Site, SiteCategory, ParentCategory } from "../data/types";
+import {
+  SITE_TYPES,
+  resolveOutingSlots,
+  outingSlotResolver,
+  parentOf,
+  tagKey,
+} from "../data/types";
+import { buildRarityIndex, type RarityIndex } from "../geo/rarity";
 import {
   findNearestOuting,
   nearestPerSlot,
   ROUTE_SPREAD_WEIGHT,
   type SlotNearest,
-} from '../geo/outing';
-import { orderRoute } from '../geo/tsp';
-import { haversine, type LatLng } from '../geo/haversine';
-import { DEFAULT_DETOUR_BUDGET, detour } from '../geo/corridor';
+} from "../geo/outing";
+import { orderRoute } from "../geo/tsp";
+import { haversine, type LatLng } from "../geo/haversine";
+import { DEFAULT_DETOUR_BUDGET, detour } from "../geo/corridor";
 import {
   loadUserState,
   putVisit,
@@ -20,9 +26,9 @@ import {
   addHidden,
   removeHidden,
   type VisitLog,
-} from './db';
-import { loadViewState, saveViewState } from './viewState';
-import type { SearchResult, SearchTarget } from '../search/types';
+} from "./db";
+import { loadViewState, saveViewState } from "./viewState";
+import type { SearchResult, SearchTarget } from "../search/types";
 
 export interface Position {
   lat: number;
@@ -61,7 +67,7 @@ export interface Destination {
 }
 
 /** Route-mode list order: travel order along the journey, or least detour. */
-export type RouteSort = 'progress' | 'detour';
+export type RouteSort = "progress" | "detour";
 
 // Outing mode v1 (spec §6 F12/F14/F16). The result stores ids, not Site
 // objects — sites are the read-only source of truth and are looked up on
@@ -91,8 +97,8 @@ export interface OutingResult {
 // than a straight-line distance — so the UI can say how much wider the budget
 // would have to be.
 export type OutingFailure =
-  | { kind: 'missing-types'; nearest: SlotNearest[]; budget: number | null }
-  | { kind: 'no-more' };
+  | { kind: "missing-types"; nearest: SlotNearest[]; budget: number | null }
+  | { kind: "no-more" };
 
 interface AppState {
   // Site data (read-only).
@@ -147,8 +153,13 @@ interface AppState {
   destination: Destination | null;
   detourBudget: number; // metres of extra driving a stop may cost
   routeSort: RouteSort;
-  // True while the map is armed to take the next tap as the destination.
-  pickingDestination: boolean;
+  // Which end of the journey the map is armed to take the next tap as, if any.
+  // ONE picker, not two: dropping an "I am here" pin and picking a destination
+  // are the same gesture aimed at different ends, and while they were separate
+  // (a store flag for one, a ref inside MapView for the other) each had to
+  // remember to disarm the other. `picking` can only name one end at a time,
+  // so a tap can only ever mean one thing.
+  picking: SearchTarget | null;
 
   // Location search (issue #28). Non-null means the search overlay is open and
   // filling THAT end of the journey — which is why picking a result needs no
@@ -175,6 +186,7 @@ interface AppState {
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
+  revealSite: (siteId: string) => void;
   toggleTag: (parent: ParentCategory, tag: string) => void;
   clearTags: (parent: ParentCategory) => void;
   toggleOutingType: (category: SiteCategory) => void;
@@ -196,7 +208,7 @@ interface AppState {
   setDestinationFromSite: (siteId: string) => void;
   setDetourBudget: (metres: number) => void;
   setRouteSort: (sort: RouteSort) => void;
-  setPickingDestination: (on: boolean) => void;
+  setPicking: (target: SearchTarget | null) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
   applySearchResult: (result: SearchResult) => void;
@@ -235,7 +247,11 @@ function reorderOuting(
 
 // A hand-picked trip has no seed or cluster spread — those fields describe a
 // found cluster only — and `edited` gates the "replace your trip?" confirm.
-const EMPTY_TRIP: OutingResult = { stopIds: [], distanceFromAnchor: 0, edited: true };
+const EMPTY_TRIP: OutingResult = {
+  stopIds: [],
+  distanceFromAnchor: 0,
+  edited: true,
+};
 
 export const useStore = create<AppState>((set, get) => ({
   sites: [],
@@ -264,8 +280,8 @@ export const useStore = create<AppState>((set, get) => ({
 
   destination: null,
   detourBudget: DEFAULT_DETOUR_BUDGET,
-  routeSort: 'progress',
-  pickingDestination: false,
+  routeSort: "progress",
+  picking: null,
 
   searchTarget: null,
   focus: null,
@@ -296,7 +312,10 @@ export const useStore = create<AppState>((set, get) => ({
         }
       })
       .catch((err: unknown) => {
-        set({ dataError: err instanceof Error ? err.message : String(err), dataLoaded: true });
+        set({
+          dataError: err instanceof Error ? err.message : String(err),
+          dataLoaded: true,
+        });
       });
 
     const userPromise = loadUserState()
@@ -337,6 +356,44 @@ export const useStore = create<AppState>((set, get) => ({
     set({ activeTypes: on ? new Set(SITE_TYPES) : new Set() });
   },
 
+  // Make one site visible again when the user asked for it BY NAME in the site
+  // finder. A filter is an ambient choice about a type; typing a name is an
+  // explicit instruction about one site, and the explicit act wins — otherwise
+  // the finder answers with a site the map and the list then refuse to show.
+  //
+  // Two things can be hiding it, and both have to give: its leaf type being
+  // switched off, and a tag narrowing on its layer that it doesn't match. A
+  // user-HIDDEN site is not one of them — hiding is a decision about that site
+  // rather than about a type, so it is never overruled here (and the finder
+  // never returns one).
+  revealSite: (siteId) => {
+    const { sites, activeTypes, activeTags } = get();
+    const site = sites.find((s) => s.id === siteId);
+    if (!site) return;
+
+    const patch: Partial<Pick<AppState, "activeTypes" | "activeTags">> = {};
+
+    if (!activeTypes.has(site.category)) {
+      patch.activeTypes = new Set(activeTypes).add(site.category);
+    }
+
+    // Only this site's own layer is unnarrowed, and only when its tags miss —
+    // clearing every layer's tags would undo far more than the reveal needs.
+    const parent = parentOf(site.category);
+    const prefix = `${parent}::`;
+    const narrowed = [...activeTags].filter((k) => k.startsWith(prefix));
+    if (narrowed.length) {
+      const wanted = new Set(narrowed.map((k) => k.slice(prefix.length)));
+      if (!site.tags?.some((t) => wanted.has(t))) {
+        patch.activeTags = new Set(
+          [...activeTags].filter((k) => !k.startsWith(prefix)),
+        );
+      }
+    }
+
+    if (patch.activeTypes || patch.activeTags) set(patch);
+  },
+
   toggleTag: (parent, tag) => {
     const next = new Set(get().activeTags);
     const key = tagKey(parent, tag);
@@ -363,7 +420,12 @@ export const useStore = create<AppState>((set, get) => ({
     const next = new Set(get().outingTypes);
     if (next.has(category)) next.delete(category);
     else next.add(category);
-    set({ outingTypes: next, outing: null, outingFailure: null, outingShownIds: [] });
+    set({
+      outingTypes: next,
+      outing: null,
+      outingFailure: null,
+      outingShownIds: [],
+    });
   },
 
   // Bulk-tick a parent's leaves (the Select all / Deselect all controls).
@@ -373,7 +435,12 @@ export const useStore = create<AppState>((set, get) => ({
       if (on) next.add(c);
       else next.delete(c);
     }
-    set({ outingTypes: next, outing: null, outingFailure: null, outingShownIds: [] });
+    set({
+      outingTypes: next,
+      outing: null,
+      outingFailure: null,
+      outingShownIds: [],
+    });
   },
 
   // Switch a parent between "Any of these" (its ticked leaves — or the whole
@@ -382,11 +449,21 @@ export const useStore = create<AppState>((set, get) => ({
     const next = new Set(get().outingAnyParents);
     if (any) next.add(parent);
     else next.delete(parent);
-    set({ outingAnyParents: next, outing: null, outingFailure: null, outingShownIds: [] });
+    set({
+      outingAnyParents: next,
+      outing: null,
+      outingFailure: null,
+      outingShownIds: [],
+    });
   },
 
   setOutingIncludeVisited: (on) => {
-    set({ outingIncludeVisited: on, outing: null, outingFailure: null, outingShownIds: [] });
+    set({
+      outingIncludeVisited: on,
+      outing: null,
+      outingFailure: null,
+      outingShownIds: [],
+    });
   },
 
   // "Find one for me". In point mode this is the nearest full-house cluster
@@ -433,7 +510,9 @@ export const useStore = create<AppState>((set, get) => ({
       ? (s: LatLng) => detour(s, position, destination)
       : undefined;
     const spreadWeight = destination ? ROUTE_SPREAD_WEIGHT : undefined;
-    const pool = proximity ? eligible.filter((s) => proximity(s) <= detourBudget) : eligible;
+    const pool = proximity
+      ? eligible.filter((s) => proximity(s) <= detourBudget)
+      : eligible;
 
     const cluster = findNearestOuting(position, slots, slotOf, pool, {
       proximity,
@@ -450,13 +529,19 @@ export const useStore = create<AppState>((set, get) => ({
       // wider budget for the second.
       set(
         another
-          ? { outingFailure: { kind: 'no-more' } }
+          ? { outingFailure: { kind: "no-more" } }
           : {
               outing: null,
               outingShownIds: [],
               outingFailure: {
-                kind: 'missing-types',
-                nearest: nearestPerSlot(position, slots, slotOf, eligible, proximity),
+                kind: "missing-types",
+                nearest: nearestPerSlot(
+                  position,
+                  slots,
+                  slotOf,
+                  eligible,
+                  proximity,
+                ),
                 budget: destination ? detourBudget : null,
               },
             },
@@ -493,7 +578,13 @@ export const useStore = create<AppState>((set, get) => ({
     if (!position) return; // UI disables the card button without a position
     const currentIds = outing?.stopIds ?? [];
     if (currentIds.includes(siteId)) return;
-    const trip = reorderOuting(EMPTY_TRIP, [...currentIds, siteId], sites, position, destination);
+    const trip = reorderOuting(
+      EMPTY_TRIP,
+      [...currentIds, siteId],
+      sites,
+      position,
+      destination,
+    );
     if (!trip) return; // unknown id, or the site is already the pinned destination
     set({ outing: trip, outingFailure: null, outingShownIds: [] });
   },
@@ -504,13 +595,20 @@ export const useStore = create<AppState>((set, get) => ({
     if (!outing) return;
     const remaining = outing.stopIds.filter((id) => id !== siteId);
     set({
-      outing: reorderOuting(EMPTY_TRIP, remaining, sites, position, destination),
+      outing: reorderOuting(
+        EMPTY_TRIP,
+        remaining,
+        sites,
+        position,
+        destination,
+      ),
       outingFailure: null,
       outingShownIds: [],
     });
   },
 
-  clearOuting: () => set({ outing: null, outingFailure: null, outingShownIds: [] }),
+  clearOuting: () =>
+    set({ outing: null, outingFailure: null, outingShownIds: [] }),
 
   markVisited: async (siteId, note) => {
     const log: VisitLog = {
@@ -563,7 +661,9 @@ export const useStore = create<AppState>((set, get) => ({
     set({ hidden: h });
   },
 
-  setPosition: (position) => set({ position, geoError: null }),
+  // The tap that set the origin is spent, so the picker disarms — the mirror
+  // of what setDestination does for the other end.
+  setPosition: (position) => set({ position, geoError: null, picking: null }),
   // Live-location updates from watchPosition. A manual "I am here" pin is an
   // explicit override (spec §8) — don't let a GPS fix silently clobber it. The
   // user resumes live location by dropping a new pin (which routes through
@@ -610,8 +710,10 @@ export const useStore = create<AppState>((set, get) => ({
     const { sites, position, outing } = get();
     set({
       destination,
-      pickingDestination: false,
-      outing: outing ? reorderOuting(outing, outing.stopIds, sites, position, destination) : null,
+      picking: null,
+      outing: outing
+        ? reorderOuting(outing, outing.stopIds, sites, position, destination)
+        : null,
       outingFailure: null,
       outingShownIds: [],
     });
@@ -622,7 +724,12 @@ export const useStore = create<AppState>((set, get) => ({
   setDestinationFromSite: (siteId) => {
     const site = get().sites.find((s) => s.id === siteId);
     if (!site) return;
-    get().setDestination({ lat: site.lat, lng: site.lng, label: site.name, siteId: site.id });
+    get().setDestination({
+      lat: site.lat,
+      lng: site.lng,
+      label: site.name,
+      siteId: site.id,
+    });
   },
 
   // Widening the budget is the documented answer to a route-mode "nothing of
@@ -633,12 +740,12 @@ export const useStore = create<AppState>((set, get) => ({
   setDetourBudget: (detourBudget) =>
     set({ detourBudget, outingFailure: null, outingShownIds: [] }),
   setRouteSort: (routeSort) => set({ routeSort }),
-  setPickingDestination: (pickingDestination) => set({ pickingDestination }),
+  setPicking: (picking) => set({ picking }),
 
   // Opening search disarms the map picker: they are two ways of answering the
-  // same question, and leaving the map in crosshair mode behind a full-screen
-  // overlay would strand it there.
-  openSearch: (searchTarget) => set({ searchTarget, pickingDestination: false }),
+  // same question, and leaving the map in crosshair mode behind the search
+  // panel would strand it there.
+  openSearch: (searchTarget) => set({ searchTarget, picking: null }),
   closeSearch: () => set({ searchTarget: null }),
 
   // Apply a picked result to whichever end the search was opened for. The
@@ -647,7 +754,7 @@ export const useStore = create<AppState>((set, get) => ({
     const { searchTarget } = get();
     if (!searchTarget) return;
 
-    if (searchTarget === 'destination') {
+    if (searchTarget === "destination") {
       get().setDestination({
         lat: result.lat,
         lng: result.lng,
@@ -689,7 +796,7 @@ export const useStore = create<AppState>((set, get) => ({
   // it sooner, and costs nothing if it fails.
   useMyLocation: () => {
     set({ position: get().livePosition, geoError: null });
-    if (!('geolocation' in navigator)) return;
+    if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) =>
         get().setLivePosition({
@@ -698,7 +805,10 @@ export const useStore = create<AppState>((set, get) => ({
           accuracy: pos.coords.accuracy,
           manual: false,
         }),
-      () => get().setGeoError('Location unavailable — drop a pin or search for a place.'),
+      () =>
+        get().setGeoError(
+          "Location unavailable — drop a pin or search for a place.",
+        ),
       { enableHighAccuracy: true, timeout: 20000 },
     );
   },
