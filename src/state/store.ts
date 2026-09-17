@@ -17,6 +17,8 @@ import {
 import { orderRoute } from "../geo/tsp";
 import { haversine, type LatLng } from "../geo/haversine";
 import { DEFAULT_DETOUR_BUDGET, detour } from "../geo/corridor";
+import { prepareRoute, routeDetour, type PreparedRoute } from "../geo/route";
+import { fetchRoute } from "../geo/osrm";
 import {
   loadUserState,
   putVisit,
@@ -25,6 +27,9 @@ import {
   removeWishlist,
   addHidden,
   removeHidden,
+  routeKey,
+  loadCachedRoute,
+  cacheRoute,
   type VisitLog,
 } from "./db";
 import { loadViewState, saveViewState } from "./viewState";
@@ -153,6 +158,12 @@ interface AppState {
   destination: Destination | null;
   detourBudget: number; // metres of extra driving a stop may cost
   routeSort: RouteSort;
+
+  // The resolved ROAD route for the journey (issue #29), projected ready for
+  // measuring. Null means the corridor falls back to the detour ellipse — no
+  // signal, a service that is down, or two ends with no road between them.
+  // Nothing gates on it: null is a complete answer, not a broken one.
+  route: PreparedRoute | null;
   // Which end of the journey the map is armed to take the next tap as, if any.
   // ONE picker, not two: dropping an "I am here" pin and picking a destination
   // are the same gesture aimed at different ends, and while they were separate
@@ -208,6 +219,10 @@ interface AppState {
   setDestinationFromSite: (siteId: string) => void;
   setDetourBudget: (metres: number) => void;
   setRouteSort: (sort: RouteSort) => void;
+  // Re-resolve the journey's road route when the ends have moved enough to
+  // warrant it (issue #29). Fire-and-forget: it never throws, never blocks a
+  // render, and a failure simply leaves `route` null.
+  syncRoute: () => void;
   setPicking: (target: SearchTarget | null) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
@@ -243,6 +258,69 @@ function reorderOuting(
     stopIds: stops.map((s) => s.id),
     distanceFromAnchor: position ? haversine(position, stops[0]) : 0,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Road-route resolution (issue #29).
+//
+// WHY THE MOVEMENT GATE. The origin is normally the LIVE GPS FIX, which moves
+// continuously while you drive. Re-resolving on every accepted fix would mean a
+// network request every few seconds, which blows through the demo server's
+// one-per-second policy on a single user and re-draws the map for nothing: the
+// road ahead does not change because you advanced 100 m along it.
+//
+// So a resolved route is kept until the origin moves RESOLVE_MOVE_M from the
+// point it was resolved at, or the destination changes. Two kilometres is well
+// under the distance at which a British road network offers a genuinely
+// different route, and well over GPS drift plus normal in-town movement.
+//
+// The same gate is what stops an offline failure from retrying forever: a null
+// result records its attempt like a successful one, so the next try waits for
+// real movement — by which time the signal may well be back.
+const RESOLVE_MOVE_M = 2000;
+
+// Module-level rather than store state: this is bookkeeping for the resolver,
+// not something any component renders, and putting it in the store would wake
+// every subscriber on each GPS tick.
+let lastAttempt: { from: LatLng; to: LatLng } | null = null;
+
+function sameEnd(a: LatLng, b: LatLng): boolean {
+  return a.lat === b.lat && a.lng === b.lng;
+}
+
+/**
+ * A journey's road route: the IndexedDB cache first, the network only on a
+ * miss. Returns null when there is no route to be had, which is a complete
+ * answer — the caller falls back to the detour ellipse.
+ */
+async function resolveRoute(from: LatLng, to: LatLng): Promise<PreparedRoute | null> {
+  const key = routeKey(from, to);
+
+  const cached = await loadCachedRoute(key);
+  if (cached) {
+    const prepared = prepareRoute({
+      points: cached.points,
+      distance: cached.distance,
+      duration: cached.duration,
+    });
+    if (prepared) return prepared;
+  }
+
+  const route = await fetchRoute(from, to);
+  if (!route) return null;
+
+  const prepared = prepareRoute(route);
+  if (!prepared) return null;
+
+  // Best-effort and deliberately not awaited: the route is already in hand, and
+  // a blocked or full store must not hold up the map.
+  void cacheRoute({
+    key,
+    points: route.points,
+    distance: route.distance,
+    duration: route.duration,
+  });
+  return prepared;
 }
 
 // A hand-picked trip has no seed or cluster spread — those fields describe a
@@ -281,6 +359,7 @@ export const useStore = create<AppState>((set, get) => ({
   destination: null,
   detourBudget: DEFAULT_DETOUR_BUDGET,
   routeSort: "progress",
+  route: null,
   picking: null,
 
   searchTarget: null,
@@ -480,6 +559,7 @@ export const useStore = create<AppState>((set, get) => ({
       position,
       destination,
       detourBudget,
+      route,
       outingTypes,
       outingAnyParents,
       outingIncludeVisited,
@@ -506,8 +586,15 @@ export const useStore = create<AppState>((set, get) => ({
     // only what the journey can afford.
     // Both are undefined in point mode, where findNearestOuting falls back to
     // haversine-from-the-anchor and SPREAD_WEIGHT — the pre-#16 search exactly.
+    //
+    // The choice between the road route and the ellipse is the SAME choice the
+    // near-me list makes (issue #29). If the two disagreed, a site could read
+    // "+3 km detour" in the list and still be invisible to "find one for me",
+    // which is the same corridor asked a different way.
     const proximity = destination
-      ? (s: LatLng) => detour(s, position, destination)
+      ? route
+        ? (s: LatLng) => routeDetour(s, route)
+        : (s: LatLng) => detour(s, position, destination)
       : undefined;
     const spreadWeight = destination ? ROUTE_SPREAD_WEIGHT : undefined;
     const pool = proximity
@@ -663,7 +750,10 @@ export const useStore = create<AppState>((set, get) => ({
 
   // The tap that set the origin is spent, so the picker disarms — the mirror
   // of what setDestination does for the other end.
-  setPosition: (position) => set({ position, geoError: null, picking: null }),
+  setPosition: (position) => {
+    set({ position, geoError: null, picking: null });
+    get().syncRoute();
+  },
   // Live-location updates from watchPosition. A manual "I am here" pin is an
   // explicit override (spec §8) — don't let a GPS fix silently clobber it. The
   // user resumes live location by dropping a new pin (which routes through
@@ -687,6 +777,9 @@ export const useStore = create<AppState>((set, get) => ({
 
     if (current?.manual) return;
     set({ position, geoError: null });
+    // The gate inside syncRoute is what keeps this from becoming a request per
+    // fix — it only resolves once the origin has genuinely moved on.
+    get().syncRoute();
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => {
@@ -717,6 +810,7 @@ export const useStore = create<AppState>((set, get) => ({
       outingFailure: null,
       outingShownIds: [],
     });
+    get().syncRoute();
   },
 
   // "Set as destination" from a site card — the common road-trip case ("I'm
@@ -740,6 +834,49 @@ export const useStore = create<AppState>((set, get) => ({
   setDetourBudget: (detourBudget) =>
     set({ detourBudget, outingFailure: null, outingShownIds: [] }),
   setRouteSort: (routeSort) => set({ routeSort }),
+
+  syncRoute: () => {
+    const { position, destination } = get();
+
+    // No journey, no route. Clearing the destination puts the app back into
+    // point mode, and a stale road line must not outlive it.
+    if (!position || !destination) {
+      lastAttempt = null;
+      if (get().route) set({ route: null });
+      return;
+    }
+
+    // Already resolved (or already tried) for ends close enough to these.
+    if (
+      lastAttempt &&
+      sameEnd(lastAttempt.to, destination) &&
+      haversine(lastAttempt.from, position) < RESOLVE_MOVE_M
+    ) {
+      return;
+    }
+
+    const from = { lat: position.lat, lng: position.lng };
+    const to = { lat: destination.lat, lng: destination.lng };
+    const previous = lastAttempt;
+    lastAttempt = { from, to };
+
+    // A CHANGED DESTINATION invalidates the old line at once — drawing
+    // yesterday's road to today's destination is worse than drawing nothing,
+    // and the ellipse takes over for the moment it takes to resolve. Moving
+    // along an unchanged journey does not: that route is still the right road,
+    // so it keeps answering until a better one arrives.
+    if (previous && !sameEnd(previous.to, to)) set({ route: null });
+
+    void resolveRoute(from, to).then((route) => {
+      // The journey may have moved on while the request was in flight. Only the
+      // ends this result was asked for may accept it.
+      const now = get();
+      if (!now.position || !now.destination) return;
+      if (!sameEnd(now.destination, to)) return;
+      if (haversine(now.position, from) >= RESOLVE_MOVE_M) return;
+      set({ route });
+    });
+  },
   setPicking: (picking) => set({ picking }),
 
   // Opening search disarms the map picker: they are two ways of answering the
@@ -796,6 +933,7 @@ export const useStore = create<AppState>((set, get) => ({
   // it sooner, and costs nothing if it fails.
   useMyLocation: () => {
     set({ position: get().livePosition, geoError: null });
+    get().syncRoute();
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
       (pos) =>

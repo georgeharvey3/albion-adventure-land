@@ -1,5 +1,6 @@
 import { useStore } from '../state/store';
 import { DETOUR_BUDGETS } from '../geo/corridor';
+import { formatDuration } from '../geo/route';
 import { formatDistance, haversine } from '../geo/haversine';
 
 // The Origin → Destination bar (issue #14). ONE control, sitting above the
@@ -59,6 +60,7 @@ export function JourneyBar() {
   const setPicking = useStore((s) => s.setPicking);
   const openSearch = useStore((s) => s.openSearch);
   const useMyLocation = useStore((s) => s.useMyLocation);
+  const route = useStore((s) => s.route);
 
   // A searched anchor says where it is; a dropped pin and live GPS keep the
   // labels they always had. An armed end says so ahead of all of them, at
@@ -74,7 +76,19 @@ export function JourneyBar() {
   // (the map's drop-pin control doubles as "clear"), and live GPS has nothing
   // to reset to.
   const searchedOrigin = !!position?.label;
-  const journeyLength = position && destination ? haversine(position, destination) : null;
+
+  // The journey's own number. With a road route it is the road distance and the
+  // driving time; without one it is the straight-line distance, and it says so.
+  //
+  // This is not a mode badge — there is deliberately none (issue #29). It is
+  // the same slot telling the truth about the number in it. Printing
+  // "148 km direct" while the list is filtered by a 172 km road would be a
+  // plain falsehood, and the word "direct" is what keeps it honest.
+  const journeySummary = route
+    ? `${formatDistance(route.route.distance)} · ${formatDuration(route.route.duration)}`
+    : position && destination
+      ? `${formatDistance(haversine(position, destination))} direct`
+      : null;
 
   const destinationValue = destination
     ? destination.label
@@ -185,9 +199,7 @@ export function JourneyBar() {
               ))}
             </select>
           </label>
-          {journeyLength !== null && (
-            <span className="journey-length">{formatDistance(journeyLength)} direct</span>
-          )}
+          {journeySummary && <span className="journey-length">{journeySummary}</span>}
         </div>
       )}
 
