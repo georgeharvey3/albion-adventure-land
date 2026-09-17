@@ -76,6 +76,12 @@ fully offline. See spec §4 and §7.
   (lat/lng present and in range) → dedupe by `id` → emit normalized JSON.
   **Log rows that fail validation; never drop them silently.** Unnamed /
   uncoordinated rows are the classic import failure — flag them.
+- `CAMRA.csv` holds all three CAMRA heritage grades: 3-star, 2-star and 1-star,
+  about 1300 pubs. The grade is a source **tag** on the pub site, not a leaf
+  category. One pin colour, one rarity figure and one outing slot cover every
+  pub, and the grade only narrows the pubs layer in the filter. A session opens
+  with 3-star and 2-star picked (`DEFAULT_ACTIVE_TAGS` in `src/data/types.ts`),
+  because the 1-star pubs are the largest group and they bury the rest.
 - Pub enrichment is a separate, manual step: `npm run scrape:camra` reads each
   pub's page on the CAMRA site and writes the description, the source link and
   the first three gallery pictures to `data/camra-descriptions.json`, keyed by
@@ -83,7 +89,8 @@ fully offline. See spec §4 and §7.
   `data/camra-images/`; `npm run ingest` copies them to `public/images/camra/`.
   Pubs have no listing number, so they use this map instead of a companion
   images CSV. The scraper is resumable and the build never depends on it — a
-  fresh checkout without the cache gives sparse pub cards.
+  fresh checkout without the cache gives sparse pub cards. A full run reads
+  about 1300 pub pages and takes more than one hour.
 - Scramble pictures are the same kind of step: `npm run scrape:ukc` visits each
   route's crag page on UKClimbing, downscales the pictures to 720 px, and writes
   them to `data/ukc-images/`. The index is `data/ukc-photos.json`, keyed by the

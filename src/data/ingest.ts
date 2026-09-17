@@ -379,6 +379,9 @@ export function mapPubRow(
 
   const id = makePubId(name, postcode);
   const extra = enrich?.[id];
+  // The CAMRA heritage grade ("3-star") travels as a source tag, so it narrows
+  // the pubs layer in the filter without becoming a leaf category of its own.
+  const tags = parseTags(col(row, mapping.columns.tags));
   return {
     id,
     name,
@@ -387,6 +390,7 @@ export function mapPubRow(
     postcode,
     source: mapping.source,
     category: 'historic_pubs',
+    ...(tags.length ? { tags } : {}),
     ...(extra?.description ? { description: extra.description } : {}),
     ...(extra?.sourceUrl ? { sourceUrl: extra.sourceUrl } : {}),
     ...(extra?.images?.length ? { images: extra.images } : {}),

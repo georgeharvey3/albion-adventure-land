@@ -60,8 +60,9 @@ export default defineConfig(({ command }) => ({
         globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
         // sites.json is the whole dataset and must be precached for offline-first
         // (see spec §9) — it has already grown past Workbox's 2 MiB default as
-        // sources were added. Raise the ceiling with headroom for dataset growth.
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // sources were added, and the 2-star and 1-star heritage pubs took it
+        // past 4 MiB. Raise the ceiling with headroom for dataset growth.
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         runtimeCaching: [
           {
             // Guidebook pictures — cache-first, so a listing seen online keeps
