@@ -239,6 +239,7 @@ export function ingest(
   rows: RawRow[],
   mapping: SourceMapping,
   imagesByListing: ReadonlyMap<string, SiteImage[]> = new Map(),
+  imagesBySite: ReadonlyMap<string, SiteImage[]> = new Map(),
 ): IngestResult {
   const rejected: RejectedRow[] = [];
   let skippedNonCollectible = 0;
@@ -289,7 +290,11 @@ export function ingest(
     seen.add(site.id);
     const mainId = site.listingId ? mainIdByListing.get(site.listingId) : undefined;
     const isMain = !!site.listingId && mainId === site.id;
-    const images = isMain ? imagesByListing.get(site.listingId!) : undefined;
+    // Listing pictures come from a companion CSV and belong to the listing's
+    // main point; site-keyed pictures (the scraped scramble ones) are already
+    // addressed to one point, so they need no listing at all.
+    const images =
+      (isMain ? imagesByListing.get(site.listingId!) : undefined) ?? imagesBySite.get(site.id);
     sites.push({
       ...site,
       ...(mainId && mainId !== site.id ? { parentId: mainId } : {}),
@@ -320,6 +325,29 @@ export interface PubEnrichment {
    *  come from a companion CSV keyed by listing — pubs have no listing number,
    *  so the enrichment map (keyed by the stable pub id) carries them. */
   images?: SiteImage[];
+}
+
+/** Build-time picture cache for the UKC scramble source, scraped once and
+ *  cached (see scripts/scrape-ukc.ts). The pictures belong to the CRAG, not to
+ *  the route: several scrambles share one crag page and therefore one picture,
+ *  so `crags` holds each crag's pictures once and `routes` maps every route's
+ *  stable site id to its crag key. Keyed by the stable id, so re-importing the
+ *  CSV keeps the pictures attached. */
+export interface CragPhotoCache {
+  crags: Record<string, { url: string; images: SiteImage[] }>;
+  routes: Record<string, string>; // stable site id → crag key
+}
+
+/** Flatten a CragPhotoCache into the `site id → pictures` map ingest() attaches.
+ *  A route whose crag is not cached yet is simply absent — the scramble keeps
+ *  its picture-free card. */
+export function imagesBySiteId(cache: CragPhotoCache): Map<string, SiteImage[]> {
+  const out = new Map<string, SiteImage[]>();
+  for (const [siteId, cragKey] of Object.entries(cache.routes ?? {})) {
+    const images = cache.crags?.[cragKey]?.images;
+    if (images?.length) out.set(siteId, images);
+  }
+  return out;
 }
 
 export function mapPubRow(
