@@ -1,8 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1f6b4f"/>
-  <!-- a simple standing-stone / menhir motif -->
-  <circle cx="256" cy="200" r="40" fill="#f4d35e"/>
-  <rect x="222" y="236" width="68" height="170" rx="20" fill="#f7f5f0"/>
-  <rect x="150" y="300" width="46" height="106" rx="16" fill="#f7f5f0" opacity="0.8"/>
-  <rect x="316" y="300" width="46" height="106" rx="16" fill="#f7f5f0" opacity="0.8"/>
+  <rect width="512" height="512" rx="96" fill="#216448"/>
+  <!-- A trilithon: two uprights and a lintel, with the sun rising behind the
+       gap, over a ground rule. Everything sits inside the maskable safe zone
+       (the centre 80% circle, radius 204.8 from 256,256) so the square variant
+       needs no second drawing — see scripts/render-icons.mjs. -->
+  <circle cx="256" cy="152" r="72" fill="#f4d35e"/>
+  <rect x="96" y="188" width="320" height="56" rx="12" fill="#f7f5f0"/>
+  <rect x="128" y="244" width="76" height="148" rx="12" fill="#f7f5f0"/>
+  <rect x="308" y="244" width="76" height="148" rx="12" fill="#f7f5f0"/>
+  <rect x="144" y="404" width="224" height="20" rx="10" fill="#f7f5f0"/>
 </svg>
