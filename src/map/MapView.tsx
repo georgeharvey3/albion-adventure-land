@@ -6,6 +6,7 @@ import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
+import { OSRM_ATTRIBUTION } from '../geo/osrm';
 import { loadViewState, saveViewState } from '../state/viewState';
 import { basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
@@ -119,6 +120,7 @@ export function MapView() {
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);
   const destination = useStore((s) => s.destination);
+  const route = useStore((s) => s.route);
   const detourBudget = useStore((s) => s.detourBudget);
   const picking = useStore((s) => s.picking);
   const focus = useStore((s) => s.focus);
@@ -385,10 +387,22 @@ export function MapView() {
     }
   }, [outing, sites, position, setSelected]);
 
-  // Journey corridor overlay (issue #14): the straight from→to line plus the
-  // shaded detour ellipse, so "on my way" is something you can see rather than
-  // infer from a number. Redraws when the budget changes — that IS the feedback
-  // for widening it.
+  // Journey corridor overlay (issue #14, revised by #29).
+  //
+  // WITH A ROAD ROUTE, the map draws the road and nothing else. No shaded band:
+  // the corridor is a fixed distance either side of the line, which reads as
+  // "near this road" without being drawn, and a band wide enough to see at
+  // national zoom swamps the road it describes.
+  //
+  // WITHOUT ONE, it is the original straight line plus the shaded detour
+  // ellipse. The ellipse is worth drawing precisely because a straight line is
+  // NOT self-explanatory as a corridor — the shading is what says the corridor
+  // is fat in the middle and pinched at the ends. Redrawing on a budget change
+  // is the feedback for widening it.
+  //
+  // The two are never drawn together. Shading an ellipse while the list is
+  // filtered by the road would put sites in the list that sit outside the
+  // shape.
   useEffect(() => {
     const layer = corridorLayerRef.current;
     const map = mapRef.current;
@@ -399,29 +413,36 @@ export function MapView() {
       return;
     }
 
-    const ring = corridorEllipse(position, destination, detourBudget);
-    if (ring.length) {
-      L.polygon(
-        ring.map((p) => [p.lat, p.lng] as L.LatLngTuple),
-        {
-          color: accent(),
-          weight: 1.5,
-          opacity: 0.5,
-          dashArray: '4 5',
-          fillColor: accent(),
-          fillOpacity: 0.07,
-          interactive: false,
-        },
+    if (route) {
+      L.polyline(
+        route.route.points.map((p) => [p.lat, p.lng] as L.LatLngTuple),
+        { color: accent(), weight: 4, opacity: 0.7, interactive: false },
+      ).addTo(layer);
+    } else {
+      const ring = corridorEllipse(position, destination, detourBudget);
+      if (ring.length) {
+        L.polygon(
+          ring.map((p) => [p.lat, p.lng] as L.LatLngTuple),
+          {
+            color: accent(),
+            weight: 1.5,
+            opacity: 0.5,
+            dashArray: '4 5',
+            fillColor: accent(),
+            fillOpacity: 0.07,
+            interactive: false,
+          },
+        ).addTo(layer);
+      }
+
+      L.polyline(
+        [
+          [position.lat, position.lng],
+          [destination.lat, destination.lng],
+        ],
+        { color: accent(), weight: 2, opacity: 0.6, interactive: false },
       ).addTo(layer);
     }
-
-    L.polyline(
-      [
-        [position.lat, position.lng],
-        [destination.lat, destination.lng],
-      ],
-      { color: accent(), weight: 2, opacity: 0.6, interactive: false },
-    ).addTo(layer);
 
     L.marker([destination.lat, destination.lng], {
       icon: L.divIcon({
@@ -434,20 +455,34 @@ export function MapView() {
       .bindTooltip(destination.label)
       .addTo(layer);
 
-    // Fit once per journey, keyed on the two ends only: refitting on every
-    // budget change or GPS tick would fight the user for the viewport.
-    const fitKey = `${destination.lat},${destination.lng}`;
+    // Fit once per journey, keyed on the destination and on whether a road
+    // route has arrived: refitting on every budget change or GPS tick would
+    // fight the user for the viewport. The route counts because it can swing
+    // well outside the two ends — a Highland journey bulges east to Perth — so
+    // the fit that framed the straight line cuts the road in half.
+    const fitKey = `${destination.lat},${destination.lng}/${route ? 'road' : 'direct'}`;
     if (journeyFitKeyRef.current !== fitKey) {
       journeyFitKeyRef.current = fitKey;
-      map.fitBounds(
-        L.latLngBounds([
-          [position.lat, position.lng],
-          [destination.lat, destination.lng],
-        ]),
-        { padding: [60, 60] },
-      );
+      const bounds = L.latLngBounds([
+        [position.lat, position.lng],
+        [destination.lat, destination.lng],
+      ]);
+      if (route) for (const p of route.route.points) bounds.extend([p.lat, p.lng]);
+      map.fitBounds(bounds, { padding: [60, 60] });
     }
-  }, [position, destination, detourBudget]);
+  }, [position, destination, detourBudget, route]);
+
+  // Routing attribution (issue #29), required by the terms of the OSRM demo
+  // server. It appears only while a road route is on the map: the basemap's own
+  // credit already covers the OpenStreetMap data underneath.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !route) return;
+    map.attributionControl.addAttribution(OSRM_ATTRIBUTION);
+    return () => {
+      map.attributionControl.removeAttribution(OSRM_ATTRIBUTION);
+    };
+  }, [route]);
 
   // Crosshair while either end is armed. One flag, one cursor: the state that
   // says a tap is spoken for is the same state that draws it.

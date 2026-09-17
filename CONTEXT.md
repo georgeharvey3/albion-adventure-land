@@ -47,8 +47,24 @@ The search opened from either journey end. It fills that end, and it answers
 from places, postcodes, coordinates, grid references and sites.
 _Avoid_: location search, place search
 
+**Route**:
+The road line from the origin to the destination, resolved online from a
+routing service. Optional: without one the journey falls back to the direct
+origin-to-destination line.
+_Avoid_: directions, path, itinerary, road route
+
+**Corridor**:
+The set of sites the journey can afford — everything inside the detour budget.
+It is measured against the route when there is one, and against the direct line
+when there is not.
+_Avoid_: band, catchment, buffer
+
 **Detour**:
-The extra travel a site costs against the direct origin-to-destination line.
+The extra travel a site costs against the journey.
+
+**Progress**:
+How far along the journey a site sits, from the origin at 0 to the destination
+at 1.
 
 ### Finding and seeing
 
@@ -85,3 +101,8 @@ sites by name.
 
 **Outing / trip** — the code says `outing` (store, tab, finder) and the site card
 says "+ Add to trip". One of these has to go; not yet resolved.
+
+**Route (overloaded)** — the glossary now gives `route` to the road line of the
+journey, but the code also uses it for the order of the outing stops
+(`orderRoute` in `src/geo/tsp.ts`, `routeSort` in the store). These are two
+different things. The outing sense needs a new name; not yet resolved.
