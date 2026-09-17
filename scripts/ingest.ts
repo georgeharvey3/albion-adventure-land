@@ -75,6 +75,38 @@ function loadPubEnrichment(): Record<string, PubEnrichment> {
   return JSON.parse(readFileSync(file, 'utf8')) as Record<string, PubEnrichment>;
 }
 
+// Pub pictures, copied the same way as the guidebook ones but driven by the
+// enrichment map instead of a companion CSV — pubs have no listing number to
+// join on (see scripts/scrape-camra.ts). Source: data/camra-images/.
+function copyPubImages(enrichment: Record<string, PubEnrichment>): void {
+  const entries = Object.values(enrichment).filter((e) => e.images?.length);
+  if (!entries.length) return;
+  const srcDir = resolve(root, 'data/camra-images');
+  const outDir = resolve(root, 'public/images/camra');
+  mkdirSync(outDir, { recursive: true });
+
+  let copied = 0;
+  const missing: string[] = [];
+  for (const entry of entries) {
+    for (const image of entry.images ?? []) {
+      const fileName = image.url.slice(image.url.lastIndexOf('/') + 1);
+      const from = resolve(srcDir, fileName);
+      if (!existsSync(from)) {
+        missing.push(fileName);
+        continue;
+      }
+      copyFileSync(from, resolve(outDir, fileName));
+      copied++;
+    }
+  }
+
+  console.log(`  copied ${copied} pub picture files → public/images/camra/`);
+  if (missing.length) {
+    console.warn(`  ⚠ ${missing.length} pub picture file(s) named in the enrichment are not in data/camra-images:`);
+    for (const f of missing) console.warn(`    - ${f}`);
+  }
+}
+
 // A source's companion pictures CSV, when it declares one. Absent file is a
 // hard error, not a silent skip: the mapping named it, so a missing file is a
 // mistake worth failing the build over.
@@ -126,6 +158,7 @@ async function main(): Promise<void> {
   let totalRejected = 0;
   let totalSkipped = 0;
   const pubEnrichment = loadPubEnrichment();
+  copyPubImages(pubEnrichment);
 
   for (const { csv, mapping } of SOURCES) {
     console.log(`\nIngesting ${csv} …`);

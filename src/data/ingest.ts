@@ -315,6 +315,11 @@ export type Geocoder = (postcode: string) => Coords | null;
 export interface PubEnrichment {
   description?: string;
   sourceUrl?: string;
+  /** Gallery pictures scraped from the pub's page, already downscaled and
+   *  written to data/camra-images/. Unlike the guidebook sources these do not
+   *  come from a companion CSV keyed by listing — pubs have no listing number,
+   *  so the enrichment map (keyed by the stable pub id) carries them. */
+  images?: SiteImage[];
 }
 
 export function mapPubRow(
@@ -356,6 +361,7 @@ export function mapPubRow(
     category: 'historic_pubs',
     ...(extra?.description ? { description: extra.description } : {}),
     ...(extra?.sourceUrl ? { sourceUrl: extra.sourceUrl } : {}),
+    ...(extra?.images?.length ? { images: extra.images } : {}),
   };
 }
 
