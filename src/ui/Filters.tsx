@@ -6,6 +6,7 @@ import {
   SITE_TYPE_LABELS,
   PARENT_CATEGORIES,
   PARENT_CATEGORY_LABELS,
+  categoriesOf,
   parentOf,
   tagKey,
   TAG_ORDER,
@@ -43,10 +44,22 @@ export function Filters() {
       return next;
     });
 
+  // A chip's count is what turning that chip on shows, so a cross-source
+  // duplicate is counted under every category it is findable as (`categoriesOf`
+  // — Old Sarum under Ruins and under Hillforts). The chips therefore sum to
+  // more than the number of pins, by the number of merged places.
   const counts = new Map<SiteCategory, number>();
+  // A layer's count is sites, not the sum of its chips: a place found under two
+  // leaves of ONE layer belongs to that layer once.
+  const layerCounts = new Map<ParentCategory, number>();
   const tagCounts = new Map<ParentCategory, Map<string, number>>();
   for (const s of sites) {
-    counts.set(s.category, (counts.get(s.category) ?? 0) + 1);
+    const parents = new Set<ParentCategory>();
+    for (const category of categoriesOf(s)) {
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+      parents.add(parentOf(category));
+    }
+    for (const p of parents) layerCounts.set(p, (layerCounts.get(p) ?? 0) + 1);
     if (!s.tags?.length) continue;
     const parent = parentOf(s.category);
     let forParent = tagCounts.get(parent);
@@ -85,7 +98,7 @@ export function Filters() {
       </div>
 
       {layers.map(({ parent, leaves }) => {
-        const groupCount = leaves.reduce((n, t) => n + (counts.get(t) ?? 0), 0);
+        const groupCount = layerCounts.get(parent) ?? 0;
         const activeCount = leaves.filter((t) => activeTypes.has(t)).length;
         const allOn = activeCount === leaves.length;
         const noneOn = activeCount === 0;

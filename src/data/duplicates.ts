@@ -1,5 +1,5 @@
 import { haversine } from '../geo/haversine';
-import { type Site, type SiteEntry, type SiteImage } from './types';
+import { type Site, type SiteCategory, type SiteEntry, type SiteImage } from './types';
 
 // Cross-source duplicates (issue #37).
 //
@@ -22,16 +22,23 @@ import { type Site, type SiteEntry, type SiteImage } from './types';
 // 2. No id changes and nothing leaves the data. The merged-away site keeps its
 //    row and its stable id, and gains a derived `duplicateOf` — the same shape
 //    as `parentId`, and the same seam as `closure`: one filter in
-//    src/state/store.ts drops it from the map, the near-me list, search, the
-//    outing pool, the rarity index and the stats. So user state keyed on the
-//    old id is never orphaned, and widening or undoing a merge later costs one
-//    line in a JSON file.
+//    src/state/store.ts drops it from the map, the near-me list, search and the
+//    outing pool. So user state keyed on the old id is never orphaned, and
+//    widening or undoing a merge later costs one line in a JSON file.
+//
+// ONE PIN, BOTH LAYERS. A merge is not a choice between two categories. The
+// representative carries the merged rows' categories in `alsoCategories`, and
+// the filter matches any of them (`categoriesOf` in ./types), so Old Sarum
+// answers a search for Ruins and a search for Hillforts alike. Its own
+// category still decides the icon, the colour, the type on the card and the
+// outing slot: one place is one thing to visit, and one thing to tick.
 
 /** One curated group. `ids` is `[representative, ...merged]` — the FIRST id is
- *  the site that keeps the pin, so its category decides the icon, the colour,
- *  the name on the card and the filter layer the merged place shows up under.
- *  Reordering the ids is how you change that choice. `note` is for the human
- *  reading the file (JSON has no comments) and is never used by the code. */
+ *  the site that keeps the pin, so its category decides the icon, the colour
+ *  and the name on the card. (Not the filter layer: the place is findable under
+ *  every member's category.) Reordering the ids is how you change that choice.
+ *  `note` is for the human reading the file (JSON has no comments) and is never
+ *  used by the code. */
 export interface DuplicateGroup {
   ids: string[];
   note?: string;
@@ -81,8 +88,9 @@ function mergeImages(sites: readonly Site[]): SiteImage[] {
  * Fold the curated groups into the site list.
  *
  * The representative gains the other members' write-ups (`entries`, one per
- * source, its own first), their pictures, and any sparse field it lacks itself.
- * Every other member gains `duplicateOf` and nothing else.
+ * source, its own first), their categories (`alsoCategories`, so both filter
+ * layers still find the place), their pictures, and any sparse field it lacks
+ * itself. Every other member gains `duplicateOf` and nothing else.
  *
  * `tags` are deliberately NOT merged. A tag selection is scoped to the parent
  * category it was picked under (`tagKey` in ./types), so moving a ruins tag
@@ -142,6 +150,13 @@ export function applyDuplicates(
 
     const group = [site, ...members];
     const entries = group.map(entryOf).filter((e): e is SiteEntry => e !== null);
+    // Built from the members themselves, NOT from `entries`: a member with
+    // neither a description nor a source URL carries no entry, and its category
+    // would then be lost. A member that repeats the representative's own
+    // category adds nothing.
+    const alsoCategories: SiteCategory[] = [
+      ...new Set(members.map((m) => m.category).filter((c) => c !== site.category)),
+    ];
     const images = mergeImages(group);
     const withField = <K extends keyof Site>(key: K): Site[K] | undefined =>
       site[key] ?? group.find((s) => s[key] !== undefined)?.[key];
@@ -149,6 +164,7 @@ export function applyDuplicates(
     return {
       ...site,
       duplicateIds: members.map((m) => m.id),
+      ...(alsoCategories.length ? { alsoCategories } : {}),
       // One write-up needs no heading, so the card keeps its single-description
       // rendering; two or more become labelled blocks.
       ...(entries.length > 1 ? { entries } : {}),

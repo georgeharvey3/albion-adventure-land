@@ -3,9 +3,10 @@
 *A personal, offline-first PWA (“Albion Adventure Land”) for visiting curated
 location pins across Britain.*
 
-Rewritten July 2026 to reflect the shipped MVP and to define the next phase —
-**completion stats + outing mode v1** — precisely. Where this spec and the code
-disagree, fix whichever is wrong rather than letting them drift.
+Rewritten July 2026 to reflect the shipped MVP and to define outing mode v1
+precisely. Amended September 2026: completion statistics (F6) and the rarity
+index are cut, and the code is deleted. Where this spec and the code disagree,
+fix whichever is wrong rather than letting them drift.
 
 ---
 
@@ -20,7 +21,9 @@ disagree, fix whichever is wrong rather than letting them drift.
 | Visited / wishlist (IndexedDB) | ✅ Built |
 | Site detail card, directions handoff, pub place-link | ✅ Built |
 | PWA / offline (Workbox precache + OSM tile cache), GitHub Pages deploy | ✅ Built |
-| **Completion stats (F6)** | ✅ Built — Stats tab consumes the rarity index |
+| **Completion stats (F6)** | ❌ Cut — the rarity index and the counts are deleted |
+| Saved tab (wishlist, visit log, hidden sites) | ✅ Built |
+| Cross-source duplicate merge, findable under every member's category (§5.4) | ✅ Built |
 | **Outing mode v1 (F12/F14/F16)** | ✅ Built — nearest full-house cluster, route, multi-stop handoff |
 | Site log (note + photo), condition filters, export/import | ❌ Not built (Phase 3) |
 | Travel-time matrix, orienteering, DBSCAN discovery | ❌ Not built (Phase 4) |
@@ -55,8 +58,10 @@ that weight and must never be cut:
 
 1. **Near me now** — live location, every site sorted by distance (later:
    travel time), filterable by type, one tap to directions.
-2. **Visited / wishlist state with completion stats** — the mechanism that
-   turns a viewer into a collection with a shape and a finish line.
+2. **Visited / wishlist state** — the mechanism that turns a viewer into a
+   collection. The Saved tab holds the wishlist, the visit log and the hidden
+   sites. Completion statistics were the original third part of this and are
+   cut: the product never used them.
 
 **Outing mode** is the headline differentiator built on top of these: pick the
 *kinds* of day you want (a pub, a holy well, a stone circle), and the app finds
@@ -127,8 +132,12 @@ story is a feature.
 ### 5.1 Normalized Site (read-only, derived from CSVs)
 
 The type system is a **two-level taxonomy**, not the flat enum of the original
-design. The *leaf* category drives pin colour, filters, rarity, and stats; the
-*parent* groups leaves in the filter UI and is **derived, never stored**.
+design. The *leaf* category drives pin colour and the filter; the *parent*
+groups leaves in the filter UI and is **derived, never stored**.
+
+A site has one leaf category, and the filter can still match it under more than
+one. A merged cross-source duplicate carries the other rows' categories in
+`alsoCategories`, and `categoriesOf(site)` reads the full list (§5.4).
 
 ```ts
 type SiteCategory =            // leaf — controlled vocabulary
@@ -139,7 +148,7 @@ type SiteCategory =            // leaf — controlled vocabulary
   | 'natural_stones' | 'sacred_buildings' | 'caves' | 'other';
 
 type ParentCategory = 'folklore' | 'historic_pubs';
-// parentOf(category) — derived, like rarity. 'historic_pubs' is its own leaf
+// parentOf(category) — derived, never stored. 'historic_pubs' is its own leaf
 // and parent (no subdivision).
 
 interface Site {
@@ -177,9 +186,8 @@ survive CSV re-import:
 - Postcode sources (pubs): `slug(name)_slug(postcode)` (`makePubId`) —
   deliberately *not* coordinate-based, so re-geocoding never changes the id.
 
-`rarity` is **not stored** — derived at load from leaf-category frequency
-(§7.4). Same rule for `parentOf` and listing `parentId` resolution: anything
-derivable is derived, so user state can never depend on it.
+Anything derivable is derived, so user state can never depend on it. `parentOf`,
+listing `parentId` resolution and `categoriesOf` all follow this rule.
 
 ### 5.2 CSV ingest (build-time, `npm run ingest`)
 
@@ -238,6 +246,32 @@ precious. Marking a site visited removes it from the wishlist. The Zustand
 store mirrors IndexedDB in memory; the app still works read-only if IndexedDB
 is unavailable.
 
+### 5.4 Cross-source duplicates (issue #37)
+
+Two guidebooks describe one place with two names and two coordinates, so ingest
+derives two stable ids and its per-source dedupe never sees the pair. The merge
+is curated in `data/duplicates.json`, and `npm run dupes` only proposes the
+pairs. `src/data/duplicates.ts` applies the file at ingest.
+
+The first id in a group is the representative and keeps the pin. Every other
+member keeps its row and its id, gains `duplicateOf`, and leaves the app in one
+filter as the data loads — the same seam as a closed pub. `foldDuplicateState`
+then moves a visit, a wish or a hidden mark onto the representative, so no user
+state is orphaned and a change of representative cannot lose a visit.
+
+One pin does not mean one layer. The representative carries the members' leaf
+categories in `alsoCategories`, and `categoriesOf(site)` returns its own
+category first, then those. `matchesFilter` in `src/state/filter.ts` tests a
+site under every one of them, so Old Sarum answers a search for Ruins and a
+search for Hillforts. All 33 curated groups span two layers.
+
+The widening stops there, and on purpose. The representative's own `category`
+decides the pin shape, the pin colour, the type on the card and the outing slot
+it fills. One place is one thing to visit and one thing to tick, so one stop
+cannot fill two slots of an outing. Tags are not merged either: a tag selection
+is scoped to the layer it was picked under, so a site matched through a merged-in
+category drops out while that layer is narrowed by a tag.
+
 ---
 
 ## 6. Features by phase
@@ -245,7 +279,7 @@ is unavailable.
 Feature numbers are stable across rewrites (code comments cite them). Phases
 are re-cut around what’s actually built and what’s next.
 
-### Phase 1 — MVP ✅ SHIPPED (except F6, moved to Phase 2)
+### Phase 1 — MVP ✅ SHIPPED
 
 - **F1. Ingest** — two sources via mapping configs (§5.2). ✅
 - **F2. Map view** — pins coloured by leaf type (squares for pubs), location
@@ -259,16 +293,15 @@ are re-cut around what’s actually built and what’s next.
 - **F8. PWA / offline** — installable, shell + data precached, tiles
   runtime-cached, deployed to GitHub Pages. ✅
 
-### Phase 2 — ✅ BUILT: Completion stats + Outing mode v1
+### Phase 2 — ✅ BUILT: Outing mode v1
 
-Two deliverables. Stats first (small, pays off a core-principle debt); then
-outing mode, the headline feature, on **raw haversine distance only** — travel
-time is explicitly Phase 4.
+The headline feature, on **raw haversine distance only** — travel time is
+explicitly Phase 4.
 
-- **F6. Completion stats** — visited/total overall, per-leaf-type and
-  per-county breakdowns, and a “rarest type you haven’t seen” nudge (consumes
-  the already-built rarity index). A fourth sheet tab; updates live as sites
-  are marked.
+- **F6. Completion stats** — ❌ CUT (September 2026). The counts and the rarity
+  index they read are deleted. The fourth sheet tab stays as the Saved tab: the
+  wishlist, the visit log and the hidden sites, each a list with its own length
+  and no other number. Do not rebuild a count by type without a product reason.
 
 - **F12. Outing search — “nearest full house”.** The user picks **one or more
   leaf types** in a picker *independent of the map filter* (the map filter is a
@@ -339,8 +372,9 @@ across reload; exported state re-imports cleanly into a fresh browser profile.
   for near-me ordering and outing routing/tightness. This is what fixes the
   Cornwall-estuary problem. Requires picking a matrix provider (§11).
 - **F15. Orienteering subset selection** — time-budgeted outings: choose the
-  subset that fits the budget and maximises value; **rarity-weighted** so
-  under-visited types get preference; “pin as must-include” override.
+  subset that fits the budget and maximises value; “pin as must-include”
+  override. The original design weighted this by rarity. That index is deleted,
+  so a value function has to be defined again if this is built.
 - **F13. Density discovery (DBSCAN)** — offline suggestion of natural regions
   as day-outs, complementing the query-driven outing search.
 
@@ -415,10 +449,10 @@ seeds the tour; 2-opt reverses segments until no improvement. Open path in v1
 (closed-loop option can come with Phase 4 budgets). Distance function is a
 parameter — haversine now, matrix lookups in Phase 4 with no algorithm change.
 
-### 7.4 Rarity scoring ✅ built
-At load: `rarity(type) = 1 / log2(count[type] + 1)` (`src/geo/rarity.ts`).
-Consumers: the F6 rarest-unvisited nudge (Stats tab), then rarity-weighted
-selection value in F15 (Phase 4).
+### 7.4 Rarity scoring ❌ cut
+`src/geo/rarity.ts` held `rarity(type) = 1 / log2(count[type] + 1)`. Its only
+consumer was F6, which is cut, so the module is deleted. The section number
+stays because code comments cite these numbers.
 
 ### 7.4b Journey corridor — detour + progress ✅ built (`src/geo/corridor.ts`)
 
@@ -507,17 +541,17 @@ src/
     store.ts           // Zustand store (sites, user state, filters, position)
     db.ts              // idb wrappers: visited, wishlist
     selectors.ts       // useVisibleSites (filter + distance + sort)
+    filter.ts          // matchesFilter: the one "is this site shown" rule
     useGeolocation.ts
   geo/
     haversine.ts
-    rarity.ts
     outing.ts          // §7.2 scored seed scan
     tsp.ts             // NN + 2-opt
   map/MapView.tsx      // Leaflet direct; pins, location, drop-pin, route overlay
   ui/
-    App.tsx            // sheet tabs: Near me · Filters · Outing · Stats
+    App.tsx            // sheet tabs: Near me · Filters · Outing · Saved
     NearMeList.tsx  Filters.tsx  SiteDetail.tsx
-    Stats.tsx          // F6
+    Stats.tsx          // the Saved tab: wishlist, visit log, hidden
     Outing.tsx         // F12/F14/F16
   links/googleMaps.ts  // directions, place lookup, multi-stop builders
 public/data/sites.json // generated — never hand-edit

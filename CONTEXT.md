@@ -3,7 +3,7 @@
 A visiting companion for curated locations across Britain. This file is the
 glossary: one name for each thing, and the names to avoid. It holds no
 implementation detail — the design system lives in `design.md`, the working
-rules in `CLAUDE.md`, and the product spec in `britain-sites-app-spec.md`.
+rules in `CLAUDE.md`, and the product spec in `plans/britain-sites-app-spec.md`.
 
 ## Language
 
@@ -26,9 +26,12 @@ circles, wild swims, historic pubs). The level above it is the **parent
 category**.
 _Avoid_: kind, tag, class
 
-**Rarity**:
-How uncommon a site's type is across the whole dataset. Derived at load time,
-never stored.
+**Findable as**:
+The set of leaf categories a filter matches a site under. It is the site's own
+type, plus the type of each row merged into it as a cross-source duplicate. Read
+it with `categoriesOf`. A site still has one type: the one on its pin and its
+card.
+_Avoid_: multi-category, secondary type
 
 ### The journey
 
