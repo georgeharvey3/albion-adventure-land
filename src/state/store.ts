@@ -6,6 +6,7 @@ import {
   outingSlotResolver,
   parentOf,
   tagKey,
+  DEFAULT_ACTIVE_TAGS,
 } from "../data/types";
 import { buildRarityIndex, type RarityIndex } from "../geo/rarity";
 import {
@@ -125,6 +126,8 @@ interface AppState {
   // NARROWING: a layer with no tag picked shows all of its sites, and a layer
   // with tags picked shows only sites carrying at least one of them (OR within
   // a layer, AND across layers is meaningless — each layer filters itself).
+  // A session does NOT start empty: it starts at DEFAULT_ACTIVE_TAGS, which
+  // opens the pubs layer on its 3-star and 2-star grades (see ../data/types).
   activeTags: Set<string>;
 
   // Outing mode. The slot selection is a QUERY, deliberately independent of
@@ -343,7 +346,7 @@ export const useStore = create<AppState>((set, get) => ({
   userLoaded: false,
 
   activeTypes: new Set(SITE_TYPES),
-  activeTags: new Set(),
+  activeTags: new Set(DEFAULT_ACTIVE_TAGS),
 
   outingTypes: new Set(),
   outingAnyParents: new Set(),

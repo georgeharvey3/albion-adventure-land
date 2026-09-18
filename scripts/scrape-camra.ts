@@ -16,6 +16,11 @@ import { camraMapping } from '../src/data/mappings/camra.ts';
 // (data/camra-descriptions.json), keyed by the STABLE pub id, so the app stays
 // fully offline and re-runs are cheap and resumable.
 //
+// The CSV holds all three CAMRA heritage grades (3-star, 2-star, 1-star), so a
+// full run is ~1300 pub pages plus their pictures — over an hour at the delay
+// below. It is resumable: a cached pub is skipped, so an interrupted run
+// continues where it stopped.
+//
 // Matching is easy because CAMRA.csv was itself derived from the National
 // Inventory listing table, which carries the same Name/Postcode columns AND a
 // link to each pub's page. We parse that table, pair our CSV rows to it by
@@ -111,15 +116,16 @@ interface ListingRow {
 }
 
 // Parse the National Inventory table into rows. Each <tr> has cells
-// [grading, country, area, town, postcode, name-as-link]; we only need 3-star
-// rows (everything in our CSV is 3-star) with a pub link.
+// [grading, country, area, town, postcode, name-as-link]; we take every graded
+// row with a pub link — the CSV holds all three grades (3-star, 2-star,
+// 1-star), and the grade itself comes from the CSV, not from here.
 function parseListing(html: string): ListingRow[] {
   const rows: ListingRow[] = [];
   const trRe = /<tr>([\s\S]*?)<\/tr>/g;
   let m: RegExpExecArray | null;
   while ((m = trRe.exec(html))) {
     const tr = m[1];
-    if (!/3-star/.test(tr)) continue;
+    if (!/[123]-star/.test(tr)) continue;
     const link = /href="(https:\/\/camra\.org\.uk\/pubs\/[^"]+)"[^>]*title="View ([^"]+)"/.exec(tr);
     if (!link) continue;
     const pc = /\b([A-Z]{1,2}\d[A-Z\d]?) ?(\d[A-Z]{2})\b/.exec(tr);
@@ -288,7 +294,7 @@ async function main(): Promise<void> {
   // 2. Fetch + parse the listing table → postcode index of {name, url}.
   console.log(`Fetching National Inventory listing …`);
   const listing = parseListing(await getText(LISTING_URL));
-  console.log(`  parsed ${listing.length} three-star listing rows`);
+  console.log(`  parsed ${listing.length} listing rows`);
   const byPostcode = new Map<string, ListingRow[]>();
   for (const row of listing) {
     const arr = byPostcode.get(row.postcode) ?? [];
@@ -303,10 +309,13 @@ async function main(): Promise<void> {
   for (const pub of pubs) {
     const id = makePubId(pub.name, pub.postcode);
     const candidates = byPostcode.get(normalizePostcode(pub.postcode)) ?? [];
+    // Name first, postcode second: a postcode can hold several heritage pubs,
+    // and taking a lone candidate whose name disagrees would attach one pub's
+    // write-up and pictures to another. The lone candidate is the fallback for
+    // the handful of pubs the listing and the CSV spell differently.
     const match =
-      candidates.length === 1
-        ? candidates[0]
-        : candidates.find((c) => slug(c.name) === slug(pub.name));
+      candidates.find((c) => slug(c.name) === slug(pub.name)) ??
+      (candidates.length === 1 ? candidates[0] : undefined);
     if (!match) {
       unmatched.push(`${pub.name} (${pub.postcode})`);
       continue;

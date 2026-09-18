@@ -8,6 +8,7 @@ import {
   PARENT_CATEGORY_LABELS,
   parentOf,
   tagKey,
+  TAG_ORDER,
   type ParentCategory,
   type SiteCategory,
 } from '../data/types';
@@ -33,7 +34,6 @@ export function Filters() {
   const activeTypes = useStore((s) => s.activeTypes);
   const toggleType = useStore((s) => s.toggleType);
   const setTypesActive = useStore((s) => s.setTypesActive);
-  const activeTagSet = useStore((s) => s.activeTags);
   const [open, setOpen] = useState<ReadonlySet<ParentCategory>>(new Set());
 
   const toggleOpen = (parent: ParentCategory) =>
@@ -91,13 +91,19 @@ export function Filters() {
         const noneOn = activeCount === 0;
         // A single-leaf parent (e.g. Historic pubs) has no finer subcategories.
         const hasSubs = !(leaves.length === 1 && (leaves[0] as string) === parent);
-        // Commonest tags first — the long tail is behind "Show all".
+        // Commonest tags first — the long tail is behind "Show all". A layer
+        // with a fixed order (the pub grades) uses that instead, for the tags
+        // it names.
+        const order = TAG_ORDER[parent];
+        const rank = (tag: string) => {
+          const i = order?.indexOf(tag) ?? -1;
+          return i === -1 ? Infinity : i;
+        };
         const tags = [...(tagCounts.get(parent) ?? new Map<string, number>())].sort(
-          (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+          (a, b) => rank(a[0]) - rank(b[0]) || b[1] - a[1] || a[0].localeCompare(b[0]),
         );
         const hasBody = hasSubs || tags.length > 0;
         const isOpen = hasBody && open.has(parent);
-        const selectedTags = tags.filter(([tag]) => activeTagSet.has(tagKey(parent, tag))).length;
 
         return (
           <section className="layer" key={parent}>
@@ -116,7 +122,6 @@ export function Filters() {
                 </span>
                 <span className="layer-count">
                   {allOn || !hasSubs ? groupCount : `${activeCount}/${leaves.length} types`}
-                  {selectedTags > 0 ? ` · ${selectedTags} tags` : ''}
                 </span>
               </button>
               <button

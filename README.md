@@ -56,9 +56,11 @@ navigation is delegated to Google Maps via deep links. No backend.
 - `magical_britain_master.csv` — folklore/magical sites (West Penwith / North
   Wales). CSVs are heterogeneous and messy (multi-line descriptions, per-source
   columns), so ingest uses a per-source mapping config and Papa Parse.
-- `CAMRA.csv` — heritage pubs, postcode-only; geocoded at build time (cached in
-  `data/geocode-cache.json`) with optional scraped descriptions
-  (`npm run scrape:camra`).
+- `CAMRA.csv` — heritage pubs of all three CAMRA grades (3-star, 2-star,
+  1-star), postcode-only. The rows are geocoded at build time (cached in
+  `data/geocode-cache.json`), with optional scraped descriptions and pictures
+  (`npm run scrape:camra`). The grade rides along as a filter tag, and a session
+  opens on the 3-star and 2-star pubs.
 - User state is kept strictly separate from site data and keyed on a stable,
   derived site `id`, so re-importing a CSV never loses your visit history.
 

@@ -99,6 +99,27 @@ export function tagKey(parent: ParentCategory, tag: string): string {
   return `${parent}::${tag}`;
 }
 
+// Tags a session starts with picked. Empty means "no narrowing" everywhere
+// else, and that is still the rule for every other layer — this is the one
+// layer where the whole set is not the right opening view. The CAMRA heritage
+// grades run 3-star (exceptional interiors, a few hundred) down to 1-star
+// (over seven hundred), and starting with all of them lit up buries the
+// flagship pubs under the long tail in every town. So a session opens on the
+// 3-star and 2-star pubs; the 1-star chip is one tap away in the pubs layer.
+// Like every other filter, this is NOT persisted — each session opens here.
+export const DEFAULT_ACTIVE_TAGS: readonly string[] = [
+  tagKey('historic_pubs', '3-star'),
+  tagKey('historic_pubs', '2-star'),
+];
+
+// Tag orders that are not "commonest first". A layer lists its tags by how many
+// sites carry them, which is right for free-text guidebook labels but wrong for
+// a graded vocabulary: the pub grades read 3, 2, 1, and 1-star is the commonest
+// of them. A tag not named here keeps its place, by count, after the named ones.
+export const TAG_ORDER: Partial<Record<ParentCategory, readonly string[]>> = {
+  historic_pubs: ['3-star', '2-star', '1-star'],
+};
+
 export function parseTagKey(key: string): { parent: ParentCategory; tag: string } {
   const at = key.indexOf('::');
   return { parent: key.slice(0, at) as ParentCategory, tag: key.slice(at + 2) };
