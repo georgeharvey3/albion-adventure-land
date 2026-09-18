@@ -10,6 +10,7 @@ import {
   type Geocoder,
   type RawRow,
   type PubEnrichment,
+  type PubStatus,
   type CragPhotoCache,
 } from '../src/data/ingest.ts';
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
@@ -75,6 +76,19 @@ function loadPubEnrichment(): Record<string, PubEnrichment> {
     return {};
   }
   return JSON.parse(readFileSync(file, 'utf8')) as Record<string, PubEnrichment>;
+}
+
+// The transient half of a pub — opening times, survey dates, closure — read by
+// scripts/refresh-camra-status.ts. Optional for the same reason as the
+// enrichment: a fresh checkout builds without it, and the pub cards simply say
+// nothing about hours rather than guessing.
+function loadPubStatus(): Record<string, PubStatus> {
+  const file = resolve(root, 'data/camra-status.json');
+  if (!existsSync(file)) {
+    console.log('  (no data/camra-status.json — run `npm run refresh:camra` for pub hours and closures)');
+    return {};
+  }
+  return JSON.parse(readFileSync(file, 'utf8')) as Record<string, PubStatus>;
 }
 
 // Scraped pictures, copied the same way as the guidebook ones but driven by a
@@ -179,6 +193,7 @@ async function main(): Promise<void> {
   let totalRejected = 0;
   let totalSkipped = 0;
   const pubEnrichment = loadPubEnrichment();
+  const pubStatus = loadPubStatus();
   copyScrapedImages(
     'pub',
     'data/camra-images',
@@ -199,7 +214,7 @@ async function main(): Promise<void> {
     copyImages(mapping, images);
     const { sites, rejected, skippedNonCollectible } =
       mapping.coords === 'geocode_postcode'
-        ? ingestPubs(rows, mapping, await buildGeocoder(rows, mapping), pubEnrichment)
+        ? ingestPubs(rows, mapping, await buildGeocoder(rows, mapping), pubEnrichment, pubStatus)
         : ingest(rows, mapping, images, siteImages);
 
     for (const s of sites) {
@@ -233,6 +248,19 @@ async function main(): Promise<void> {
       }
     }
     totalSkipped += skippedNonCollectible;
+  }
+
+  // Closed sites are written out like any other — the data keeps them so a later
+  // refresh can clear the closure — but the app drops them when it loads, so the
+  // count is reported here rather than left to be discovered as a hole in the map.
+  const closed = allSites.filter((s) => s.closure);
+  if (closed.length) {
+    console.log(`\nClosed at source, so not shown in the app: ${closed.length}`);
+    const byLabel: Record<string, number> = {};
+    for (const s of closed) byLabel[s.closure!.label] = (byLabel[s.closure!.label] ?? 0) + 1;
+    for (const [label, n] of Object.entries(byLabel).sort((a, b) => b[1] - a[1])) {
+      console.log(`  ${label}: ${n}`);
+    }
   }
 
   // Type-frequency summary (rarity is derived at load in the app, not stored).

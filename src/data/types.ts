@@ -347,5 +347,67 @@ export interface Site {
   seasonal?: boolean;
   needsWalk?: boolean;
   cost?: 'free' | 'paid';
-  openingHours?: string;
+
+  // --- Transient source facts (pubs only today) --------------------------
+  // These four change under us between builds, unlike the rest of a Site, so
+  // they are refreshed by their own script (`npm run refresh:camra`) and are
+  // always shown together with the dates, never on their own: an opening time
+  // with no survey date behind it is a claim the app cannot stand behind.
+  // See scripts/refresh-camra-status.ts.
+  hours?: OpeningHours[];
+  /** Present only when the source says the site is shut. Its presence IS the
+   *  closed flag — there is no separate boolean. A site carrying one is
+   *  filtered out of the app when the data loads (see src/state/store.ts); it
+   *  stays in sites.json so the next refresh can clear it and bring the site
+   *  back. */
+  closure?: Closure;
+  lastSurveyed?: string; // ISO date the source last inspected the site
+  lastUpdated?: string; // ISO date the source last edited the entry
+  checkedAt?: string; // ISO date this app last read the source page
+}
+
+/** One opening period, verbatim from the source in 24-hour local time. A day
+ *  the source gives no period for is shut that day; a day with two periods
+ *  (afternoon break) simply appears twice, so no consumer has to model it. */
+export interface OpeningHours {
+  day: Weekday;
+  opens: string; // "HH:MM"
+  closes: string; // "HH:MM", and "24:00" for midnight
+}
+
+export type Weekday =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
+export const WEEKDAYS: readonly Weekday[] = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+];
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+};
+
+/** Why a site is shut, as the source states it. `label` is the source's own
+ *  short status ("Temporarily Closed"); `note` is the full sentence, which
+ *  usually carries the closure date and any expected reopening. */
+export interface Closure {
+  label: string;
+  note: string;
 }

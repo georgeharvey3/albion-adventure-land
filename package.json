@@ -7,6 +7,7 @@
     "ingest": "tsx scripts/ingest.ts",
     "gazetteer": "tsx scripts/build-gazetteer.ts",
     "scrape:camra": "tsx scripts/scrape-camra.ts",
+    "refresh:camra": "tsx scripts/refresh-camra-status.ts",
     "scrape:ukc": "tsx scripts/scrape-ukc.ts",
     "dev": "vite",
     "build": "npm run ingest && tsc -b && vite build",
