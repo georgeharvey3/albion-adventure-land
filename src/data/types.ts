@@ -304,6 +304,18 @@ export interface SiteImage {
   caption?: string;
 }
 
+// One source's write-up of a site that several sources describe (issue #37).
+// Built at ingest by ./duplicates from the merged rows, so the card can show
+// both guidebooks under their own headings instead of picking a winner. The
+// heading itself is DERIVED in the UI from `category` (the parent category's
+// label — "Folklore entry", "Ruins entry"), never stored.
+export interface SiteEntry {
+  source: string;
+  category: SiteCategory;
+  description?: string;
+  sourceUrl?: string;
+}
+
 export interface Site {
   id: string; // stable, derived: slug(name)+rounded(lat,lng)
   name: string;
@@ -325,6 +337,18 @@ export interface Site {
   listingId?: string;
   listingTitle?: string; // the curated listing label (CSV `listing_title`)
   parentId?: string; // stable id of the listing's `main` point
+
+  // Cross-source duplicate merge (issue #37), DERIVED at ingest from the
+  // curated data/duplicates.json — never user state, and no id ever changes.
+  // The same shape as the listing pair above: `duplicateOf` names the
+  // representative that keeps the pin (set on the merged-away site, which stays
+  // in sites.json and is dropped by one filter in the store, exactly like a
+  // closed pub), and `duplicateIds` lists the sites folded INTO a
+  // representative, so user state saved against an old id still finds its way
+  // home. `entries` carries the merged write-ups.
+  duplicateOf?: string;
+  duplicateIds?: string[];
+  entries?: SiteEntry[];
 
   // Guidebook pictures for this listing, in source order. DERIVED at ingest from
   // the source's companion images CSV and attached only to the listing's `main`

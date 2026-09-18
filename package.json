@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "ingest": "tsx scripts/ingest.ts",
+    "dupes": "tsx scripts/report-duplicates.ts",
     "gazetteer": "tsx scripts/build-gazetteer.ts",
     "scrape:camra": "tsx scripts/scrape-camra.ts",
     "refresh:camra": "tsx scripts/refresh-camra-status.ts",

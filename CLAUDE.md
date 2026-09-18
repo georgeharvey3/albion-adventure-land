@@ -125,6 +125,10 @@ fully offline. See spec §4 and §7.
   its Chrome profile in `data/.ukc-profile/` for the clearance cookie, and reads
   one page at a time with a delay: this is somebody else's website. `npm run ingest` copies the
   files to `public/images/ukc/`, and the build never depends on the cache.
+- Dedupe inside a source is by stable `id`, and that is all it can be. Two
+  sources naming one place produce two different ids, so the cross-source merge
+  is a separate, curated step that runs after every source — see
+  **Cross-source duplicates** below.
 - Only build the OSGB→WGS84 step if a source actually needs it (this CSV carries
   both lat/lng and `os_grid_ref`, so ingest still doesn't need it). It now exists
   anyway, in `src/geo/osgb.ts`, because **location search** accepts typed grid
@@ -149,6 +153,47 @@ layering is the feature — don't collapse it:
   network, it's wrong.
 - Place data is GeoNames (CC BY 4.0). The attribution string is baked into
   `places.json` and rendered in the overlay — don't strip it.
+
+## Cross-source duplicates (issue #37)
+
+Two guidebooks describe one place. Tintern Abbey is a folklore row and a ruins
+row. St Dyfnog's Well is a well and a wild swim. The names and the coordinates
+differ by a word and a few metres, so the stable ids differ too, and the
+per-source dedupe in ingest never sees the pair. One stone then gets two pins,
+two visited ticks, two rarity counts and two outing slots.
+
+- A merge is **curated, never inferred**. `npm run dupes` proposes: it lists
+  every pair from two different sources within 200 m, and the words the two
+  names share. `data/duplicates.json` decides, and nothing else takes effect.
+  No rule separates "Tintern Abbey / Tintern Abbey And St Mary's" (one abbey)
+  from "Roman Baths / Ale House" (a pub 91 m from a Roman bath), or from
+  "Mount Snowdon (summit) / Y Gribin" (a summit and the scramble up it).
+- In each group the **first id keeps the pin**. That id's category decides the
+  icon, the colour, the name on the card and the filter layer. To change the
+  choice, reorder the ids. The `note` field is for the human reader only.
+- **No id changes, and nothing leaves the data.** The merged-away site keeps its
+  row in `sites.json` and carries `duplicateOf`. The representative carries
+  `duplicateIds` and `entries`. The store drops the merged rows in one filter
+  when the data loads (`src/state/store.ts`) — the seam a closed pub goes
+  through. That one seam covers the map, the near-me list, search, the outing
+  pool, the rarity index and the stats.
+- The site card shows **every source's write-up**, under a heading that names
+  its layer: "Folklore entry", "Ruins entry". The sources say different things
+  about one stone — one carries the legend, the other the fabric and the access —
+  so a merge that picked a winner would throw half the visit away. The heading
+  is derived from the entry's category, like rarity, and never stored.
+- User state comes home in `foldDuplicateState`, once, as the data loads. It
+  moves a visit, a wish or a hidden mark from a merged-away id to the
+  representative, keeps the earlier visit date and keeps both notes. So the fold
+  is safe to run again, and a change of representative cannot lose a visit.
+  Every other reader still looks up one id and knows nothing about duplicates.
+- **Tags are not merged.** A tag selection is scoped to the parent category it
+  was picked under (`tagKey`), so a ruins tag on a folklore representative
+  would invent a folklore chip that no folklore site carries.
+- The cost of one pin: a merged place appears under the representative's
+  category only. Multi-category sites are the alternative, and they reach into
+  the filter, the rarity index, the stats and the outing search. For about 33
+  places, that price is too high. Raise it again if the count grows.
 
 ## Build order (each phase independently shippable)
 

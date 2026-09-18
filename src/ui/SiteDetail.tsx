@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site, type SiteImage } from '../data/types';
+import {
+  PARENT_CATEGORY_LABELS,
+  SITE_TYPE_COLORS,
+  SITE_TYPE_LABELS,
+  parentOf,
+  type Site,
+  type SiteEntry,
+  type SiteImage,
+} from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
 import { Lightbox } from './Lightbox';
@@ -34,6 +42,42 @@ function sourceLinkLabel(url: string): string {
 const DESC_CLAMP_CHARS = 160;
 function isCollapsible(description?: string): boolean {
   return !!description && description.length > DESC_CLAMP_CHARS;
+}
+
+// Merged write-ups for a place two guidebooks both describe (issue #37). Each
+// source keeps its own text under a heading naming the layer it came from —
+// "Folklore entry", "Ruins entry" — because the sources say different things
+// about the same stone: one carries the legend, the other the fabric and the
+// access. Picking a winner would throw half the visit away.
+//
+// The heading is DERIVED from the entry's category (its parent's label), never
+// stored, and its dot is the same colour the layer wears on the map. Collapsed,
+// each entry clamps to its own teaser, so the card still says at a glance which
+// guidebooks cover this place.
+function SiteEntries({ entries, collapsed }: { entries: SiteEntry[]; collapsed: boolean }) {
+  return (
+    <div className="card-entries">
+      {entries.map((entry, i) => (
+        <section className="card-entry" key={`${entry.source}-${i}`}>
+          <span className="card-entry-label">
+            <span className="dot" style={{ background: SITE_TYPE_COLORS[entry.category] }} />
+            {PARENT_CATEGORY_LABELS[parentOf(entry.category)]} entry
+          </span>
+          {entry.description && (
+            <p className={collapsed ? 'card-desc collapsed' : 'card-desc'}>{entry.description}</p>
+          )}
+          {entry.sourceUrl && (
+            <p className="card-source">
+              Description via{' '}
+              <a href={entry.sourceUrl} target="_blank" rel="noreferrer">
+                {sourceLinkLabel(entry.sourceUrl)} ↗
+              </a>
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  );
 }
 
 // Guidebook pictures for the listing, shown above the write-up. Several pictures
@@ -128,12 +172,18 @@ export function SiteBody({
   // map stays visible; the reader opens it when they want it. A short
   // description has no toggle, so it is never clamped. Fresh selection returns
   // to the caller's default.
-  const collapsible = isCollapsible(site.description);
+  // A merged site (issue #37) is described by every source that lists it, and
+  // the whole stack shares one toggle — so the length that decides whether it
+  // collapses is the length of all of it.
+  const writeUp = site.entries
+    ? site.entries.map((e) => e.description ?? '').join(' ')
+    : site.description;
+  const collapsible = isCollapsible(writeUp);
   const startCollapsed = collapseDescription && collapsible;
   const [descCollapsed, setDescCollapsed] = useState(startCollapsed);
   useEffect(() => {
-    setDescCollapsed(collapseDescription && isCollapsible(site.description));
-  }, [site.id, site.description, collapseDescription]);
+    setDescCollapsed(collapseDescription && isCollapsible(writeUp));
+  }, [site.id, writeUp, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
 
@@ -185,23 +235,27 @@ export function SiteBody({
       {site.access && <p className="card-meta">Access: {site.access}</p>}
       <OpeningTimes site={site} />
       {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
-      {site.description && (
-        <>
+      {site.entries ? (
+        <SiteEntries entries={site.entries} collapsed={descCollapsed} />
+      ) : (
+        site.description && (
           <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
             {site.description}
           </p>
-          {collapsible && (
-            <button
-              className="desc-toggle"
-              onClick={() => setDescCollapsed((c) => !c)}
-              aria-expanded={!descCollapsed}
-            >
-              {descCollapsed ? 'Show more ▾' : 'Show less ▴'}
-            </button>
-          )}
-        </>
+        )
       )}
-      {site.sourceUrl && (
+      {collapsible && (
+        <button
+          className="desc-toggle"
+          onClick={() => setDescCollapsed((c) => !c)}
+          aria-expanded={!descCollapsed}
+        >
+          {descCollapsed ? 'Show more ▾' : 'Show less ▴'}
+        </button>
+      )}
+      {/* A merged site carries its attribution inside each entry, next to the
+          text that came from it. */}
+      {!site.entries && site.sourceUrl && (
         <p className="card-source">
           Description via{' '}
           <a href={site.sourceUrl} target="_blank" rel="noreferrer">

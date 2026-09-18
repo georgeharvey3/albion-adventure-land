@@ -1008,6 +1008,32 @@ body,
   color: var(--color-muted);
   margin: var(--space-xs) 0 0;
 }
+/* Merged write-ups: one block per source that describes this place (issue #37).
+   A rule between the blocks and a labelled heading on each say whose words
+   these are, without the blocks reading as separate cards. */
+.card-entries {
+  margin: var(--space-xs) 0 0;
+}
+.card-entry + .card-entry {
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+.card-entry-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-bottom: var(--space-3xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.card-entry .card-desc {
+  margin-top: 0;
+}
 .card-listing {
   font-size: var(--text-xs);
   color: var(--color-muted);
