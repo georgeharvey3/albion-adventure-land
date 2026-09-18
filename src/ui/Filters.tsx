@@ -34,7 +34,6 @@ export function Filters() {
   const activeTypes = useStore((s) => s.activeTypes);
   const toggleType = useStore((s) => s.toggleType);
   const setTypesActive = useStore((s) => s.setTypesActive);
-  const activeTagSet = useStore((s) => s.activeTags);
   const [open, setOpen] = useState<ReadonlySet<ParentCategory>>(new Set());
 
   const toggleOpen = (parent: ParentCategory) =>
@@ -105,7 +104,6 @@ export function Filters() {
         );
         const hasBody = hasSubs || tags.length > 0;
         const isOpen = hasBody && open.has(parent);
-        const selectedTags = tags.filter(([tag]) => activeTagSet.has(tagKey(parent, tag))).length;
 
         return (
           <section className="layer" key={parent}>
@@ -124,7 +122,6 @@ export function Filters() {
                 </span>
                 <span className="layer-count">
                   {allOn || !hasSubs ? groupCount : `${activeCount}/${leaves.length} types`}
-                  {selectedTags > 0 ? ` · ${selectedTags} tags` : ''}
                 </span>
               </button>
               <button
