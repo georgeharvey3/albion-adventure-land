@@ -1,4 +1,10 @@
-import { type Site, type SiteImage, normalizeCategory } from './types';
+import {
+  type Closure,
+  type OpeningHours,
+  type Site,
+  type SiteImage,
+  normalizeCategory,
+} from './types';
 import { type SourceMapping } from './mappings/magical_britain';
 
 // Pure ingest logic (spec §5.2). Runtime-agnostic so it runs in the Node build
@@ -327,6 +333,25 @@ export interface PubEnrichment {
   images?: SiteImage[];
 }
 
+/** Build-time cache of a pub's TRANSIENT facts — the ones that go stale between
+ *  builds — refreshed on its own by scripts/refresh-camra-status.ts and kept in
+ *  data/camra-status.json. Separate from PubEnrichment on purpose: the prose and
+ *  pictures cost an hour to collect and change once in a blue moon, while these
+ *  are cheap to re-read and worth re-reading often. Keyed by the stable pub id,
+ *  like every other cache here. */
+export interface PubStatus {
+  /** Present only while the source says the pub is shut. Absent again after a
+   *  refresh finds it open, which is how a reopened pub returns to the app. */
+  closure?: Closure;
+  hours?: OpeningHours[];
+  lastSurveyed?: string; // ISO
+  lastUpdated?: string; // ISO
+  /** ISO date this cache last read the pub's page. The card shows it next to
+   *  the source's own two dates, so a stale entry says so instead of passing
+   *  itself off as current. */
+  checkedAt: string;
+}
+
 /** Build-time picture cache for the UKC scramble source, scraped once and
  *  cached (see scripts/scrape-ukc.ts). The pictures belong to the CRAG, not to
  *  the route: several scrambles share one crag page and therefore one picture,
@@ -355,6 +380,7 @@ export function mapPubRow(
   mapping: SourceMapping,
   geocode: Geocoder,
   enrich?: Record<string, PubEnrichment>,
+  status?: Record<string, PubStatus>,
 ): Site | RejectedRow {
   const name = col(row, mapping.columns.name);
   if (!name) {
@@ -379,6 +405,10 @@ export function mapPubRow(
 
   const id = makePubId(name, postcode);
   const extra = enrich?.[id];
+  // Transient facts from the other cache. A closed pub still becomes a Site —
+  // the data keeps it so the next refresh can clear the closure — and the app
+  // filters it out when it loads. See src/state/store.ts.
+  const now = status?.[id];
   // The CAMRA heritage grade ("3-star") travels as a source tag, so it narrows
   // the pubs layer in the filter without becoming a leaf category of its own.
   const tags = parseTags(col(row, mapping.columns.tags));
@@ -394,6 +424,11 @@ export function mapPubRow(
     ...(extra?.description ? { description: extra.description } : {}),
     ...(extra?.sourceUrl ? { sourceUrl: extra.sourceUrl } : {}),
     ...(extra?.images?.length ? { images: extra.images } : {}),
+    ...(now?.hours?.length ? { hours: now.hours } : {}),
+    ...(now?.closure ? { closure: now.closure } : {}),
+    ...(now?.lastSurveyed ? { lastSurveyed: now.lastSurveyed } : {}),
+    ...(now?.lastUpdated ? { lastUpdated: now.lastUpdated } : {}),
+    ...(now?.checkedAt ? { checkedAt: now.checkedAt } : {}),
   };
 }
 
@@ -402,6 +437,7 @@ export function ingestPubs(
   mapping: SourceMapping,
   geocode: Geocoder,
   enrich?: Record<string, PubEnrichment>,
+  status?: Record<string, PubStatus>,
 ): IngestResult {
   const sites: Site[] = [];
   const rejected: RejectedRow[] = [];
@@ -414,7 +450,7 @@ export function ingestPubs(
       continue;
     }
 
-    const mapped = mapPubRow(row, mapping, geocode, enrich);
+    const mapped = mapPubRow(row, mapping, geocode, enrich, status);
     if ('reason' in mapped) {
       rejected.push(mapped);
       continue;

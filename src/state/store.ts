@@ -467,11 +467,19 @@ export const useStore = create<AppState>((set, get) => ({
         return r.json() as Promise<Site[]>;
       })
       .then((all) => {
-        // The one duplicate seam (issue #37). A site merged into another keeps
-        // its row in sites.json — so the merge can be widened or undone in a
-        // JSON file, and no user state is ever orphaned — and leaves the app
-        // here, before anything derives from the list.
-        const sites = all.filter((s) => !s.duplicateOf);
+        // THE seam. Two kinds of row leave the app here, before anything
+        // derives from the list, and every other consumer — the map, the
+        // near-me list, search, the outing pool, the rarity index and the
+        // completion stats — reads what comes out and knows about neither.
+        //
+        // A site the source says is shut is not a place you can visit. It stays
+        // in sites.json, so the next `npm run refresh:camra` can clear the
+        // closure and bring it back.
+        //
+        // A site merged into another (issue #37) is the same place under a
+        // second guidebook's name. It stays in sites.json too, so the merge can
+        // be widened or undone in a JSON file and no user state is orphaned.
+        const sites = all.filter((s) => !s.closure && !s.duplicateOf);
         set({ sites, rarity: buildRarityIndex(sites), dataLoaded: true });
         // A restored selection is only a remembered id: drop it if a CSV
         // re-import has since removed that site, rather than leaving the store

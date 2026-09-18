@@ -13,6 +13,7 @@ import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
 import { Lightbox } from './Lightbox';
 import { BanIcon, CheckIcon, ClockIcon, FlagIcon, StarIcon } from './icons';
+import { OpeningTimes } from './OpeningTimes';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
@@ -232,6 +233,7 @@ export function SiteBody({
         </p>
       )}
       {site.access && <p className="card-meta">Access: {site.access}</p>}
+      <OpeningTimes site={site} />
       {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
       {site.entries ? (
         <SiteEntries entries={site.entries} collapsed={descCollapsed} />

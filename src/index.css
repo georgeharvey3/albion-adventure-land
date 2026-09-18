@@ -942,6 +942,67 @@ body,
   color: var(--color-accent);
   cursor: pointer;
 }
+/* Opening times and the dates behind them (pubs). One block: the times are only
+   as good as the survey date under them, so they never appear apart. */
+.card-hours {
+  margin: var(--space-xs) 0;
+}
+/* Today's hours, and the handle for the rest of the week. */
+.hours-today {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 100%;
+  padding: var(--space-3xs) 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  text-align: left;
+}
+.hours-today-day {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.hours-today-text {
+  font-weight: 600;
+}
+.hours-chevron {
+  margin-left: auto;
+  color: var(--color-accent);
+}
+.hours-week {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+.hours-row {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-3xs) 0;
+}
+.hours-row dt {
+  flex: 0 0 3.2em;
+  color: var(--color-muted);
+}
+.hours-row dd {
+  margin: 0;
+}
+/* Today's row is the one being read in the car park. */
+.hours-row.is-today dt,
+.hours-row.is-today dd {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.card-hours-dates {
+  margin: var(--space-3xs) 0 0;
+  font-size: var(--text-2xs);
+  color: var(--color-muted);
+}
 .card-source {
   font-size: var(--text-xs);
   color: var(--color-muted);
