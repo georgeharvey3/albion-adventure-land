@@ -8,7 +8,6 @@ import {
   tagKey,
   DEFAULT_ACTIVE_TAGS,
 } from "../data/types";
-import { buildRarityIndex, type RarityIndex } from "../geo/rarity";
 import {
   findNearestOuting,
   nearestPerSlot,
@@ -33,6 +32,7 @@ import {
   cacheRoute,
   type VisitLog,
 } from "./db";
+import { matchesFilter, tagsByParent } from "./filter";
 import { loadViewState, saveViewState } from "./viewState";
 import type { SearchResult, SearchTarget } from "../search/types";
 
@@ -109,7 +109,6 @@ export type OutingFailure =
 interface AppState {
   // Site data (read-only).
   sites: Site[];
-  rarity: RarityIndex | null;
   dataLoaded: boolean;
   dataError: string | null;
 
@@ -339,8 +338,8 @@ const EMPTY_TRIP: OutingResult = {
 // ids. The merge is done at ingest (src/data/duplicates.ts): the representative
 // carries `duplicateIds` and the other rows carry `duplicateOf`. The app drops
 // those rows in ONE filter as the data loads — the seam every surface is behind,
-// so the map, the near-me list, search, the outing pool, the rarity index and
-// the stats all see one site without knowing duplicates exist.
+// so the map, the near-me list, search and the outing pool all see one site
+// without knowing duplicates exist.
 
 /** merged-away id → representative id, read off the representatives that
  *  survived the filter. */
@@ -420,7 +419,6 @@ async function foldDuplicateState(
 
 export const useStore = create<AppState>((set, get) => ({
   sites: [],
-  rarity: null,
   dataLoaded: false,
   dataError: null,
 
@@ -469,8 +467,8 @@ export const useStore = create<AppState>((set, get) => ({
       .then((all) => {
         // THE seam. Two kinds of row leave the app here, before anything
         // derives from the list, and every other consumer — the map, the
-        // near-me list, search, the outing pool, the rarity index and the
-        // completion stats — reads what comes out and knows about neither.
+        // near-me list, search and the outing pool — reads what comes out and
+        // knows about neither.
         //
         // A site the source says is shut is not a place you can visit. It stays
         // in sites.json, so the next `npm run refresh:camra` can clear the
@@ -480,7 +478,7 @@ export const useStore = create<AppState>((set, get) => ({
         // second guidebook's name. It stays in sites.json too, so the merge can
         // be widened or undone in a JSON file and no user state is orphaned.
         const sites = all.filter((s) => !s.closure && !s.duplicateOf);
-        set({ sites, rarity: buildRarityIndex(sites), dataLoaded: true });
+        set({ sites, dataLoaded: true });
         // A restored selection is only a remembered id: drop it if a CSV
         // re-import has since removed that site, rather than leaving the store
         // pointing at nothing. An id that has since been merged away is not
@@ -558,10 +556,16 @@ export const useStore = create<AppState>((set, get) => ({
   // user-HIDDEN site is not one of them — hiding is a decision about that site
   // rather than about a type, so it is never overruled here (and the finder
   // never returns one).
+  //
+  // What is opened is the site's OWN layer — the one whose colour its pin
+  // wears. A merged-in duplicate category can already be showing it (the filter
+  // matches every category a site is findable under), so ask the filter first
+  // and touch nothing when the answer is yes.
   revealSite: (siteId) => {
     const { sites, activeTypes, activeTags } = get();
     const site = sites.find((s) => s.id === siteId);
     if (!site) return;
+    if (matchesFilter(site, activeTypes, tagsByParent(activeTags))) return;
 
     const patch: Partial<Pick<AppState, "activeTypes" | "activeTags">> = {};
 

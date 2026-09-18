@@ -145,8 +145,9 @@ function loadCragPhotos(): CragPhotoCache {
 
 // Curated cross-source duplicate groups (issue #37). One place that two
 // guidebooks both list — Tintern Abbey as a folklore row and a ruins row —
-// merged onto one representative so one pin, one visited tick and one rarity
-// count cover it. The file is hand-written (see src/data/duplicates.ts for why
+// merged onto one representative so one pin and one visited tick cover it. The
+// representative keeps the other rows' categories in `alsoCategories`, so the
+// place is still found under both filter layers. The file is hand-written (see src/data/duplicates.ts for why
 // no rule can decide this) and `npm run dupes` proposes what to put in it. An
 // absent file is not an error: the app simply shows both pins, as it did before.
 function loadDuplicateGroups(): DuplicateGroup[] {
@@ -301,9 +302,9 @@ async function main(): Promise<void> {
     }
   }
 
-  // Type-frequency summary (rarity is derived at load in the app, not stored).
-  // A merged-away duplicate is skipped, so one place is counted once — the same
-  // reason the app derives rarity after its filter.
+  // Type-frequency summary. A merged-away duplicate is skipped, so one place is
+  // counted once, under its representative's own category. The filter is wider
+  // than this: it also matches a representative's `alsoCategories`.
   const byCategory: Record<string, number> = {};
   for (const s of sitesOut) {
     if (s.duplicateOf) continue;

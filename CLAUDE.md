@@ -16,7 +16,8 @@ several into one outing."
 The two features that must never be cut (the product's core principle):
 
 1. **Near me now** — live location, every site sorted by distance, type-filterable, one tap to directions.
-2. **Visited / wishlist state with completion stats** — turns a viewer into a collection with a finish line.
+2. **Visited / wishlist state** — turns a viewer into a collection. The Saved
+   tab holds the wishlist, the visit log and the hidden sites.
 
 If a feature doesn't serve "visit more, and more varied, sites," it's a candidate for cutting.
 
@@ -48,9 +49,11 @@ fully offline. See spec §4 and §7.
   state on anything that changes when a CSV is re-imported.
 - `UserState` (visited, wishlist, notes, photos, cached matrices) lives in
   IndexedDB, keyed by the stable site `id`. This is the data we must never lose.
-- `rarity` is **not stored** — it is derived at load time from category
-  frequency across the dataset (spec §7.4). Same rule for the parent category
-  and listing `parentId`: derivable things are derived, never stored as state.
+- Derivable things are derived, never stored as state. The parent category, the
+  listing `parentId` and the categories a merged duplicate is findable under all
+  follow this rule. **There is no rarity index and no completion statistics.**
+  Both are torn out. Do not add a number to the app that counts sites by type
+  until the product asks for one.
 - `SiteCategory` (leaf) is a controlled vocabulary mapped at ingest, *not* a raw
   CSV value; the two-level taxonomy (Folklore → leaves; Historic pubs) lives in
   `src/data/types.ts`.
@@ -78,8 +81,8 @@ fully offline. See spec §4 and §7.
   uncoordinated rows are the classic import failure — flag them.
 - `CAMRA.csv` holds all three CAMRA heritage grades: 3-star, 2-star and 1-star,
   about 1300 pubs. The grade is a source **tag** on the pub site, not a leaf
-  category. One pin colour, one rarity figure and one outing slot cover every
-  pub, and the grade only narrows the pubs layer in the filter. A session opens
+  category. One pin colour and one outing slot cover every pub, and the grade
+  only narrows the pubs layer in the filter. A session opens
   with 3-star and 2-star picked (`DEFAULT_ACTIVE_TAGS` in `src/data/types.ts`),
   because the 1-star pubs are the largest group and they bury the rest.
 - Pub enrichment is a separate, manual step: `npm run scrape:camra` reads each
@@ -105,9 +108,8 @@ fully offline. See spec §4 and §7.
   `Permanently Closed` or `Closed Long Term`, and the banner, not the wording, is
   the rule — becomes `Site.closure`. `npm run ingest` still writes that site to
   `sites.json`, and the store drops it in one filter when the data loads
-  (`src/state/store.ts`). One seam covers the map, the near-me list, search, the
-  outing pool, the rarity index and the stats, and a pub that reopens comes back
-  on the next refresh. About one pub in ten is shut at any time.
+  (`src/state/store.ts`). One seam covers the map, the near-me list, search and
+  the outing pool, and a pub that reopens comes back on the next refresh. About one pub in ten is shut at any time.
 - Scramble pictures are the same kind of step: `npm run scrape:ukc` visits each
   route's crag page on UKClimbing, downscales the pictures to 720 px, and writes
   them to `data/ukc-images/`. The index is `data/ukc-photos.json`, keyed by the
@@ -160,7 +162,7 @@ Two guidebooks describe one place. Tintern Abbey is a folklore row and a ruins
 row. St Dyfnog's Well is a well and a wild swim. The names and the coordinates
 differ by a word and a few metres, so the stable ids differ too, and the
 per-source dedupe in ingest never sees the pair. One stone then gets two pins,
-two visited ticks, two rarity counts and two outing slots.
+two visited ticks and two outing slots.
 
 - A merge is **curated, never inferred**. `npm run dupes` proposes: it lists
   every pair from two different sources within 200 m, and the words the two
@@ -169,19 +171,20 @@ two visited ticks, two rarity counts and two outing slots.
   from "Roman Baths / Ale House" (a pub 91 m from a Roman bath), or from
   "Mount Snowdon (summit) / Y Gribin" (a summit and the scramble up it).
 - In each group the **first id keeps the pin**. That id's category decides the
-  icon, the colour, the name on the card and the filter layer. To change the
+  icon, the colour, the name on the card and the outing slot. It does *not*
+  decide the filter layer — see the multi-category rule below. To change the
   choice, reorder the ids. The `note` field is for the human reader only.
 - **No id changes, and nothing leaves the data.** The merged-away site keeps its
   row in `sites.json` and carries `duplicateOf`. The representative carries
   `duplicateIds` and `entries`. The store drops the merged rows in one filter
   when the data loads (`src/state/store.ts`) — the seam a closed pub goes
-  through. That one seam covers the map, the near-me list, search, the outing
-  pool, the rarity index and the stats.
+  through. That one seam covers the map, the near-me list, search and the outing
+  pool.
 - The site card shows **every source's write-up**, under a heading that names
   its layer: "Folklore entry", "Ruins entry". The sources say different things
   about one stone — one carries the legend, the other the fabric and the access —
   so a merge that picked a winner would throw half the visit away. The heading
-  is derived from the entry's category, like rarity, and never stored.
+  is derived from the entry's category and never stored.
 - User state comes home in `foldDuplicateState`, once, as the data loads. It
   moves a visit, a wish or a hidden mark from a merged-away id to the
   representative, keeps the earlier visit date and keeps both notes. So the fold
@@ -190,18 +193,30 @@ two visited ticks, two rarity counts and two outing slots.
 - **Tags are not merged.** A tag selection is scoped to the parent category it
   was picked under (`tagKey`), so a ruins tag on a folklore representative
   would invent a folklore chip that no folklore site carries.
-- The cost of one pin: a merged place appears under the representative's
-  category only. Multi-category sites are the alternative, and they reach into
-  the filter, the rarity index, the stats and the outing search. For about 33
-  places, that price is too high. Raise it again if the count grows.
+- **One pin, every layer.** A merged place stays findable under each member's
+  category. The representative carries the other rows' leaf categories in
+  `alsoCategories`, and `categoriesOf(site)` in `src/data/types.ts` reads the
+  full list. The filter matches any one of them, so Old Sarum answers both Ruins
+  and Hillforts. All 33 groups in the data span two layers, so this is the
+  normal case and not an edge case.
+- The limits of that widening are deliberate. The representative's own
+  `category` still decides the pin shape, the pin colour, the type on the card
+  and the outing slot. One place is one thing to visit and one thing to tick, so
+  one stop can never fill both "a ruin" and "a hillfort" in an outing.
+- `matchesFilter` in `src/state/filter.ts` is the **one** definition of "is this
+  site on the map now". The rendered list (`src/state/selectors.ts`) and
+  `revealSite` (`src/state/store.ts`) both call it. When they had separate
+  copies, the site finder could open a site that the map then refused to show.
+- A filter chip counts the sites that the chip shows, so a merged place is
+  counted under each of its categories. The chips therefore sum to more than the
+  number of pins, by the number of merged places. A layer header counts sites,
+  not chips.
 
 ## Build order (each phase independently shippable)
 
 - **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter
   → near-me (haversine) → visited/wishlist → directions handoff → PWA/offline.
-  Completion stats (F6) was *not* built with it and moved to Phase 2.
-- **Phase 2: built** — completion stats (F6, consumes the rarity index) +
-  **outing mode v1** — pick ≥1 site types in a picker *independent of the map
+- **Phase 2: built** — **outing mode v1** — pick ≥1 site types in a picker *independent of the map
   filter*; find the nearest cluster of **exactly one site per selected type**
   (scored anchor-outward seed scan, spec §7.2; raw haversine only; **no
   proximity cap and no padding** — the cost function balances nearness vs
@@ -211,7 +226,10 @@ two visited ticks, two rarity counts and two outing slots.
 - **Phase 3:** condition filters → site log (note + photo as IndexedDB blob) →
   user-state export/import.
 - **Phase 4:** travel-time sort (cached road-time matrix) → orienteering subset
-  selection (rarity-weighted) → DBSCAN density discovery.
+  selection → DBSCAN density discovery.
+- **Cut, not deferred:** completion statistics (spec F6) and the rarity index
+  that fed them. The code is deleted. The spec keeps the requirement numbers for
+  the record only.
 
 Build in order; each phase has explicit acceptance criteria in spec §6. Travel
 time is deliberately deferred — outing mode v1 ships on raw distance.

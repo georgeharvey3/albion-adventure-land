@@ -17,9 +17,8 @@ The collection lives as curated CSVs. This app layers the engagement loop on top
 
 - **Near me now** — your live location with every site sorted by distance,
   filterable by type, one tap to directions.
-- **Visited / wishlist + completion stats** — turn a pile of pins into a
-  collection with a shape and a finish line, including a nudge toward the rarer
-  types you haven't seen yet.
+- **Visited / wishlist** — turn a pile of pins into a collection. The Saved tab
+  holds the wishlist, the visit log and the sites you have hidden.
 - **Outing mode** — pick the kinds of day you want (a historic pub, a holy
   well, a stone circle…) and the app finds the nearest cluster containing one
   of each, orders it into a route, and exports it to Google Maps in one tap.
@@ -34,9 +33,9 @@ MVP shipped and deployed; outing mode is the current focus.
 | Phase | Scope | State |
 |---|---|---|
 | 1 — MVP | Ingest (2 sources) · map · two-level type filter · near-me (haversine) · visited/wishlist · directions handoff · PWA/offline | Built |
-| 2 — Stats + Outing mode v1 | Completion stats · nearest "full house" cluster of selected types (raw distance, no proximity cap) · route (NN + 2-opt) · multi-stop Maps handoff | Built |
+| 2 — Outing mode v1 | Nearest "full house" cluster of selected types (raw distance, no proximity cap) · route (NN + 2-opt) · multi-stop Maps handoff | Built |
 | 3 — Personal record | Condition filters · visit note + photo · user-state export/import | Not started |
-| 4 — Travel time | Cached road-time matrix · time-budgeted (orienteering) outings · rarity weighting · DBSCAN discovery | Not started |
+| 4 — Travel time | Cached road-time matrix · time-budgeted (orienteering) outings · DBSCAN discovery | Not started |
 
 ## Tech stack
 
