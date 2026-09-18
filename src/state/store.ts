@@ -382,7 +382,14 @@ export const useStore = create<AppState>((set, get) => ({
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<Site[]>;
       })
-      .then((sites) => {
+      .then((all) => {
+        // A site the source says is shut is not a place you can visit, so it
+        // leaves the app here, at the one seam every other consumer is built
+        // on: the map, the near-me list, search, the outing pool, the rarity
+        // index and the completion stats all read `sites`, and none of them
+        // has to know that closure exists. It stays in sites.json, so the next
+        // `npm run refresh:camra` can clear the closure and bring it back.
+        const sites = all.filter((s) => !s.closure);
         set({ sites, rarity: buildRarityIndex(sites), dataLoaded: true });
         // A restored selection is only a remembered id: drop it if a CSV
         // re-import has since removed that site, rather than leaving the store

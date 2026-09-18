@@ -91,6 +91,23 @@ fully offline. See spec §4 and §7.
   images CSV. The scraper is resumable and the build never depends on it — a
   fresh checkout without the cache gives sparse pub cards. A full run reads
   about 1300 pub pages and takes more than one hour.
+- A pub also carries facts that go stale: the opening times, the two dates CAMRA
+  publishes (`Last surveyed`, `Last updated`) and the closure warning. These have
+  their own script, `npm run refresh:camra`, and their own cache,
+  `data/camra-status.json`, keyed by the same stable pub id. The split is the
+  point. The scraper collects prose and pictures that are good for years and
+  costs an hour; this script downloads no pictures, reads the same 1300 pages in
+  about half an hour, and can run as often as the data deserves. Both read a page
+  through `scripts/camra-page.ts`. Use `--stale=DAYS` to re-read only the entries
+  that are older than DAYS. The build never depends on this cache either.
+- **A site that the source says is shut leaves the app, but stays in the data.**
+  A red closure banner on the pub page — CAMRA words it `Temporarily Closed`,
+  `Permanently Closed` or `Closed Long Term`, and the banner, not the wording, is
+  the rule — becomes `Site.closure`. `npm run ingest` still writes that site to
+  `sites.json`, and the store drops it in one filter when the data loads
+  (`src/state/store.ts`). One seam covers the map, the near-me list, search, the
+  outing pool, the rarity index and the stats, and a pub that reopens comes back
+  on the next refresh. About one pub in ten is shut at any time.
 - Scramble pictures are the same kind of step: `npm run scrape:ukc` visits each
   route's crag page on UKClimbing, downscales the pictures to 720 px, and writes
   them to `data/ukc-images/`. The index is `data/ukc-photos.json`, keyed by the
