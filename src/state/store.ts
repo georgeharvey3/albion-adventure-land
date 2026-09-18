@@ -334,6 +334,90 @@ const EMPTY_TRIP: OutingResult = {
   edited: true,
 };
 
+// --- Cross-source duplicates (issue #37) ---------------------------------
+// Two guidebooks describe one place, so the data holds two rows with two stable
+// ids. The merge is done at ingest (src/data/duplicates.ts): the representative
+// carries `duplicateIds` and the other rows carry `duplicateOf`. The app drops
+// those rows in ONE filter as the data loads — the seam every surface is behind,
+// so the map, the near-me list, search, the outing pool, the rarity index and
+// the stats all see one site without knowing duplicates exist.
+
+/** merged-away id → representative id, read off the representatives that
+ *  survived the filter. */
+function aliasMap(sites: readonly Site[]): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const site of sites) {
+    for (const id of site.duplicateIds ?? []) out.set(id, site.id);
+  }
+  return out;
+}
+
+/**
+ * Move user state off merged-away ids and onto their representative.
+ *
+ * A visit ticked before the merge — or ticked on the other guidebook's row — is
+ * keyed on an id the app no longer shows, and would read as unvisited. Folding
+ * it here, once as the data loads, is what lets every other reader keep looking
+ * up a single id and know nothing about duplicates.
+ *
+ * The fold only ever MOVES a tick to the representative, keeps the EARLIER
+ * visit date and keeps both notes, so running it again — or changing which
+ * member of a group represents it — can never lose a visit. Returns null when
+ * there was nothing to move, which is the normal case.
+ */
+async function foldDuplicateState(
+  sites: readonly Site[],
+  visited: Record<string, VisitLog>,
+  wishlist: ReadonlySet<string>,
+  hidden: ReadonlySet<string>,
+): Promise<Pick<AppState, "visited" | "wishlist" | "hidden"> | null> {
+  const alias = aliasMap(sites);
+  if (!alias.size) return null;
+
+  const nextVisited = { ...visited };
+  const nextWishlist = new Set(wishlist);
+  const nextHidden = new Set(hidden);
+  let changed = false;
+
+  for (const [oldId, repId] of alias) {
+    const stale = nextVisited[oldId];
+    if (stale) {
+      const own = nextVisited[repId];
+      const note = [own?.note, stale.note].filter(Boolean).join("\n\n");
+      const log: VisitLog = {
+        siteId: repId,
+        visitedAt: own && own.visitedAt < stale.visitedAt ? own.visitedAt : stale.visitedAt,
+        ...(note ? { note } : {}),
+      };
+      await putVisit(log);
+      await deleteVisit(oldId);
+      nextVisited[repId] = log;
+      delete nextVisited[oldId];
+      changed = true;
+    }
+
+    if (nextWishlist.delete(oldId)) {
+      await removeWishlist(oldId);
+      // A visited site is never on the wishlist (see markVisited), so a folded
+      // wish on an already-visited representative is dropped, not moved.
+      if (!nextVisited[repId]) {
+        await addWishlist(repId);
+        nextWishlist.add(repId);
+      }
+      changed = true;
+    }
+
+    if (nextHidden.delete(oldId)) {
+      await removeHidden(oldId);
+      await addHidden(repId);
+      nextHidden.add(repId);
+      changed = true;
+    }
+  }
+
+  return changed ? { visited: nextVisited, wishlist: nextWishlist, hidden: nextHidden } : null;
+}
+
 export const useStore = create<AppState>((set, get) => ({
   sites: [],
   rarity: null,
@@ -382,15 +466,22 @@ export const useStore = create<AppState>((set, get) => ({
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<Site[]>;
       })
-      .then((sites) => {
+      .then((all) => {
+        // The one duplicate seam (issue #37). A site merged into another keeps
+        // its row in sites.json — so the merge can be widened or undone in a
+        // JSON file, and no user state is ever orphaned — and leaves the app
+        // here, before anything derives from the list.
+        const sites = all.filter((s) => !s.duplicateOf);
         set({ sites, rarity: buildRarityIndex(sites), dataLoaded: true });
         // A restored selection is only a remembered id: drop it if a CSV
         // re-import has since removed that site, rather than leaving the store
-        // pointing at nothing.
+        // pointing at nothing. An id that has since been merged away is not
+        // gone, though — it is now part of another site, so follow it there.
         const { selectedSiteId } = get();
         if (selectedSiteId && !sites.some((s) => s.id === selectedSiteId)) {
-          saveViewState({ selectedSiteId: null });
-          set({ selectedSiteId: null });
+          const repId = aliasMap(sites).get(selectedSiteId) ?? null;
+          saveViewState({ selectedSiteId: repId });
+          set({ selectedSiteId: repId });
         }
       })
       .catch((err: unknown) => {
@@ -415,6 +506,17 @@ export const useStore = create<AppState>((set, get) => ({
       });
 
     await Promise.all([sitesPromise, userPromise]);
+
+    // Both halves are in hand, so any user state left on a merged-away id can
+    // come home. Best-effort: a failure here leaves the state where it is and
+    // the app still works — it just reads one duplicate's tick as unvisited.
+    try {
+      const { sites, visited, wishlist, hidden } = get();
+      const folded = await foldDuplicateState(sites, visited, wishlist, hidden);
+      if (folded) set(folded);
+    } catch {
+      // IndexedDB unavailable — there is nothing to fold into.
+    }
   },
 
   toggleType: (category) => {

@@ -1,0 +1,149 @@
+{
+  "//": "Curated cross-source duplicates (issue #37). One place that two guidebooks both list. `npm run dupes` proposes candidates; only the groups written here take effect. In each group the FIRST id keeps the pin, so its category decides the icon, the colour, the name and the filter layer; the rest keep their row and their stable id and are dropped by one filter in the app. A pair only belongs here when it is ONE thing to visit: a summit and the scramble up it, or a pub beside a church, are two.",
+  "groups": [
+    {
+      "note": "Dryslwyn Castle, Tywi — the castle and the swim below it",
+      "ids": ["dryslwyn-castle-carmarthen_51.8624_-4.1013", "castell-dryslwyn_51.8624_-4.1013"]
+    },
+    {
+      "note": "St Bega's Church, Bassenthwaite — a standing church, not a ruin",
+      "ids": ["st-bega-s-church_54.6479_-3.2002", "st-bega-s-church-mirehouse_54.6479_-3.2001"]
+    },
+    {
+      "note": "Mulgrave Castle, Sandsend",
+      "ids": ["old-mulgrave-nr-sandsend-whitby_54.4935_-0.7055", "mulgrave-castle_54.4935_-0.7056"]
+    },
+    {
+      "note": "St Dyfnog's Well — the holy well is the thing, the bathe is the way in",
+      "ids": ["st-dyfnog-s-well_53.1592_-3.3779", "st-dyfnog-s-well_53.1592_-3.3778"]
+    },
+    {
+      "note": "Tarr Steps, Barle — the folklore row calls the clapper bridge 'Other'",
+      "ids": ["tarr-steps-barle_51.0772_-3.6176", "tarr-steps_51.0772_-3.6177"]
+    },
+    {
+      "note": "Tintern Abbey — the folklore row carries the cleaner name",
+      "ids": ["tintern-abbey_51.6969_-2.6770", "tintern-abbey-and-st-mary-s_51.6968_-2.6770"]
+    },
+    {
+      "note": "Clun Castle — the ruins and the swim under the walls. NOT Clun Forest, which is a different place nearby",
+      "ids": ["clun-castle_52.4222_-3.0330", "clun-castle_52.4218_-3.0342"]
+    },
+    {
+      "note": "Rag Mill, By Brook — the mill ruin and its pool",
+      "ids": ["rag-mill-slaughterford_51.4629_-2.2329", "rag-mill-by-brook_51.4629_-2.2331"]
+    },
+    {
+      "note": "Dunscaith Castle, Skye",
+      "ids": ["dunscaith-castle-tokavaig-skye_57.1365_-5.9757", "dunscaith-castle_57.1366_-5.9759"]
+    },
+    {
+      "note": "Pendragon Castle, Kirkby Stephen",
+      "ids": ["pendragon-castle-kirkby-stephen_54.4186_-2.3376", "pendragon-castle_54.4187_-2.3378"]
+    },
+    {
+      "note": "Carreg Cennen Castle",
+      "ids": ["carreg-cennen-castle_51.8545_-3.9354", "carreg-cennen_51.8544_-3.9356"]
+    },
+    {
+      "note": "Knowlton — the ruined church stands inside the henge, one field and one visit",
+      "ids": ["knowlton-church-knowlton_50.8920_-1.9674", "knowlton-henge_50.8921_-1.9676"]
+    },
+    {
+      "note": "Urquhart Castle, Loch Ness",
+      "ids": ["urquhart-castle-drumnadrochit_57.3242_-4.4423", "urquhart-castle_57.3242_-4.4420"]
+    },
+    {
+      "note": "Strata Florida Abbey",
+      "ids": [
+        "strata-florida-abbey-near-pontrhydfendigaid_52.2756_-3.8386",
+        "strata-florida-abbey_52.2754_-3.8385"
+      ]
+    },
+    {
+      "note": "Old Sarum — an Iron Age hillfort holding a ruined castle and cathedral",
+      "ids": ["old-sarum-salisbury_51.0933_-1.8048", "old-sarum_51.0931_-1.8047"]
+    },
+    {
+      "note": "Burrow Mump — the ruined chapel on top of the mump",
+      "ids": ["st-michaels-burrow-mump_51.0704_-2.9161", "burrow-mump_51.0706_-2.9164"]
+    },
+    {
+      "note": "Janet's Foss — the waterfall and its plunge pool",
+      "ids": ["janet-s-foss_54.0657_-2.1370", "janet-s-foss_54.0657_-2.1365"]
+    },
+    {
+      "note": "Black Mere / Mermaid's Pool, Morridge",
+      "ids": ["black-mere_53.1489_-1.9419", "mermaid-s-pool-blake-mere_53.1486_-1.9418"]
+    },
+    {
+      "note": "Carn Euny ancient village",
+      "ids": ["carn-euny-ancient-village_50.1027_-5.6339", "carn-euny_50.1030_-5.6342"]
+    },
+    {
+      "note": "Ogmore Castle — the folklore row adds Arthur's Stone at the same crossing",
+      "ids": ["ogmore-castle-near-biridgend_51.4805_-3.6121", "ogmore-castle-arthur-s-stone_51.4806_-3.6115"]
+    },
+    {
+      "note": "Lochindorb Castle — the island castle and the loch swim",
+      "ids": [
+        "lochindorb-castle-near-grantown-on-spey_57.4058_-3.7087",
+        "lochindorb-castle-grantown_57.4057_-3.7080"
+      ]
+    },
+    {
+      "note": "Grimspound — a Bronze Age enclosure, so the earthwork row leads",
+      "ids": ["grimspound_50.6134_-3.8381", "grimspound-village-postbridge-yelverton_50.6131_-3.8377"]
+    },
+    {
+      "note": "St Nectan's Kieve, Tintagel",
+      "ids": ["st-nectan-s-kieve_50.6648_-4.7168", "st-nectan-s-kieve-tintagel_50.6644_-4.7168"]
+    },
+    {
+      "note": "Dulsie Bridge, River Findhorn — the folklore row is only the gorge car park",
+      "ids": [
+        "dulsie-bridge-r-findhorn_57.4507_-3.7814",
+        "dulsie-gorge-the-findhorn-river-parking_57.4503_-3.7815"
+      ]
+    },
+    {
+      "note": "An Lochan Uaine, Glenmore",
+      "ids": ["an-lochan-uaine_57.1755_-3.6550", "lochan-uaine_57.1751_-3.6549"]
+    },
+    {
+      "note": "Loch Morar — two access points on one shore",
+      "ids": ["loch-morar_56.9723_-5.7900", "loch-morar_56.9718_-5.7900"]
+    },
+    {
+      "note": "St Dogmaels Abbey",
+      "ids": ["st-dogmaels-abbey-near-cardigan_52.0805_-4.6807", "st-dogmaels_52.0811_-4.6807"]
+    },
+    {
+      "note": "Loch Sheanta, Skye — a holy loch",
+      "ids": ["loch-sheanta_57.6479_-6.2402", "loch-shianta_57.6473_-6.2395"]
+    },
+    {
+      "note": "Lake Gormire, Sutton Bank",
+      "ids": ["lake-gormire_54.2422_-1.2272", "gormire-lake_54.2427_-1.2283"]
+    },
+    {
+      "note": "Pistyll Rhaeadr — the folklore row is only the waterfall car park",
+      "ids": [
+        "pistyll-rhaeadr-llyn-lluncaws_52.8546_-3.3780",
+        "pistyll-rhaeadr-waterfall-parking_52.8550_-3.3768"
+      ]
+    },
+    {
+      "note": "Odiham Castle, Greywell",
+      "ids": ["odiham-castle-north-warnborough_51.2613_-0.9616", "odiham-castle-greywell_51.2606_-0.9629"]
+    },
+    {
+      "note": "Rocks of Solitude, North Esk",
+      "ids": ["rocks-of-solitude_56.8448_-2.6761", "rocks-of-solitude_56.8437_-2.6756"]
+    },
+    {
+      "note": "Rocky Valley, Tintagel — the labyrinth carvings and the pools in one glen",
+      "ids": ["rocky-valley-tintagel_50.6740_-4.7299", "rocky-valley_50.6728_-4.7293"]
+    }
+  ]
+}

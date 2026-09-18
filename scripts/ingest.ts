@@ -12,6 +12,7 @@ import {
   type PubEnrichment,
   type CragPhotoCache,
 } from '../src/data/ingest.ts';
+import { applyDuplicates, type DuplicateFile, type DuplicateGroup } from '../src/data/duplicates.ts';
 import { magicalBritainMapping, type SourceMapping } from '../src/data/mappings/magical_britain.ts';
 import { camraMapping } from '../src/data/mappings/camra.ts';
 import { wildSwimsMapping } from '../src/data/mappings/wild_swims.ts';
@@ -128,6 +129,21 @@ function loadCragPhotos(): CragPhotoCache {
   return JSON.parse(readFileSync(file, 'utf8')) as CragPhotoCache;
 }
 
+// Curated cross-source duplicate groups (issue #37). One place that two
+// guidebooks both list — Tintern Abbey as a folklore row and a ruins row —
+// merged onto one representative so one pin, one visited tick and one rarity
+// count cover it. The file is hand-written (see src/data/duplicates.ts for why
+// no rule can decide this) and `npm run dupes` proposes what to put in it. An
+// absent file is not an error: the app simply shows both pins, as it did before.
+function loadDuplicateGroups(): DuplicateGroup[] {
+  const file = resolve(root, 'data/duplicates.json');
+  if (!existsSync(file)) {
+    console.log('  (no data/duplicates.json — cross-source duplicates stay as separate pins)');
+    return [];
+  }
+  return (JSON.parse(readFileSync(file, 'utf8')) as DuplicateFile).groups;
+}
+
 // A source's companion pictures CSV, when it declares one. Absent file is a
 // hard error, not a silent skip: the mapping named it, so a missing file is a
 // mistake worth failing the build over.
@@ -235,9 +251,36 @@ async function main(): Promise<void> {
     totalSkipped += skippedNonCollectible;
   }
 
+  // Cross-source duplicate merge, last: it needs every source in hand, and it
+  // is the only step that looks across sources. Nothing is removed here — the
+  // merged-away site keeps its row and its stable id and carries `duplicateOf`,
+  // which the app drops in one filter (src/state/store.ts), the same seam a
+  // closed pub goes through.
+  const groups = loadDuplicateGroups();
+  const mergeResult = applyDuplicates(allSites, groups);
+  const sitesOut = mergeResult.sites;
+  if (groups.length) {
+    console.log(
+      `\nMerged ${mergeResult.merged} duplicate site(s) into ${groups.length - mergeResult.deadGroups} ` +
+        `representative(s) from ${groups.length} curated group(s)`,
+    );
+  }
+  if (mergeResult.unknownIds.length) {
+    console.warn(
+      `  ⚠ ${mergeResult.unknownIds.length} id(s) in data/duplicates.json match no site — the ` +
+        `source renamed or moved the row, so the merge has stopped and the duplicate pin is back:`,
+    );
+    for (const id of mergeResult.unknownIds) console.warn(`    - ${id}`);
+  }
+
   // Type-frequency summary (rarity is derived at load in the app, not stored).
+  // Counted over what the app will SHOW, so a merged-away duplicate is not
+  // counted twice — the same reason the app derives rarity after its filter.
   const byCategory: Record<string, number> = {};
-  for (const s of allSites) byCategory[s.category] = (byCategory[s.category] ?? 0) + 1;
+  for (const s of sitesOut) {
+    if (s.duplicateOf) continue;
+    byCategory[s.category] = (byCategory[s.category] ?? 0) + 1;
+  }
   console.log('\nSites by inferred type:');
   for (const [type, n] of Object.entries(byCategory).sort((a, b) => b[1] - a[1])) {
     console.log(`  ${SITE_TYPE_LABELS[type as Site['category']]}: ${n}`);
@@ -246,11 +289,11 @@ async function main(): Promise<void> {
   const outDir = resolve(root, 'public/data');
   mkdirSync(outDir, { recursive: true });
   const outFile = resolve(outDir, 'sites.json');
-  writeFileSync(outFile, JSON.stringify(allSites, null, 0));
+  writeFileSync(outFile, JSON.stringify(sitesOut, null, 0));
 
   console.log(
-    `\n✓ Wrote ${allSites.length} sites to public/data/sites.json ` +
-      `(${totalSkipped} skipped, ${totalRejected} rejected)`,
+    `\n✓ Wrote ${sitesOut.length} sites to public/data/sites.json ` +
+      `(${totalSkipped} skipped, ${totalRejected} rejected, ${mergeResult.merged} merged as duplicates)`,
   );
 }
 
