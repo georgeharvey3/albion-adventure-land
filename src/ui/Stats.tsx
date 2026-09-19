@@ -3,6 +3,7 @@ import { useStore } from '../state/store';
 import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
 import type { Site } from '../data/types';
 import { BanIcon, CheckIcon, StarIcon } from './icons';
+import { Backup } from './Backup';
 
 // The "Saved" tab: the two lists that make this a collection rather than a
 // viewer — places you want to visit (wishlist) and a log of the ones you have,
@@ -141,6 +142,8 @@ export function Stats() {
           </ul>
         </>
       )}
+
+      <Backup />
     </div>
   );
 }
