@@ -176,11 +176,18 @@ The eight icons and what each one means:
 | `MapPinIcon` | A position: the drop-pin control, "here", the manual pin hints      |
 | `FlagIcon`   | The destination: the map marker, the journey bar, the trip terminus |
 | `CheckIcon`  | Visited, or in the trip                                             |
-| `StarIcon`   | Wishlist. Filled when on, outline when off                          |
+| `StarIcon`   | Wishlist, and the marks of a pub's heritage grade (see below)        |
 | `BanIcon`    | Hidden                                                              |
 | `ClockIcon`  | The walk time                                                       |
 | `MapIcon`    | Browse mode is on, and this returns to the map                      |
 | `ListIcon`   | Browse mode is off, and this opens the list                         |
+
+The star is the one glyph with two jobs, and one rule keeps them apart. The
+wishlist star stands alone and takes `--color-wish`. The heritage grade is
+always a labelled row of three marks in `--color-ink`, with the unearned ones
+drawn in `--color-rule-strong` rather than left out — a lone filled star reads
+as "starred", three slots read as a grade out of three. Never draw a grade with
+fewer than three marks, and never in the wish colour.
 
 ### What stays as text
 

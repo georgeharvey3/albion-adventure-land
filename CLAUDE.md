@@ -79,7 +79,9 @@ fully offline. See spec §4 and §7.
 - `CAMRA.csv` holds all three CAMRA heritage grades: 3-star, 2-star and 1-star,
   about 1300 pubs. The grade is a source **tag** on the pub site, not a leaf
   category. One pin colour, one rarity figure and one outing slot cover every
-  pub, and the grade only narrows the pubs layer in the filter. A session opens
+  pub; the grade narrows the pubs layer in the filter, and the pub's card shows
+  it as a labelled row of three marks — `pubGrade` in `src/data/types.ts`
+  derives it from the tag, like rarity, and never stores it. A session opens
   with 3-star and 2-star picked (`DEFAULT_ACTIVE_TAGS` in `src/data/types.ts`),
   because the 1-star pubs are the largest group and they bury the rest.
 - Pub enrichment is a separate, manual step: `npm run scrape:camra` reads each

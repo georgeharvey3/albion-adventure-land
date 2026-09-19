@@ -855,6 +855,29 @@ body,
   color: var(--color-muted);
   margin: var(--space-2xs) 0;
 }
+/* The pub's CAMRA heritage grade. A label in the label register and a row of
+   three marks — the unearned ones stay drawn, because three slots read as a
+   grade where one filled star would read as "starred". The marks take the ink,
+   never `--color-wish`: the wishlist badge can sit directly underneath. */
+.card-grade {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: var(--space-2xs) 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.grade-stars {
+  display: inline-flex;
+  gap: var(--space-3xs);
+  color: var(--color-ink);
+}
+.grade-stars .off {
+  color: var(--color-rule-strong);
+}
 /* Guidebook pictures, above the write-up. One picture fills the card width; two
    or more become a horizontal snap strip with a fixed height, so a tall portrait
    plate and a wide landscape one line up and the card height stays predictable. */
