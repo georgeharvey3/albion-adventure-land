@@ -44,7 +44,7 @@ export function Backup() {
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: name });
-        setStatus({ kind: 'ok', message: 'Backup sent. Check it saved before you delete anything.' });
+        setStatus({ kind: 'ok', message: 'Backup sent.' });
         return;
       } catch (err) {
         // A cancelled share is a decision, not a failure — say nothing and
@@ -64,14 +64,14 @@ export function Backup() {
       a.remove();
       // Revoked late: Safari reads the blob after the click returns.
       setTimeout(() => URL.revokeObjectURL(url), 30_000);
-      setStatus({ kind: 'ok', message: `Saved as ${name}. Check it landed before you delete anything.` });
+      setStatus({ kind: 'ok', message: `Saved as ${name}.` });
       return;
     } catch {
       // Fall through to the text.
     }
 
     setShowText(text);
-    setStatus({ kind: 'error', message: 'This browser would not hand over a file. Copy the text below instead.' });
+    setStatus({ kind: 'error', message: 'No file could be saved. Copy the text below instead.' });
   }
 
   async function copy() {
@@ -79,10 +79,10 @@ export function Backup() {
     try {
       await navigator.clipboard.writeText(text);
       setShowText(null);
-      setStatus({ kind: 'ok', message: 'Backup copied. Paste it somewhere it will keep — Notes, an email to yourself.' });
+      setStatus({ kind: 'ok', message: 'Backup copied.' });
     } catch {
       setShowText(text);
-      setStatus({ kind: 'error', message: 'Copying was blocked. Select the text below and copy it by hand.' });
+      setStatus({ kind: 'error', message: 'Copying was blocked. Copy the text below instead.' });
     }
   }
 
@@ -106,11 +106,6 @@ export function Backup() {
   return (
     <section className="backup">
       <h3 className="stats-heading">Backup</h3>
-      <p className="hint">
-        Your visits, wishlist and hidden places live on this device only. Save a backup before you
-        reinstall the app or move to a new phone — on iPhone, removing the home-screen icon takes
-        them with it.
-      </p>
 
       <div className="card-actions">
         <button className="btn primary" onClick={save} disabled={!userLoaded || count === 0}>
@@ -163,11 +158,6 @@ export function Backup() {
       {status && <p className={`hint backup-status ${status.kind}`}>{status.message}</p>}
 
       {showText && <textarea className="backup-text" readOnly value={showText} rows={6} onFocus={(e) => e.target.select()} />}
-
-      <p className="hint">
-        Restoring only ever adds — it never removes a visit, so loading the wrong file, or the same
-        one twice, costs nothing.
-      </p>
     </section>
   );
 }
