@@ -209,7 +209,14 @@ two visited ticks, two rarity counts and two outing slots.
   include-visited toggle) → order it with NN + 2-opt → multi-stop Maps
   handoff (hidden when the selection exceeds the waypoint cap).
 - **Phase 3:** condition filters → site log (note + photo as IndexedDB blob) →
-  user-state export/import.
+  user-state export/import. **Export/import shipped early** (Saved tab →
+  Backup, `src/state/backup.ts`): on iOS a home-screen web app owns its storage
+  container, so re-adding the icon — the only way to refresh a stale home-screen
+  logo — starts an empty one. Without a file to carry the state out and back in,
+  a routine reinstall costs the user every tick they have made. A restore MERGES
+  and never deletes (earlier visit date wins, both notes kept, the same rules as
+  `foldDuplicateState`), so loading the wrong file, or the same one twice, costs
+  nothing. Photos are not in the format yet — add them with the site log.
 - **Phase 4:** travel-time sort (cached road-time matrix) → orienteering subset
   selection (rarity-weighted) → DBSCAN density discovery.
 

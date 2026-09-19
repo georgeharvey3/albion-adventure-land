@@ -136,6 +136,30 @@ export async function loadUserState(): Promise<PersistedUserState> {
   };
 }
 
+/**
+ * Write a whole user state back, for a restore (see ../state/backup.ts).
+ *
+ * Almost put-only, by design. The caller has already merged the backup into
+ * what is held, and a merge never removes a visit or a hidden mark, so there is
+ * nothing to clear for those two — a restore interrupted halfway has still only
+ * ever added. The one exception is the wishlist: a restored visit takes its
+ * site off the list to visit (what markVisited does), so a wish the merge
+ * dropped has to be deleted here rather than left behind as a stale row.
+ */
+export async function writeUserState(state: PersistedUserState): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(['visited', 'wishlist', 'hidden'], 'readwrite');
+  const wished = new Set(state.wishlist);
+  const stale = (await tx.objectStore('wishlist').getAllKeys()).filter((id) => !wished.has(id));
+  await Promise.all([
+    ...Object.values(state.visited).map((log) => tx.objectStore('visited').put(log)),
+    ...state.wishlist.map((siteId) => tx.objectStore('wishlist').put({ siteId })),
+    ...state.hidden.map((siteId) => tx.objectStore('hidden').put({ siteId })),
+    ...stale.map((id) => tx.objectStore('wishlist').delete(id)),
+  ]);
+  await tx.done;
+}
+
 export async function putVisit(log: VisitLog): Promise<void> {
   const db = await getDb();
   await db.put('visited', log);

@@ -2271,3 +2271,38 @@ body,
     border-radius: 0;
   }
 }
+
+/* --- Backup (Saved tab foot) -----------------------------------------------
+   Set off from the two lists above it by a rule and a wider gap: this is
+   housekeeping, not part of the collection. */
+.backup {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-xs);
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+/* The picker is driven by the button beside it; the native control would only
+   add a second, differently-styled one. */
+.backup-file {
+  display: none;
+}
+/* The backup text is data, not prose — the UI face, not Cardo, and left at the
+   caption step so a long paste still shows several lines. */
+.backup-text {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-xs);
+  padding: var(--space-xs);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  resize: vertical;
+}
+.backup-status.ok {
+  color: var(--color-accent);
+}
+.backup-status.error {
+  color: var(--color-danger);
+}

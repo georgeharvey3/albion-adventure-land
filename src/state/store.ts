@@ -31,8 +31,10 @@ import {
   routeKey,
   loadCachedRoute,
   cacheRoute,
+  writeUserState,
   type VisitLog,
 } from "./db";
+import { mergeBackup, parseBackup, serializeBackup, type RestoreCounts } from "./backup";
 import { loadViewState, saveViewState } from "./viewState";
 import type { SearchResult, SearchTarget } from "../search/types";
 
@@ -215,6 +217,11 @@ interface AppState {
   unmarkVisited: (siteId: string) => Promise<void>;
   toggleWishlist: (siteId: string) => Promise<void>;
   toggleHidden: (siteId: string) => Promise<void>;
+  /** The precious state as a backup file's text (see ./backup). */
+  exportUserState: () => string;
+  /** Merge a backup file's text into the held state. Throws a showable message
+   *  if the text is not a backup; never deletes a visit. */
+  restoreUserState: (text: string) => Promise<RestoreCounts>;
   setPosition: (pos: Position | null) => void;
   setLivePosition: (pos: Position) => void;
   setGeoError: (msg: string | null) => void;
@@ -859,6 +866,40 @@ export const useStore = create<AppState>((set, get) => ({
       h.add(siteId);
     }
     set({ hidden: h });
+  },
+
+  // --- Backup (issue: home-screen icon) ------------------------------------
+  // The state in here is the only thing in the app that cannot be rebuilt from
+  // the shipped data, and on iOS the platform will take it away whenever the
+  // home-screen icon is re-added. These two are its way out and back in.
+
+  exportUserState: () => {
+    const { visited, wishlist, hidden } = get();
+    return serializeBackup({ visited, wishlist: [...wishlist], hidden: [...hidden] });
+  },
+
+  restoreUserState: async (text) => {
+    const { sites, visited, wishlist, hidden } = get();
+    const { state, added } = mergeBackup(
+      { visited, wishlist: [...wishlist], hidden: [...hidden] },
+      parseBackup(text),
+    );
+    await writeUserState(state);
+    set({
+      visited: state.visited,
+      wishlist: new Set(state.wishlist),
+      hidden: new Set(state.hidden),
+    });
+    // A backup can predate a merge (issue #37) and carry ids that are now
+    // merged away, so bring them home exactly as a load does. Best-effort: the
+    // restore itself has already succeeded.
+    try {
+      const folded = await foldDuplicateState(sites, state.visited, new Set(state.wishlist), new Set(state.hidden));
+      if (folded) set(folded);
+    } catch {
+      // Nothing to fold into; the restored state stands as written.
+    }
+    return added;
   },
 
   // The tap that set the origin is spent, so the picker disarms — the mirror
