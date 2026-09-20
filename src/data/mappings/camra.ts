@@ -7,10 +7,11 @@
 // mapPubRow (there is no subcategory). The CSV holds all three CAMRA heritage
 // grades (3-star, 2-star, 1-star), and the grade rides along as a source TAG
 // rather than as a leaf category: one pin colour and shape for every pub, one
-// rarity figure, one outing slot — the grade only narrows the pubs layer in the
-// filter, the same way the swim and ruin tags narrow theirs. The remaining
-// columns (Country, Area, Town) stay discarded: per the product decision we
-// display only name, postcode and location.
+// outing slot — the grade narrows the pubs layer in the
+// filter, the same way the swim and ruin tags narrow theirs, and the pub's card
+// reads it back off the tag as a heritage grade (`pubGrade` in ../types). The
+// remaining columns (Country, Area, Town) stay discarded: per the product
+// decision we display only name, postcode and location.
 //
 // CSV header: Grading, Country, Area, Town, Postcode, Name
 

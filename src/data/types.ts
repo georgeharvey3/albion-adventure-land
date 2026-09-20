@@ -132,12 +132,45 @@ export const DEFAULT_ACTIVE_TAGS: readonly string[] = [
   tagKey('historic_pubs', '2-star'),
 ];
 
+// --- CAMRA heritage grade -------------------------------------------------
+// The grade rides on a pub as a source tag rather than as a leaf category, so
+// that one pin colour and one outing slot cover every pub
+// (see the mapping note in src/data/mappings/camra.ts). That keeps the grade
+// out of the taxonomy, but it must not keep it off the card: the grade is the
+// one fact that decides WHICH pub you drive to, and a 3-star room — a few
+// hundred in the country — is a different day out from a 1-star one. Like
+// the parent category, it is DERIVED at read time, never stored.
+export type PubGrade = 1 | 2 | 3;
+
+export const MAX_PUB_GRADE = 3;
+
+/** The grades CAMRA publishes, best first — the one place the vocabulary is
+ *  written down. The filter's tag order and the card's marks both read it. */
+export const PUB_GRADE_TAGS: Readonly<Record<string, PubGrade>> = {
+  '3-star': 3,
+  '2-star': 2,
+  '1-star': 1,
+};
+
+/** This site's heritage grade, or undefined when it has none — every non-pub,
+ *  and any pub whose source row carried no grade. Guarded on the category
+ *  because a tag is a per-layer free-text string: another source is free to
+ *  use the word "3-star" for something that is not a pub interior. */
+export function pubGrade(site: Site): PubGrade | undefined {
+  if (site.category !== 'historic_pubs') return undefined;
+  for (const tag of site.tags ?? []) {
+    const grade = PUB_GRADE_TAGS[tag];
+    if (grade) return grade;
+  }
+  return undefined;
+}
+
 // Tag orders that are not "commonest first". A layer lists its tags by how many
 // sites carry them, which is right for free-text guidebook labels but wrong for
 // a graded vocabulary: the pub grades read 3, 2, 1, and 1-star is the commonest
 // of them. A tag not named here keeps its place, by count, after the named ones.
 export const TAG_ORDER: Partial<Record<ParentCategory, readonly string[]>> = {
-  historic_pubs: ['3-star', '2-star', '1-star'],
+  historic_pubs: Object.keys(PUB_GRADE_TAGS),
 };
 
 export function parseTagKey(key: string): { parent: ParentCategory; tag: string } {

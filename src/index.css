@@ -855,6 +855,29 @@ body,
   color: var(--color-muted);
   margin: var(--space-2xs) 0;
 }
+/* The pub's CAMRA heritage grade. A label in the label register and a row of
+   three marks — the unearned ones stay drawn, because three slots read as a
+   grade where one filled star would read as "starred". The marks take the ink,
+   never `--color-wish`: the wishlist badge can sit directly underneath. */
+.card-grade {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: var(--space-2xs) 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.grade-stars {
+  display: inline-flex;
+  gap: var(--space-3xs);
+  color: var(--color-ink);
+}
+.grade-stars .off {
+  color: var(--color-rule-strong);
+}
 /* Guidebook pictures, above the write-up. One picture fills the card width; two
    or more become a horizontal snap strip with a fixed height, so a tall portrait
    plate and a wide landscape one line up and the card height stays predictable. */
@@ -2270,4 +2293,39 @@ body,
     border-bottom: var(--rule-hairline) solid var(--color-rule-strong);
     border-radius: 0;
   }
+}
+
+/* --- Backup (Saved tab foot) -----------------------------------------------
+   Set off from the two lists above it by a rule and a wider gap: this is
+   housekeeping, not part of the collection. */
+.backup {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-xs);
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+/* The picker is driven by the button beside it; the native control would only
+   add a second, differently-styled one. */
+.backup-file {
+  display: none;
+}
+/* The backup text is data, not prose — the UI face, not Cardo, and left at the
+   caption step so a long paste still shows several lines. */
+.backup-text {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-xs);
+  padding: var(--space-xs);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+  resize: vertical;
+}
+.backup-status.ok {
+  color: var(--color-accent);
+}
+.backup-status.error {
+  color: var(--color-danger);
 }

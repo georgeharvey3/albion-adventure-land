@@ -81,8 +81,10 @@ fully offline. See spec §4 and §7.
   uncoordinated rows are the classic import failure — flag them.
 - `CAMRA.csv` holds all three CAMRA heritage grades: 3-star, 2-star and 1-star,
   about 1300 pubs. The grade is a source **tag** on the pub site, not a leaf
-  category. One pin colour and one outing slot cover every pub, and the grade
-  only narrows the pubs layer in the filter. A session opens
+  category. One pin colour and one outing slot cover every pub; the grade
+  narrows the pubs layer in the filter, and the pub's card shows it as a
+  labelled row of three marks — `pubGrade` in `src/data/types.ts` derives it
+  from the tag, like the parent category, and never stores it. A session opens
   with 3-star and 2-star picked (`DEFAULT_ACTIVE_TAGS` in `src/data/types.ts`),
   because the 1-star pubs are the largest group and they bury the rest.
 - Pub enrichment is a separate, manual step: `npm run scrape:camra` reads each
@@ -224,7 +226,14 @@ two visited ticks and two outing slots.
   include-visited toggle) → order it with NN + 2-opt → multi-stop Maps
   handoff (hidden when the selection exceeds the waypoint cap).
 - **Phase 3:** condition filters → site log (note + photo as IndexedDB blob) →
-  user-state export/import.
+  user-state export/import. **Export/import shipped early** (Saved tab →
+  Backup, `src/state/backup.ts`): on iOS a home-screen web app owns its storage
+  container, so re-adding the icon — the only way to refresh a stale home-screen
+  logo — starts an empty one. Without a file to carry the state out and back in,
+  a routine reinstall costs the user every tick they have made. A restore MERGES
+  and never deletes (earlier visit date wins, both notes kept, the same rules as
+  `foldDuplicateState`), so loading the wrong file, or the same one twice, costs
+  nothing. Photos are not in the format yet — add them with the site log.
 - **Phase 4:** travel-time sort (cached road-time matrix) → orienteering subset
   selection → DBSCAN density discovery.
 - **Cut, not deferred:** completion statistics (spec F6) and the rarity index
