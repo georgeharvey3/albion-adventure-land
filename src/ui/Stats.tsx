@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '../state/store';
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS } from '../data/types';
+import { hybridTitle, siteSwatch, SITE_TYPE_LABELS } from '../data/types';
 import type { Site } from '../data/types';
 import { BanIcon, CheckIcon, StarIcon } from './icons';
 import { Backup } from './Backup';
@@ -73,7 +73,11 @@ export function Stats() {
               className={`row ${site.id === selectedSiteId ? 'selected' : ''}`}
               onClick={() => setSelected(site.id)}
             >
-              <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+              <span
+                className="dot"
+                style={{ background: siteSwatch(site) }}
+                title={hybridTitle(site)}
+              />
               <span className="row-main">
                 <span className="row-name">
                   <StarIcon filled /> {site.name}
@@ -101,7 +105,11 @@ export function Stats() {
               className={`row is-visited ${site.id === selectedSiteId ? 'selected' : ''}`}
               onClick={() => setSelected(site.id)}
             >
-              <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+              <span
+                className="dot"
+                style={{ background: siteSwatch(site) }}
+                title={hybridTitle(site)}
+              />
               <span className="row-main">
                 <span className="row-name">
                   <CheckIcon /> {site.name}
@@ -127,7 +135,11 @@ export function Stats() {
                 className={`row ${site.id === selectedSiteId ? 'selected' : ''}`}
                 onClick={() => setSelected(site.id)}
               >
-                <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+                <span
+                className="dot"
+                style={{ background: siteSwatch(site) }}
+                title={hybridTitle(site)}
+              />
                 <span className="row-main">
                   <span className="row-name">
                     <BanIcon /> {site.name}

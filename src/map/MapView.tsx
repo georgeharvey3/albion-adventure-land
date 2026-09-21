@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { SITE_TYPE_COLORS, type SiteCategory } from '../data/types';
+import { categoryColorsOf, SITE_TYPE_COLORS, type SiteCategory } from '../data/types';
 import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
-import { shapeMarker, type MarkerShape } from './shapeMarker';
+import { shapeMarker, type MarkerShape, type ShapeMarkerOptions } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
 import { OSRM_ATTRIBUTION } from '../geo/osrm';
 import { loadViewState, saveViewState } from '../state/viewState';
@@ -58,15 +58,26 @@ function shapeFor(category: SiteCategory): MarkerShape {
 // (they are not hidden or dimmed — visiting a place doesn't take it off the
 // map), marked only by a dark ring. Wishlisted gets an orange ring; selected is
 // larger.
-function markerStyle(view: FilteredSiteView, selected: boolean): L.CircleMarkerOptions {
+//
+// A cross-source merge (issue #37) gets a HYBRID pin: the shape is still the
+// representative's, but the fill is striped across every category the place
+// answers to, so Old Sarum reads as ruins *and* hillfort under either filter.
+// `fillColor` stays set for the single-colour case and as the fallback if the
+// map ever runs on the SVG renderer, where the stripes aren't drawn.
+function markerStyle(view: FilteredSiteView, selected: boolean): ShapeMarkerOptions {
   const { site, visited, wishlisted } = view;
   const shape = shapeFor(site.category);
   const base = shape === 'triangle' || shape === 'diamond' || shape === 'chevron' ? 7.5 : 6;
+  const colors = categoryColorsOf(site);
+  // A merged pin is a fraction wider: two colours inside 12px of shape need the
+  // room, and there are 33 of them on a map of ~2,600, so nothing is crowded.
+  const radius = colors.length > 1 ? base + 1 : base;
   return {
-    radius: selected ? base + 3 : base,
+    radius: selected ? radius + 3 : radius,
     color: wishlisted ? '#f4a261' : visited ? '#2a2a2a' : '#fff',
     weight: wishlisted ? 3 : visited ? 2 : 1.5,
     fillColor: SITE_TYPE_COLORS[site.category],
+    fillColors: colors,
     fillOpacity: 0.95,
   };
 }

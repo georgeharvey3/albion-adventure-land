@@ -4,7 +4,9 @@ import {
   PARENT_CATEGORY_LABELS,
   SITE_TYPE_COLORS,
   SITE_TYPE_LABELS,
+  hybridTitle,
   parentOf,
+  siteSwatch,
   type Site,
   type SiteEntry,
   type SiteImage,
@@ -198,7 +200,11 @@ export function SiteBody({
       {showHeader && (
         <>
           <div className="card-type">
-            <span className="dot" style={{ background: SITE_TYPE_COLORS[site.category] }} />
+            <span
+              className="dot"
+              style={{ background: siteSwatch(site) }}
+              title={hybridTitle(site)}
+            />
             {SITE_TYPE_LABELS[site.category]}
             {distance !== null ? ` · ${formatDistance(distance)} away` : ''}
           </div>
