@@ -1,8 +1,8 @@
 // Normalized, read-only site model (spec §5.1). Site data is replaceable;
 // user state (in IndexedDB) is keyed on the stable `id` and must never be lost.
 
-// `SiteCategory` is the *leaf* type — what drives pin colour, filter chips,
-// rarity and stats. Folklore leaves come from the source CSV's `category` column
+// `SiteCategory` is the *leaf* type — what drives pin colour and filter chips.
+// Folklore leaves come from the source CSV's `category` column
 // (slugified). `historic_pubs` and `wild_swims` are leaves that have no finer
 // subdivision: for them the leaf and its parent are one and the same. Keep this
 // union in sync with the categories the data carries.
@@ -47,8 +47,8 @@ export const SITE_TYPES: SiteCategory[] = [
 
 // Top-level grouping over leaf categories (spec: two-level taxonomy). The filter
 // UI groups leaves by parent — Folklore expands to its 13 subcategories; Historic
-// pubs is a single leaf shown on its own. Parent is DERIVED from category (like
-// rarity), never stored on a Site, so user state can't depend on it.
+// pubs is a single leaf shown on its own. Parent is DERIVED from category, never
+// stored on a Site, so user state can't depend on it.
 export type ParentCategory = 'folklore' | 'historic_pubs' | 'wild_swims' | 'ruins' | 'scrambles';
 
 export const PARENT_CATEGORIES: ParentCategory[] = ['historic_pubs', 'wild_swims', 'ruins', 'scrambles', 'folklore'];
@@ -85,11 +85,31 @@ export function parentOf(category: SiteCategory): ParentCategory {
   return CATEGORY_PARENT[category];
 }
 
+/**
+ * Every leaf category a site can be FOUND under: its own first, then the
+ * category of each row merged into it as a cross-source duplicate (issue #37).
+ *
+ * Old Sarum is a ruins row and a hillforts row. One pin covers it, and the
+ * representative's own `category` alone decides that pin's icon, its colour,
+ * the type on its card and the outing slot it fills — a single place is a
+ * single thing to visit. But it stays findable under both filter layers, which
+ * is what this list is for. Every merged group in the data today spans two
+ * categories, so nothing is gained by treating the second as an afterthought.
+ *
+ * Read-only and derived, like `parentOf`: the order is the source order, and
+ * the first element is always the representative's own category.
+ */
+export function categoriesOf(site: Site): SiteCategory[] {
+  return site.alsoCategories?.length
+    ? [site.category, ...site.alsoCategories]
+    : [site.category];
+}
+
 // --- Source tags ----------------------------------------------------------
 // Some sources (wild swims, ruins) carry free-text descriptive labels in a
 // `Tags` column ("Waterfall", "Dramatic"). The vocabulary is per-source and NOT
 // controlled — unlike SiteCategory — so tags are stored verbatim on the Site
-// and the filter's tag list is DERIVED from the loaded data, like rarity.
+// and the filter's tag list is DERIVED from the loaded data.
 //
 // A tag filter selection is SCOPED to the parent category it was picked under:
 // two sources can use the same word for different things ("Difficult path"
@@ -114,12 +134,12 @@ export const DEFAULT_ACTIVE_TAGS: readonly string[] = [
 
 // --- CAMRA heritage grade -------------------------------------------------
 // The grade rides on a pub as a source tag rather than as a leaf category, so
-// that one pin colour, one rarity figure and one outing slot cover every pub
+// that one pin colour and one outing slot cover every pub
 // (see the mapping note in src/data/mappings/camra.ts). That keeps the grade
 // out of the taxonomy, but it must not keep it off the card: the grade is the
 // one fact that decides WHICH pub you drive to, and a 3-star room — a few
 // hundred in the country — is a different day out from a 1-star one. Like
-// rarity and the parent category, it is DERIVED at read time, never stored.
+// the parent category, it is DERIVED at read time, never stored.
 export type PubGrade = 1 | 2 | 3;
 
 export const MAX_PUB_GRADE = 3;
@@ -363,7 +383,7 @@ export interface Site {
 
   // Listing grouping (spec: a `listing` groups a `main` point with its
   // trailheads/nearby features). DERIVED from the source's listing columns at
-  // ingest, like rarity/parent — never user state. `listingId` is shared by every
+  // ingest, like `parentOf` — never user state. `listingId` is shared by every
   // collectible point in the listing; `parentId` points a sub-feature back at the
   // listing's `main` point (undefined on the main point itself). Lets the detail
   // card link a sub-point to its full write-up and list a main point's features.
@@ -382,6 +402,11 @@ export interface Site {
   duplicateOf?: string;
   duplicateIds?: string[];
   entries?: SiteEntry[];
+  /** The merged rows' leaf categories, in file order and without the
+   *  representative's own. Read through `categoriesOf`, never directly. It is
+   *  what keeps a merged place in both filter layers; it changes no pin, no
+   *  slot and no count. */
+  alsoCategories?: SiteCategory[];
 
   // Guidebook pictures for this listing, in source order. DERIVED at ingest from
   // the source's companion images CSV and attached only to the listing's `main`
