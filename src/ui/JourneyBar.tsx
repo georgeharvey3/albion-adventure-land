@@ -72,10 +72,10 @@ export function JourneyBar() {
       : !position
         ? 'Locating…'
         : (position.label ?? (position.manual ? 'Dropped pin' : 'My location'));
-  // Only a SEARCHED anchor gets the reset button. A dropped pin already has one
-  // (the map's drop-pin control doubles as "clear"), and live GPS has nothing
-  // to reset to.
-  const searchedOrigin = !!position?.label;
+  // Anything the user set by hand — a searched anchor or a dropped pin — gets
+  // the reset button. It is the only way back to live GPS now that the map's
+  // drop-pin control is gone. Live GPS itself has nothing to reset to.
+  const overriddenOrigin = !!position && (!!position.label || !!position.manual);
 
   // The journey's own number. With a road route it is the road distance and the
   // driving time; without one it is the straight-line distance, and it says so.
@@ -103,7 +103,7 @@ export function JourneyBar() {
           className={
             picking === 'origin'
               ? 'journey-field picking'
-              : searchedOrigin
+              : overriddenOrigin
                 ? 'journey-field has-reset'
                 : 'journey-field'
           }
@@ -123,7 +123,7 @@ export function JourneyBar() {
             <span className="journey-label">Origin</span>
             <span className="journey-value">{originLabel}</span>
           </button>
-          {searchedOrigin && (
+          {overriddenOrigin && (
             <button
               className="journey-reset"
               onClick={useMyLocation}

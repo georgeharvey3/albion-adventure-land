@@ -103,7 +103,6 @@ export function MapView() {
   const meLayerRef = useRef<L.LayerGroup | null>(null);
   const outingLayerRef = useRef<L.LayerGroup | null>(null);
   const corridorLayerRef = useRef<L.LayerGroup | null>(null);
-  const dropBtnRef = useRef<HTMLButtonElement | null>(null);
   const locateBtnRef = useRef<HTMLButtonElement | null>(null);
   const didFitRef = useRef(false);
   const basemapRef = useRef<L.LayerGroup | null>(null);
@@ -161,38 +160,6 @@ export function MapView() {
     siteLayerRef.current = L.layerGroup().addTo(map);
     outingLayerRef.current = L.layerGroup().addTo(map);
     meLayerRef.current = L.layerGroup().addTo(map);
-
-    // "Drop my location" control — fallback when GPS is denied/unavailable.
-    const Ctl = L.Control.extend({
-      options: { position: 'topleft' as L.ControlPosition },
-      onAdd() {
-        const btn = L.DomUtil.create('button', 'drop-pin-btn');
-        btn.type = 'button';
-        btn.title = 'Drop a manual "I am here" pin';
-        btn.innerHTML = iconMarkup('mapPin', 20);
-        dropBtnRef.current = btn;
-        L.DomEvent.disableClickPropagation(btn);
-        L.DomEvent.on(btn, 'click', () => {
-          // With a manual pin active, the button clears it and hands control
-          // back to live GPS (the watcher repopulates position on its next
-          // fix). Otherwise it arms the picker on the ORIGIN end — the same
-          // armed state the search panel's "Pick on the map" produces, so the
-          // two routes into this gesture cannot disagree.
-          const { position: current, picking: armed, setPicking } = useStore.getState();
-          if (current?.manual) {
-            // Back to the live fix, not to nothing: clearing to null left the
-            // bar reading "Locating…" until watchPosition next reported, which
-            // on a stationary phone can be a long wait. `useMyLocation` restores
-            // the last recorded fix synchronously and re-requests one.
-            useStore.getState().useMyLocation();
-            return;
-          }
-          setPicking(armed === 'origin' ? null : 'origin');
-        });
-        return btn;
-      },
-    });
-    map.addControl(new Ctl());
 
     // Basemap switcher. Street tiles carry the lanes and place names that get
     // you there; satellite imagery answers what the place looks like when you
@@ -527,23 +494,6 @@ export function MapView() {
       })
       .addTo(layer);
   }, [position]);
-
-  // The drop-pin button carries two states, and both are read from the store
-  // rather than tracked here: lit while it is waiting for your tap, and lit
-  // with a "clear" title once a manual pin is what the app is using. Arming
-  // the origin from the search panel therefore lights this button too.
-  useEffect(() => {
-    const btn = dropBtnRef.current;
-    if (!btn) return;
-    const manual = !!position?.manual;
-    const armed = picking === 'origin';
-    btn.classList.toggle('active', manual || armed);
-    btn.title = armed
-      ? 'Tap the map to set where you are (tap here to cancel)'
-      : manual
-        ? 'Clear manual pin (resume live location)'
-        : 'Drop a manual "I am here" pin';
-  }, [position?.manual, picking]);
 
   // The zoom-to-me control is only useful once there is a location to zoom to.
   useEffect(() => {
