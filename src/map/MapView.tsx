@@ -218,7 +218,9 @@ export function MapView() {
         const btn = L.DomUtil.create('button', 'drop-pin-btn locate-btn');
         btn.type = 'button';
         btn.title = 'Zoom to my location';
-        btn.textContent = '\u{1F3AF}';
+        // Icon-only control, so it carries its own label (see ui/icons.tsx).
+        btn.setAttribute('aria-label', 'Zoom to my location');
+        btn.innerHTML = iconMarkup('locateFixed', 20);
         btn.hidden = !useStore.getState().position;
         locateBtnRef.current = btn;
         L.DomEvent.disableClickPropagation(btn);
