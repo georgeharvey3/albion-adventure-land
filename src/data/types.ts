@@ -330,6 +330,59 @@ export const PARENT_CATEGORY_COLORS: Record<ParentCategory, string> = {
   folklore: '#7b4fb0',
 };
 
+// --- Hybrid (multi-category) swatches --------------------------------------
+// A cross-source merge (issue #37) leaves one pin standing for a place that two
+// guidebooks file under different layers — Tintern Abbey is a sacred building
+// AND a ruin, Old Sarum is a ruin AND a hillfort. A single-colour pin tells
+// half that story: filter for hillforts, and Old Sarum's pin is still ruins
+// olive, so the one place the filter is *about* looks like it belongs to the
+// other layer.
+//
+// So the fill is striped across every category the place answers to, in the
+// `categoriesOf` order — representative's colour first. Everything else about
+// the pin is unchanged, and deliberately so: the SHAPE, the name, the type on
+// the card and the outing slot all still come from the representative's own
+// category, because one place is still one thing to visit and one thing to
+// tick. The stripe says "also findable as"; it does not split the site in two.
+//
+// Derived, never stored — the same rule as `parentOf` and `categoriesOf`.
+
+/** Distinct pin colours for a site, representative's own first. One element
+ *  for an ordinary site; two for every merged group in the data today. */
+export function categoryColorsOf(site: Site): string[] {
+  const colors: string[] = [];
+  for (const category of categoriesOf(site)) {
+    const hex = SITE_TYPE_COLORS[category];
+    if (!colors.includes(hex)) colors.push(hex);
+  }
+  return colors;
+}
+
+/** The same swatch as a CSS `background`, for the list dots that mirror the
+ *  map pins. Hard-edged 135° bands, matching the canvas stripes the map draws
+ *  (see `src/map/shapeMarker.ts`) — a gradient blend would read as a third,
+ *  invented colour. */
+export function swatchBackground(colors: string[]): string {
+  if (colors.length < 2) return colors[0] ?? SITE_TYPE_COLORS.other;
+  const step = 100 / colors.length;
+  const stops = colors.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`);
+  return `linear-gradient(135deg, ${stops.join(', ')})`;
+}
+
+/** Convenience for the list dots: a site's swatch, striped when it is a merge. */
+export function siteSwatch(site: Site): string {
+  return swatchBackground(categoryColorsOf(site));
+}
+
+/** The layers a merged pin answers to, for a dot's tooltip. Empty string for an
+ *  ordinary site, whose single label is already spelled out beside it. */
+export function hybridTitle(site: Site): string | undefined {
+  const categories = categoriesOf(site);
+  return categories.length > 1
+    ? categories.map((c) => SITE_TYPE_LABELS[c]).join(' · ')
+    : undefined;
+}
+
 const SITE_TYPE_SET: ReadonlySet<string> = new Set(SITE_TYPES);
 
 // Normalize a raw CSV `category` value to a SiteType. The category vocabulary is

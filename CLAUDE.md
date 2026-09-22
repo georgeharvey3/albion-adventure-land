@@ -201,10 +201,19 @@ two visited ticks and two outing slots.
   full list. The filter matches any one of them, so Old Sarum answers both Ruins
   and Hillforts. All 33 groups in the data span two layers, so this is the
   normal case and not an edge case.
+- **A merged place gets a hybrid pin.** Its fill is striped across every colour
+  in `categoriesOf` — representative's first — so Old Sarum reads as ruins *and*
+  hillfort under either filter, instead of wearing the other layer's colour
+  while the hillforts filter is the one showing it. The stripes are drawn on the
+  canvas renderer in `src/map/shapeMarker.ts` (`fillColors`), and the list dots
+  mirror them with the same hard-edged 135° bands (`siteSwatch` in
+  `src/data/types.ts`). Derived, never stored, like everything else here.
 - The limits of that widening are deliberate. The representative's own
-  `category` still decides the pin shape, the pin colour, the type on the card
-  and the outing slot. One place is one thing to visit and one thing to tick, so
-  one stop can never fill both "a ruin" and "a hillfort" in an outing.
+  `category` still decides the pin **shape**, the name, the type on the card and
+  the outing slot — only the colour is shared. One place is one thing to visit
+  and one thing to tick, so one stop can never fill both "a ruin" and "a
+  hillfort" in an outing, and the shape stays the one honest answer to "what am
+  I going to see".
 - `matchesFilter` in `src/state/filter.ts` is the **one** definition of "is this
   site on the map now". The rendered list (`src/state/selectors.ts`) and
   `revealSite` (`src/state/store.ts`) both call it. When they had separate

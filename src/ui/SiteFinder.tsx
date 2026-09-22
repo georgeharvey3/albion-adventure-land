@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { searchSites } from "../search/sites";
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site } from "../data/types";
+import {
+  hybridTitle,
+  siteSwatch,
+  SITE_TYPE_LABELS,
+  type Site,
+} from "../data/types";
 import { formatDistance, haversine } from "../geo/haversine";
 import { CheckIcon, SearchIcon, StarIcon } from "./icons";
 
@@ -195,7 +200,8 @@ export function SiteFinderResults({
         >
           <span
             className="dot"
-            style={{ background: SITE_TYPE_COLORS[site.category] }}
+            style={{ background: siteSwatch(site) }}
+            title={hybridTitle(site)}
           />
           <span className="row-main">
             <span className="row-name">

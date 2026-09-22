@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { useVisibleSites } from "../state/selectors";
-import { SITE_TYPE_COLORS, SITE_TYPE_LABELS, type Site } from "../data/types";
+import {
+  hybridTitle,
+  siteSwatch,
+  SITE_TYPE_COLORS,
+  SITE_TYPE_LABELS,
+  type Site,
+} from "../data/types";
 import { formatDistance } from "../geo/haversine";
 import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
@@ -278,7 +284,8 @@ export function NearMeList() {
                 >
                   <span
                     className="dot"
-                    style={{ background: SITE_TYPE_COLORS[site.category] }}
+                    style={{ background: siteSwatch(site) }}
+                    title={hybridTitle(site)}
                   />
                   <span className="row-main">
                     <span className="row-name">
