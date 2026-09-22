@@ -202,7 +202,6 @@ body,
 .locate-btn {
   width: 40px;
   height: 40px;
-  font-size: var(--text-xl);
   box-shadow: var(--shadow-float);
 }
 .locate-btn[hidden] {
