@@ -354,7 +354,11 @@ export function NearMeList() {
                       onShowOnMap={() => setBrowse(false)}
                     />
                     {/* Naming the neighbours turns the step into a decision
-                      rather than a leap in the dark. */}
+                      rather than a leap in the dark. The bar is sticky (see
+                      .row-nav): it closes the entry, but on a write-up longer
+                      than the screen it rides the bottom of the viewport, so
+                      the step to the next site never costs a scroll past text
+                      the reader has already given up on. */}
                     <div className="row-nav">
                       <button
                         className="row-nav-btn"

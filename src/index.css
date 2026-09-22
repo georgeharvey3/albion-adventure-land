@@ -1745,6 +1745,18 @@ body,
   min-height: 0;
 }
 
+/* The scroller's trailing space moves to the list inside it. A sticky element
+   is held clear of its scroll container's padding, so .sheet-body's bottom
+   padding would park .row-nav a gap above the screen edge with the write-up
+   sliding visibly through the gap. Same breathing room at the end of the list,
+   no strip of text under the bar. */
+.sheet.browse .sheet-body {
+  padding-bottom: 0;
+}
+.sheet.browse .list {
+  padding-bottom: var(--space-md);
+}
+
 /* Hint and mode toggle share a line, so turning browse mode on and off costs no
    vertical space of its own. */
 .list-head {
@@ -1926,9 +1938,11 @@ body,
 }
 
 /* The opened write-up. The horizontal padding matches .card, so the picture
-   strip's edge-bleed (`margin-inline`) lines up here too. */
+   strip's edge-bleed (`margin-inline`) lines up here too. The bottom padding
+   belongs to .row-nav rather than here: the nav bar is sticky, and padding on
+   this element would sit *under* the stuck bar where it buys nothing. */
 .row-body {
-  padding: 0 var(--space-md) var(--space-sm) var(--space-md);
+  padding: 0 var(--space-md);
 }
 
 @media (min-width: 760px) {
@@ -1947,13 +1961,35 @@ body,
 
 /* Prev/next bar closing an expanded row. Naming the neighbouring sites is the
    point: "Next › Lily Tarn" is a decision, "Next ›" alone is a leap in the
-   dark. */
+   dark.
+
+   Sticky, because a guidebook write-up with a picture strip is several screens
+   long and the step to the next site was only reachable from the very bottom of
+   it — so browsing ten sites meant ten long scrolls past text you had decided
+   not to read. Sticky keeps the bar in the one honest place in the document
+   (closing the entry) while making it reachable from anywhere in it: it rides
+   the bottom of the screen while the entry is taller than the viewport, and
+   settles into its real position when the end of the write-up arrives. A short
+   entry never sticks at all, so it pays nothing.
+
+   The negative inline margin bleeds the bar across .row-body's gutters, so text
+   scrolls *under* it rather than beside it; the padding puts the buttons back
+   where they were. The background must stay opaque for the same reason, and it
+   matches .row.browse.expanded so the bar reads as part of the entry, not as a
+   floating toolbar. The bottom padding clears the home indicator on a
+   full-height phone, where the sheet runs to the physical bottom of the glass. */
 .row-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   gap: var(--space-xs);
   margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
+  margin-inline: calc(var(--space-md) * -1);
+  padding: var(--space-sm) var(--space-md)
+    calc(var(--space-sm) + env(safe-area-inset-bottom));
   border-top: var(--rule-hairline) solid var(--color-rule);
+  background: var(--color-paper-3);
 }
 .row-nav-btn {
   flex: 1 1 0;
