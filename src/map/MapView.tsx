@@ -524,12 +524,51 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.nonce]);
 
-  // Pan to a site selected from the list.
+  // Pan to a selected site. The site card floats over the map, so centring on
+  // the whole map hides the pin under the card on a phone. Centre it in the
+  // largest strip of map the card leaves uncovered instead. The card grows as
+  // its picture loads (and on "show more"), so follow its size until the user
+  // moves the map themselves.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedSiteId) return;
     const v = views.find((x) => x.site.id === selectedSiteId);
-    if (v) map.panTo([v.site.lat, v.site.lng]);
+    if (!v) return;
+    const latlng = L.latLng(v.site.lat, v.site.lng);
+    const container = map.getContainer();
+    const card = container.parentElement?.querySelector<HTMLElement>('.card');
+
+    const pan = () => {
+      const size = map.getSize();
+      let target = L.point(size.x / 2, size.y / 2);
+      if (card) {
+        const m = container.getBoundingClientRect();
+        const c = card.getBoundingClientRect();
+        const top = c.top - m.top;
+        const left = c.left - m.left;
+        const right = c.right - m.left;
+        // The free strips above, left of and right of the card; take the biggest.
+        const strips = [
+          { area: top * size.x, at: L.point(size.x / 2, top / 2) },
+          { area: left * size.y, at: L.point(left / 2, size.y / 2) },
+          { area: (size.x - right) * size.y, at: L.point((size.x + right) / 2, size.y / 2) },
+        ];
+        const best = strips.reduce((a, b) => (b.area > a.area ? b : a));
+        if (best.area > 0) target = best.at;
+      }
+      map.panBy(map.latLngToContainerPoint(latlng).subtract(target));
+    };
+
+    pan();
+    if (!card) return;
+    const ro = new ResizeObserver(() => pan());
+    ro.observe(card);
+    const stop = () => ro.disconnect();
+    map.once('dragstart zoomstart', stop);
+    return () => {
+      stop();
+      map.off('dragstart zoomstart', stop);
+    };
     // views intentionally omitted from deps: only react to selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
