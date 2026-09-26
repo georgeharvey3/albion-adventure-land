@@ -39,3 +39,4 @@ __pycache__/
 # dictionary, public/data/places.json, is what is committed — like the geocode
 # cache, it is the artefact, not the source.
 data/gazetteer/
+server/.cache/
