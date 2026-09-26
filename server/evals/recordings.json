@@ -1,0 +1,988 @@
+{
+ "photon:cornwall": [
+  {
+   "id": "photon:50.4433,-4.6247",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "England",
+   "lat": 50.4433489,
+   "lng": -4.6246566,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:50.4167,-4.7500",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "England",
+   "lat": 50.416667,
+   "lng": -4.75,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:50.4433,-4.6247",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "England",
+   "lat": 50.4433489,
+   "lng": -4.6246566,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:50.4433,-4.6247",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "England",
+   "lat": 50.4433489,
+   "lng": -4.6246566,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:45.0184,-74.7287",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "Cornwall (city), Ontario",
+   "lat": 45.0184417,
+   "lng": -74.728703,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:41.4344,-74.0358",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "Orange, New York",
+   "lat": 41.434444,
+   "lng": -74.035833,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:41.8437,-73.3293",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "Northwest Hills Planning Region, Connecticut",
+   "lat": 41.8437058,
+   "lng": -73.3292848,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:43.9609,-73.2098",
+   "kind": "place",
+   "label": "Cornwall",
+   "detail": "Addison, Vermont",
+   "lat": 43.9609015,
+   "lng": -73.2098352,
+   "source": "online",
+   "score": 0
+  }
+ ],
+ "photon:hay-on-wye": [
+  {
+   "id": "photon:52.0745,-3.1243",
+   "kind": "place",
+   "label": "Hay on Wye",
+   "detail": "Powys, Wales",
+   "lat": 52.0744595,
+   "lng": -3.1243132,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0693,-3.1300",
+   "kind": "place",
+   "label": "Hay-on-Wye Cemetery",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0693273,
+   "lng": -3.1300419,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0733,-3.1270",
+   "kind": "place",
+   "label": "Hay-on-Wye Post Office",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0732655,
+   "lng": -3.1270392,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0733,-3.1268",
+   "kind": "place",
+   "label": "Hay-on-Wye stamping station",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0732804,
+   "lng": -3.1268113,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0720,-3.1268",
+   "kind": "place",
+   "label": "Hay-On-Wye C.P. School",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0719738,
+   "lng": -3.1267984,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0700,-3.1325",
+   "kind": "place",
+   "label": "Hay-on-Wye Fire Station",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0699781,
+   "lng": -3.1325163,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0743,-3.1263",
+   "kind": "place",
+   "label": "Hay-on-Wye Booksellers",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0743042,
+   "lng": -3.1263247,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:52.0731,-3.1262",
+   "kind": "place",
+   "label": "Hay-on-Wye Hay Castle",
+   "detail": "Hay on Wye, Powys",
+   "lat": 52.0731323,
+   "lng": -3.1261692,
+   "source": "online",
+   "score": 0
+  }
+ ],
+ "photon:liverpool city centre": [
+  {
+   "id": "photon:53.4054,-2.9858",
+   "kind": "place",
+   "label": "City Centre",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4054249,
+   "lng": -2.9858029,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4772,-2.2581",
+   "kind": "place",
+   "label": "Manchester Liverpool Road railway station",
+   "detail": "Manchester, Greater Manchester",
+   "lat": 53.4772221,
+   "lng": -2.2581468,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4665,-2.9304",
+   "kind": "place",
+   "label": "The Walton Centre",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4665093,
+   "lng": -2.9303717,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4040,-2.9585",
+   "kind": "place",
+   "label": "Williamson Tunnels Heritage Centre",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4040182,
+   "lng": -2.9585314,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4079,-2.9820",
+   "kind": "place",
+   "label": "Liverpool Marriott Hotel City Centre",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4079275,
+   "lng": -2.9819796,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4025,-2.9882",
+   "kind": "place",
+   "label": "Hilton Liverpool City Centre",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4024769,
+   "lng": -2.9882269,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4036,-2.9862",
+   "kind": "place",
+   "label": "Liverpool One",
+   "detail": "Liverpool, Liverpool City Region",
+   "lat": 53.4035823,
+   "lng": -2.986238,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.4450,-2.9907",
+   "kind": "place",
+   "label": "Hugh Baird College",
+   "detail": "Sefton, Liverpool City Region",
+   "lat": 53.4450129,
+   "lng": -2.9906512,
+   "source": "online",
+   "score": 0
+  }
+ ],
+ "photon:northumberland": [
+  {
+   "id": "photon:55.2500,-2.0006",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "England",
+   "lat": 55.25,
+   "lng": -2.000559,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:40.8488,-76.6944",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "Pennsylvania",
+   "lat": 40.8488473,
+   "lng": -76.6943741,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:37.9315,-76.4837",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "Virginia",
+   "lat": 37.9314992,
+   "lng": -76.4836686,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:44.5763,-71.5160",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "Coos, New Hampshire",
+   "lat": 44.5762975,
+   "lng": -71.5160464,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:43.1697,-73.6328",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "Saratoga, New York",
+   "lat": 43.169722,
+   "lng": -73.632778,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:40.8886,-76.7954",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "Pennsylvania",
+   "lat": 40.8885834,
+   "lng": -76.7953727,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:46.9462,-66.0795",
+   "kind": "place",
+   "label": "Northumberland County",
+   "detail": "New Brunswick",
+   "lat": 46.9461759,
+   "lng": -66.0795313,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:55.2971,-2.0678",
+   "kind": "place",
+   "label": "Northumberland",
+   "detail": "England",
+   "lat": 55.2970562,
+   "lng": -2.0677894,
+   "source": "online",
+   "score": 0
+  }
+ ],
+ "photon:nowhereville-on-sea": [
+  {
+   "id": "photon:51.5388,0.7128",
+   "kind": "place",
+   "label": "Southend-on-Sea",
+   "detail": "Essex, England",
+   "lat": 51.5388241,
+   "lng": 0.7128137,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:51.7884,1.1528",
+   "kind": "place",
+   "label": "Clacton-on-Sea",
+   "detail": "Tendring, Essex",
+   "lat": 51.7883997,
+   "lng": 1.1527865,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:50.8420,0.4709",
+   "kind": "place",
+   "label": "Bexhill-on-Sea",
+   "detail": "Rother, England",
+   "lat": 50.8419553,
+   "lng": 0.4709063,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:53.3134,0.2809",
+   "kind": "place",
+   "label": "Sutton-on-Sea",
+   "detail": "East Lindsey, Lincolnshire",
+   "lat": 53.3134339,
+   "lng": 0.2809461,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:51.5416,0.6455",
+   "kind": "place",
+   "label": "Leigh-on-Sea",
+   "detail": "Southend-on-Sea, England",
+   "lat": 51.5416283,
+   "lng": 0.6455104,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:51.8293,1.2462",
+   "kind": "place",
+   "label": "Frinton-on-Sea",
+   "detail": "Tendring, Essex",
+   "lat": 51.8293064,
+   "lng": 1.2462138,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:51.2377,-2.9987",
+   "kind": "place",
+   "label": "Burnham-on-Sea",
+   "detail": "Somerset, England",
+   "lat": 51.2377356,
+   "lng": -2.998695,
+   "source": "online",
+   "score": 0
+  },
+  {
+   "id": "photon:51.3816,1.3372",
+   "kind": "place",
+   "label": "Westgate-on-Sea",
+   "detail": "Thanet, England",
+   "lat": 51.3815773,
+   "lng": 1.3372108,
+   "source": "online",
+   "score": 0
+  }
+ ],
+ "postcode:LD3 7HP": {
+  "id": "postcode:LD3",
+  "kind": "postcode",
+  "label": "LD3 7HP",
+  "detail": "Powys",
+  "lat": 51.943159,
+  "lng": -3.379668,
+  "source": "online",
+  "score": 95
+ },
+ "route:51.454,-2.588;50.726,-3.527": {
+  "points": [
+   {
+    "lat": 51.453628,
+    "lng": -2.587778
+   },
+   {
+    "lat": 51.445341,
+    "lng": -2.590861
+   },
+   {
+    "lat": 51.440676,
+    "lng": -2.626821
+   },
+   {
+    "lat": 51.450692,
+    "lng": -2.628172
+   },
+   {
+    "lat": 51.46901,
+    "lng": -2.676503
+   },
+   {
+    "lat": 51.476826,
+    "lng": -2.721988
+   },
+   {
+    "lat": 51.43516,
+    "lng": -2.83505
+   },
+   {
+    "lat": 51.39435,
+    "lng": -2.858002
+   },
+   {
+    "lat": 51.363087,
+    "lng": -2.891976
+   },
+   {
+    "lat": 51.313685,
+    "lng": -2.884866
+   },
+   {
+    "lat": 51.296757,
+    "lng": -2.892806
+   },
+   {
+    "lat": 51.210569,
+    "lng": -2.964184
+   },
+   {
+    "lat": 51.161388,
+    "lng": -2.98151
+   },
+   {
+    "lat": 51.124992,
+    "lng": -2.9697
+   },
+   {
+    "lat": 51.095309,
+    "lng": -3.000588
+   },
+   {
+    "lat": 51.042464,
+    "lng": -3.033487
+   },
+   {
+    "lat": 51.002214,
+    "lng": -3.076161
+   },
+   {
+    "lat": 50.981742,
+    "lng": -3.116079
+   },
+   {
+    "lat": 50.972036,
+    "lng": -3.195943
+   },
+   {
+    "lat": 50.922411,
+    "lng": -3.349506
+   },
+   {
+    "lat": 50.891191,
+    "lng": -3.376879
+   },
+   {
+    "lat": 50.83845,
+    "lng": -3.390877
+   },
+   {
+    "lat": 50.799157,
+    "lng": -3.441548
+   },
+   {
+    "lat": 50.773982,
+    "lng": -3.458487
+   },
+   {
+    "lat": 50.728869,
+    "lng": -3.461954
+   },
+   {
+    "lat": 50.71969,
+    "lng": -3.492794
+   },
+   {
+    "lat": 50.726128,
+    "lng": -3.527335
+   }
+  ],
+  "distance": 126215.6,
+  "duration": 5956.4
+ },
+ "route:51.454,-2.588;51.697,-2.677": {
+  "points": [
+   {
+    "lat": 51.453628,
+    "lng": -2.587778
+   },
+   {
+    "lat": 51.454289,
+    "lng": -2.583835
+   },
+   {
+    "lat": 51.459759,
+    "lng": -2.584067
+   },
+   {
+    "lat": 51.472873,
+    "lng": -2.56212
+   },
+   {
+    "lat": 51.484544,
+    "lng": -2.558285
+   },
+   {
+    "lat": 51.496416,
+    "lng": -2.53486
+   },
+   {
+    "lat": 51.513211,
+    "lng": -2.518957
+   },
+   {
+    "lat": 51.55913,
+    "lng": -2.558922
+   },
+   {
+    "lat": 51.571707,
+    "lng": -2.583441
+   },
+   {
+    "lat": 51.596774,
+    "lng": -2.608884
+   },
+   {
+    "lat": 51.61937,
+    "lng": -2.665236
+   },
+   {
+    "lat": 51.620128,
+    "lng": -2.673492
+   },
+   {
+    "lat": 51.634574,
+    "lng": -2.686356
+   },
+   {
+    "lat": 51.664862,
+    "lng": -2.697467
+   },
+   {
+    "lat": 51.67116,
+    "lng": -2.687965
+   },
+   {
+    "lat": 51.674623,
+    "lng": -2.675049
+   },
+   {
+    "lat": 51.677765,
+    "lng": -2.673489
+   },
+   {
+    "lat": 51.680131,
+    "lng": -2.676367
+   },
+   {
+    "lat": 51.683876,
+    "lng": -2.675844
+   },
+   {
+    "lat": 51.691818,
+    "lng": -2.671236
+   },
+   {
+    "lat": 51.697095,
+    "lng": -2.677808
+   }
+  ],
+  "distance": 35781.5,
+  "duration": 1897.4
+ },
+ "route:51.455,-2.597;50.724,-3.527": {
+  "points": [
+   {
+    "lat": 51.455189,
+    "lng": -2.59657
+   },
+   {
+    "lat": 51.451734,
+    "lng": -2.63734
+   },
+   {
+    "lat": 51.46901,
+    "lng": -2.676503
+   },
+   {
+    "lat": 51.476738,
+    "lng": -2.723123
+   },
+   {
+    "lat": 51.43516,
+    "lng": -2.83505
+   },
+   {
+    "lat": 51.39435,
+    "lng": -2.858002
+   },
+   {
+    "lat": 51.363087,
+    "lng": -2.891976
+   },
+   {
+    "lat": 51.313685,
+    "lng": -2.884866
+   },
+   {
+    "lat": 51.296757,
+    "lng": -2.892806
+   },
+   {
+    "lat": 51.210569,
+    "lng": -2.964184
+   },
+   {
+    "lat": 51.161388,
+    "lng": -2.98151
+   },
+   {
+    "lat": 51.124992,
+    "lng": -2.9697
+   },
+   {
+    "lat": 51.095309,
+    "lng": -3.000588
+   },
+   {
+    "lat": 51.042464,
+    "lng": -3.033487
+   },
+   {
+    "lat": 51.002214,
+    "lng": -3.076161
+   },
+   {
+    "lat": 50.981742,
+    "lng": -3.116079
+   },
+   {
+    "lat": 50.972036,
+    "lng": -3.195943
+   },
+   {
+    "lat": 50.922411,
+    "lng": -3.349506
+   },
+   {
+    "lat": 50.891191,
+    "lng": -3.376879
+   },
+   {
+    "lat": 50.83845,
+    "lng": -3.390877
+   },
+   {
+    "lat": 50.799157,
+    "lng": -3.441548
+   },
+   {
+    "lat": 50.773982,
+    "lng": -3.458487
+   },
+   {
+    "lat": 50.728869,
+    "lng": -3.461954
+   },
+   {
+    "lat": 50.71969,
+    "lng": -3.492794
+   },
+   {
+    "lat": 50.723282,
+    "lng": -3.527518
+   }
+  ],
+  "distance": 124185,
+  "duration": 5844.1
+ },
+ "route:51.508,-0.126;51.375,-2.362": {
+  "points": [
+   {
+    "lat": 51.508507,
+    "lng": -0.125709
+   },
+   {
+    "lat": 51.495931,
+    "lng": -0.171496
+   },
+   {
+    "lat": 51.486635,
+    "lng": -0.252327
+   },
+   {
+    "lat": 51.495819,
+    "lng": -0.336036
+   },
+   {
+    "lat": 51.487735,
+    "lng": -0.386369
+   },
+   {
+    "lat": 51.495769,
+    "lng": -0.459147
+   },
+   {
+    "lat": 51.486428,
+    "lng": -0.565978
+   },
+   {
+    "lat": 51.501433,
+    "lng": -0.594586
+   },
+   {
+    "lat": 51.511587,
+    "lng": -0.662323
+   },
+   {
+    "lat": 51.496891,
+    "lng": -0.730799
+   },
+   {
+    "lat": 51.463846,
+    "lng": -0.7807
+   },
+   {
+    "lat": 51.425962,
+    "lng": -0.86468
+   },
+   {
+    "lat": 51.411685,
+    "lng": -0.965371
+   },
+   {
+    "lat": 51.424793,
+    "lng": -1.035954
+   },
+   {
+    "lat": 51.454566,
+    "lng": -1.083033
+   },
+   {
+    "lat": 51.460003,
+    "lng": -1.106484
+   },
+   {
+    "lat": 51.45847,
+    "lng": -1.196844
+   },
+   {
+    "lat": 51.465223,
+    "lng": -1.268155
+   },
+   {
+    "lat": 51.452751,
+    "lng": -1.30874
+   },
+   {
+    "lat": 51.456491,
+    "lng": -1.359563
+   },
+   {
+    "lat": 51.448713,
+    "lng": -1.463742
+   },
+   {
+    "lat": 51.487331,
+    "lng": -1.572542
+   },
+   {
+    "lat": 51.50528,
+    "lng": -1.595569
+   },
+   {
+    "lat": 51.525805,
+    "lng": -1.676548
+   },
+   {
+    "lat": 51.540502,
+    "lng": -1.82921
+   },
+   {
+    "lat": 51.55931,
+    "lng": -1.907858
+   },
+   {
+    "lat": 51.517645,
+    "lng": -2.059829
+   },
+   {
+    "lat": 51.514452,
+    "lng": -2.120401
+   },
+   {
+    "lat": 51.478181,
+    "lng": -2.128138
+   },
+   {
+    "lat": 51.463978,
+    "lng": -2.149314
+   },
+   {
+    "lat": 51.447438,
+    "lng": -2.149319
+   },
+   {
+    "lat": 51.431586,
+    "lng": -2.224589
+   },
+   {
+    "lat": 51.415191,
+    "lng": -2.252551
+   },
+   {
+    "lat": 51.416747,
+    "lng": -2.271425
+   },
+   {
+    "lat": 51.405219,
+    "lng": -2.293347
+   },
+   {
+    "lat": 51.398203,
+    "lng": -2.337579
+   },
+   {
+    "lat": 51.390181,
+    "lng": -2.356616
+   },
+   {
+    "lat": 51.378562,
+    "lng": -2.351101
+   },
+   {
+    "lat": 51.375,
+    "lng": -2.362054
+   }
+  ],
+  "distance": 181739.1,
+  "duration": 9220.1
+ },
+ "route:53.383,-1.466;51.065,-1.319": {
+  "points": [
+   {
+    "lat": 53.382944,
+    "lng": -1.465791
+   },
+   {
+    "lat": 53.38631,
+    "lng": -1.278865
+   },
+   {
+    "lat": 53.116268,
+    "lng": -1.333707
+   },
+   {
+    "lat": 52.99826,
+    "lng": -1.230792
+   },
+   {
+    "lat": 52.879857,
+    "lng": -1.310417
+   },
+   {
+    "lat": 52.681254,
+    "lng": -1.288683
+   },
+   {
+    "lat": 52.604757,
+    "lng": -1.196039
+   },
+   {
+    "lat": 52.43284,
+    "lng": -1.193231
+   },
+   {
+    "lat": 52.329829,
+    "lng": -1.145049
+   },
+   {
+    "lat": 52.252923,
+    "lng": -1.074201
+   },
+   {
+    "lat": 52.208868,
+    "lng": -0.935859
+   },
+   {
+    "lat": 52.08544,
+    "lng": -1.021011
+   },
+   {
+    "lat": 52.042007,
+    "lng": -1.135589
+   },
+   {
+    "lat": 51.956344,
+    "lng": -1.203032
+   },
+   {
+    "lat": 51.868698,
+    "lng": -1.197192
+   },
+   {
+    "lat": 51.778969,
+    "lng": -1.303923
+   },
+   {
+    "lat": 51.714925,
+    "lng": -1.254229
+   },
+   {
+    "lat": 51.649651,
+    "lng": -1.319515
+   },
+   {
+    "lat": 51.598255,
+    "lng": -1.27865
+   },
+   {
+    "lat": 51.512634,
+    "lng": -1.290389
+   },
+   {
+    "lat": 51.370026,
+    "lng": -1.364819
+   },
+   {
+    "lat": 51.065166,
+    "lng": -1.318903
+   }
+  ],
+  "distance": 309806.2,
+  "duration": 12881.1
+ }
+}
