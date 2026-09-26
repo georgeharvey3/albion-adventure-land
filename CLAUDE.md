@@ -23,8 +23,11 @@ If a feature doesn't serve "visit more, and more varied, sites," it's a candidat
 
 ## Architecture (do not drift from this)
 
-- **Client-only. No backend** for the full MVP and Phase 2. A server buys *only*
-  cross-device visited-state sync, and that is deferred until the friction is felt.
+- **Client-only, except for Ethelred.** The app has one server, and it serves
+  Ethelred only (issue #45, `docs/adr/0002-ethelred-server.md`). The server
+  runs the agent loop and keeps no user state. No other feature can depend on
+  it. Cross-device visited-state sync is still deferred until the friction is
+  felt, and it is the only other thing a server can buy.
 - **Offline-first is a hard requirement**, not a nice-to-have — the target use is
   no-signal rural Britain. The mental test: after one online session covering a
   region, the app must be fully functional in airplane mode for that region.
@@ -265,8 +268,9 @@ time is deliberately deferred — outing mode v1 ships on raw distance.
 ## Working agreements
 
 - Keep dependencies minimal — the offline/bundle-size story is a feature.
-- Don't introduce a backend, SSR, or a state-management framework heavier than
-  Zustand without raising it first.
+- Don't introduce a second backend, SSR, or a state-management framework
+  heavier than Zustand without raising it first. Don't give the Ethelred server
+  a second job without raising it first.
 - When the spec lists an open decision (§11: outing cost function, tile
   provider, photo storage, routing engine, sync), surface it rather than
   silently picking.

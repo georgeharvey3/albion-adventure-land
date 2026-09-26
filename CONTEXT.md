@@ -65,6 +65,14 @@ _Avoid_: band, catchment, buffer
 **Detour**:
 The extra travel a site costs against the journey.
 
+**Trip**:
+The ordered set of stops for one day out. The user builds it by hand, one site
+at a time, or the finder builds it from a choice of site types. With a
+destination, the stops sit between the two ends of the journey. There is one
+trip at a time. A trip is the stops; the journey is the two ends. "My trip to
+Winchester" names both: a journey to Winchester, and the stops on the way.
+_Avoid_: outing, itinerary, route, plan
+
 **Progress**:
 How far along the journey a site sits, from the origin at 0 to the destination
 at 1.
@@ -100,12 +108,40 @@ _Avoid_: block, ignore, dismiss
 Turning a filtered-off site type back on because the user asked for one of its
 sites by name.
 
+### Asking Ethelred
+
+**Ethelred**:
+The travel agent. It answers questions asked in plain language from the site
+data, the places the app knows and the road routes it can find. It names only
+sites that exist in the data, and it states only facts that the data holds. It
+needs a signal; the rest of the app does not.
+_Avoid_: assistant, chatbot, AI, the agent
+
+**Answer**:
+What Ethelred gives back to one question: prose, plus the sites it names. An
+answer shows its sites on the map as its own set, apart from the filter.
+_Avoid_: response, result, reply
+
+**Conversation**:
+The questions and answers that follow on from one another, so that "the second
+one" means something. The device keeps the latest conversation until the user
+starts a new one. It is disposable: it is not user state and it is not in the
+backup.
+_Avoid_: chat, session, thread
+
+**Report**:
+One conversation that a user chose to send back because an answer was wrong.
+It is the only conversation that ever leaves the device to be kept.
+_Avoid_: feedback, flag, complaint
+
+**Hand-off**:
+An action an answer offers and the user must tap before anything changes — use
+as journey, add to trip, plan a trip, show on map. Ethelred proposes; the user decides.
+_Avoid_: suggestion, command, apply
+
 ## Open terms
 
-**Outing / trip** — the code says `outing` (store, tab, finder) and the site card
-says "+ Add to trip". One of these has to go; not yet resolved.
-
 **Route (overloaded)** — the glossary now gives `route` to the road line of the
-journey, but the code also uses it for the order of the outing stops
+journey, but the code also uses it for the order of the trip stops
 (`orderRoute` in `src/geo/tsp.ts`, `routeSort` in the store). These are two
-different things. The outing sense needs a new name; not yet resolved.
+different things. The trip sense needs a new name; not yet resolved.
