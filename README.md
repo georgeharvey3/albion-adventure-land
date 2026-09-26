@@ -48,7 +48,9 @@ runs fully offline.
 Client-only single-page PWA. Read-only **site data** (CSV → normalized JSON)
 plus read-write **user state** (visited, wishlist, notes, photos, cached travel
 matrices) in IndexedDB. Map tiles from OSM/MapTiler, cached offline. Turn-by-turn
-navigation is delegated to Google Maps via deep links. No backend.
+navigation is delegated to Google Maps via deep links. The app has one server,
+for Ethelred only (`docs/adr/0002-ethelred-server.md`). No other feature
+depends on it.
 
 ## Data
 
@@ -90,3 +92,46 @@ offline and reload.
 
 > Tiles use keyless OSM raster for now; swap in a keyed provider (MapTiler /
 > Thunderforest) in `src/map/MapView.tsx` for outdoor/topo styles.
+
+## Ethelred server
+
+Ethelred is the travel agent. It answers questions in plain language from the
+site data. The server is in `server/`. It runs the agent loop and three tools:
+`resolve_place`, `find_sites` and `read_sites`. It sends each answer back as
+server-sent events. The server keeps no user state. The app does not use it
+yet (issue #63).
+
+The model is behind one OpenAI-compatible adapter. By default, the server uses
+vLLM at `http://localhost:8000/v1` with `Qwen/Qwen3.5-4B`.
+
+```bash
+npm run ethelred:index   # build the semantic index (the server also builds it if it is stale)
+npm run ethelred         # start the server on http://localhost:8787
+npm run ask "Any swims on the way from Sheffield to Winchester?"
+npm run eval             # run the golden set, 3 runs for each case
+npm test                 # unit tests
+```
+
+These environment variables change the model:
+
+| Variable | Default |
+|---|---|
+| `ETHELRED_MODEL_URL` | `http://localhost:8000/v1` |
+| `ETHELRED_MODEL` | `Qwen/Qwen3.5-4B` |
+| `ETHELRED_API_KEY` | none |
+| `ETHELRED_MODEL_EXTRA` | none. A JSON object that the server adds to each request body. |
+| `ETHELRED_MODEL_TIMEOUT_MS` | `120000` |
+| `ETHELRED_PORT` | `8787` |
+
+The eval replaces Photon, postcodes.io and OSRM with the responses in
+`server/evals/recordings.json`. A run then depends only on the model, and it
+works offline. If the report lists network calls with no recording, run
+`npm run eval -- --record`.
+
+On a laptop GPU with 8 GB, this command starts a model that fits:
+
+```bash
+vllm serve Qwen/Qwen3.5-4B --quantization fp8 --max-model-len 16384 --max-num-seqs 4 \
+  --gpu-memory-utilization 0.92 --enable-auto-tool-choice --tool-call-parser qwen3_coder \
+  --reasoning-parser qwen3 --language-model-only
+```
