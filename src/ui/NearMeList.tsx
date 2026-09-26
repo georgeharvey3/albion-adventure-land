@@ -95,6 +95,7 @@ export function NearMeList() {
 
   const routeMode = !!position && !!destination;
   const expandedRef = useRef<HTMLLIElement | null>(null);
+  const headRef = useRef<HTMLDivElement | null>(null);
   // Set when the reader is *moved* to a site rather than choosing it — see the
   // scroll effect below.
   const pendingScroll = useRef(false);
@@ -156,7 +157,14 @@ export function NearMeList() {
       setLimit(Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
       return;
     }
-    expandedRef.current?.scrollIntoView({ block: "start" });
+    // The list header is sticky in browse mode, so the row lands under it
+    // unless it is told to stop short. Measured, because the hint wraps to a
+    // second line on a narrow phone.
+    const row = expandedRef.current;
+    if (row) {
+      row.style.scrollMarginTop = `${headRef.current?.offsetHeight ?? 0}px`;
+      row.scrollIntoView({ block: "start" });
+    }
     pendingScroll.current = false;
   }, [browse, selectedSiteId, limit, views]);
 
@@ -178,7 +186,7 @@ export function NearMeList() {
 
   return (
     <div className={browse ? "list browse" : "list"}>
-      <div className="list-head">
+      <div className="list-head" ref={headRef}>
         {!position && (
           <p className="hint">
             {geoError ?? "Finding your location… "} Use the <MapPinIcon />{" "}

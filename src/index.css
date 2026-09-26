@@ -1758,12 +1758,32 @@ body,
 }
 
 /* Hint and mode toggle share a line, so turning browse mode on and off costs no
-   vertical space of its own. */
+   vertical space of its own. Centred, not baseline: the magnifier has no text,
+   so baseline alignment set it a few pixels off the Browse/Map button. */
 .list-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-xs);
+}
+
+/* In browse mode the list is several screens long, and the way back to the map
+   (and to the finder) was only at the very top of it. The header sticks, like
+   the tab bar above it. Same trick as .row-nav: a sticky element is held clear
+   of its scroller's padding, so the top padding moves from .sheet-body onto the
+   header, and the negative inline margin bleeds its opaque ground across the
+   gutters so rows scroll under it rather than beside it. */
+.sheet.browse .sheet-body {
+  padding-top: 0;
+}
+.sheet.browse .list-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-inline: calc(var(--space-sm) * -1);
+  padding: var(--space-xs) var(--space-sm) var(--space-2xs);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+  background: var(--color-paper);
 }
 .list-head .hint {
   flex: 1;
@@ -1775,7 +1795,12 @@ body,
 .browse-toggle {
   flex: 0 0 auto;
   margin-left: auto;
-  padding: var(--space-2xs) var(--space-xs);
+  /* Same box as .finder-toggle beside it, so the two tops and bottoms line up. */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  height: 1.7rem;
+  padding: 0 var(--space-xs);
   border: var(--rule-hairline) solid var(--color-edge);
   border-radius: var(--radius-sm);
   background: var(--color-paper-2);
