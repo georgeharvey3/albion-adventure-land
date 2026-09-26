@@ -206,10 +206,15 @@ export function Lightbox({
     const stillFitted = viewRef.current.scale <= 1.01;
     if (stillFitted && Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(e.clientY - start.y)) {
       go(dx < 0 ? 1 : -1);
-      return;
     }
-    // A clean tap on the backdrop (not the picture) closes, matching the usual
-    // full-screen-viewer habit.
+  };
+
+  // A clean tap on the backdrop (not the picture) closes, matching the usual
+  // full-screen-viewer habit. This waits for `click` rather than closing on
+  // pointerup: the browser sends the click after pointerup, so closing earlier
+  // unmounts the viewer and that click lands on whatever was underneath it — a
+  // map pin, a list row, a button on the card.
+  const onClick = (e: React.MouseEvent) => {
     if (!dragged.current && e.target === stageRef.current) onClose();
   };
 
@@ -265,6 +270,7 @@ export function Lightbox({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onClick={onClick}
         onDoubleClick={onDoubleClick}
       >
         <img
