@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2238"/><stop offset="1" stop-color="#0f4c5c"/></linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#bfe9ff" stop-opacity=".55"/><stop offset="1" stop-color="#bfe9ff" stop-opacity="0"/></radialGradient>
+<linearGradient id="blade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e3edf3"/><stop offset=".5" stop-color="#a9bccb"/><stop offset="1" stop-color="#8aa2b4"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7d26a"/><stop offset="1" stop-color="#c98f1f"/></linearGradient>
+</defs><rect width="512" height="512" rx="96" fill="url(#g)"/>
+<circle cx="256" cy="210" r="150" fill="url(#glow)"/>
+<path d="M0 352 H512 V416 Q512 512 416 512 H96 Q0 512 0 416 Z" fill="#0a3444" opacity=".7"/>
+<path d="M256 84 L278 124 L278 300 L234 300 L234 124 Z" fill="url(#blade)"/>
+<path d="M190 300 Q256 286 322 300 L322 318 Q256 306 190 318 Z" fill="url(#gold)"/>
+<rect x="246" y="316" width="20" height="44" rx="4" fill="#7a4b1d"/>
+<circle cx="256" cy="366" r="13" fill="url(#gold)"/>
+<g fill="none" stroke="#9fe3f0" stroke-linecap="round">
+<ellipse cx="256" cy="368" rx="62" ry="11" stroke-width="7" opacity=".9"/>
+<ellipse cx="256" cy="374" rx="112" ry="20" stroke-width="6" opacity=".55"/>
+<ellipse cx="256" cy="380" rx="162" ry="30" stroke-width="5" opacity=".25"/>
+</g>
+<g fill="#e8f7ff"><circle cx="150" cy="120" r="3"/><circle cx="372" cy="150" r="2.5"/><circle cx="340" cy="96" r="2"/><circle cx="170" cy="210" r="2"/></g>
+</svg>
