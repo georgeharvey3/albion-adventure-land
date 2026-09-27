@@ -24,6 +24,7 @@ const BRECON = { lat: 51.946, lng: -3.39 };
 const LIVERPOOL = { lat: 53.4106, lng: -2.9779 };
 const HAY = { lat: 52.0745, lng: -3.1243 };
 const FORT_WILLIAM = { lat: 56.8165, lng: -5.1121 };
+const CANTERBURY = { lat: 51.279, lng: 1.0799 };
 const TINTERN = { lat: 51.6969, lng: -2.677 };
 const SNOWDON = { lat: 53.0678, lng: -4.0775 };
 
@@ -169,6 +170,24 @@ export const CASES: EvalCase[] = [
         'river-edw-weir_52.1244_-3.3138',
       ],
       mustNotName: ['grwyne-fawr-reservoir_51.9709_-3.1189'],
+    },
+  },
+  {
+    // The mirror of the case above. All six swims within 25 km reach the
+    // model, and `meaning` only orders them: the paddling spot at Olantigh
+    // ranks fourth. The model must leave out the sites whose data says the
+    // water is shallow.
+    id: 'deep-water-not-a-paddle',
+    question: 'Where can I find deep water for a proper swim near Canterbury?',
+    request: { now: SATURDAY },
+    expect: {
+      calls: [{ tool: 'find_sites', near: CANTERBURY, types: ['wild_swims'] }],
+      mustName: [
+        'chartham-r-great-stour_51.2562_1.0215',
+        'westbere-marshes_51.3047_1.1479',
+        'upstreet-r-great-stour_51.3226_1.2029',
+      ],
+      mustNotName: ['olantigh-r-wye_51.2017_0.9479', 'wickhambreaux-r-little-stour_51.2860_1.1961'],
     },
   },
   {
