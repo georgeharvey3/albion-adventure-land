@@ -159,6 +159,7 @@ export function SiteBody({
   const wishlisted = useStore((s) => s.wishlist.has(site.id));
   const hidden = useStore((s) => s.hidden.has(site.id));
   const setSelected = useStore((s) => s.setSelected);
+  const revealSite = useStore((s) => s.revealSite);
   const markVisited = useStore((s) => s.markVisited);
   const unmarkVisited = useStore((s) => s.unmarkVisited);
   const toggleWishlist = useStore((s) => s.toggleWishlist);
@@ -194,6 +195,12 @@ export function SiteBody({
   // write-up; a main point lists the features grouped under it.
   const parent = site.parentId ? sites.find((x) => x.id === site.parentId) : undefined;
   const children = site.parentId ? [] : sites.filter((x) => x.parentId === site.id);
+  // Revealed first, like a site the finder found: a listing member on a layer
+  // that is switched off has no pin and no row, so it would open to nothing.
+  const openRelated = (id: string) => {
+    revealSite(id);
+    setSelected(id);
+  };
 
   return (
     <>
@@ -233,7 +240,7 @@ export function SiteBody({
       {parent && (
         <p className="card-listing">
           Part of{' '}
-          <button className="link" onClick={() => setSelected(parent.id)}>
+          <button className="link" onClick={() => openRelated(parent.id)}>
             {parent.listingTitle ?? parent.name}
           </button>
         </p>
@@ -281,7 +288,7 @@ export function SiteBody({
           <ul className="listing-children">
             {children.map((c) => (
               <li key={c.id}>
-                <button className="link" onClick={() => setSelected(c.id)}>
+                <button className="link" onClick={() => openRelated(c.id)}>
                   {c.name}
                 </button>
               </li>
