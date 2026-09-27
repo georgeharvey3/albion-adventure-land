@@ -96,9 +96,10 @@ export function NearMeList() {
   const routeMode = !!position && !!destination;
   const expandedRef = useRef<HTMLLIElement | null>(null);
   const headRef = useRef<HTMLDivElement | null>(null);
-  // Set when the reader is *moved* to a site rather than choosing it — see the
-  // scroll effect below.
+  // Set when the open row should be brought to the top of the list — see the
+  // scroll effect below. `smoothScroll` marks a row the reader tapped open.
   const pendingScroll = useRef(false);
+  const smoothScroll = useRef(false);
 
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
@@ -138,10 +139,14 @@ export function NearMeList() {
     finder.close();
   };
 
-  // Bring the reader to the selected site when they were moved to it — entering
-  // browse mode on a site picked from the map, or stepping to a neighbour —
-  // but not when they tapped a row themselves, where the row should stay put
-  // under their finger and grow downwards.
+  // Bring the open site to the top of the list. When the reader was moved to it
+  // — entering browse mode on a site picked from the map, or stepping to a
+  // neighbour — it jumps there. When they tapped the row themselves it glides
+  // there instead: a row tapped near the bottom of the screen would otherwise
+  // open below the fold with no sign that anything happened, and the glide
+  // shows where the write-up went. (Closing a row that sat above it can also
+  // pull the tapped row out from under the finger, so staying put isn't an
+  // option either.)
   //
   // The site can sit past the paging limit (a distant pin, or a long walk down
   // the list), so the limit is raised first and the effect runs again once the
@@ -151,6 +156,7 @@ export function NearMeList() {
     const index = views.findIndex((v) => v.site.id === selectedSiteId);
     if (index < 0) {
       pendingScroll.current = false; // filtered out — nothing to scroll to
+      smoothScroll.current = false;
       return;
     }
     if (index >= limit) {
@@ -163,9 +169,16 @@ export function NearMeList() {
     const row = expandedRef.current;
     if (row) {
       row.style.scrollMarginTop = `${headRef.current?.offsetHeight ?? 0}px`;
-      row.scrollIntoView({ block: "start" });
+      const reduceMotion = window.matchMedia?.(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      row.scrollIntoView({
+        block: "start",
+        behavior: smoothScroll.current && !reduceMotion ? "smooth" : "auto",
+      });
     }
     pendingScroll.current = false;
+    smoothScroll.current = false;
   }, [browse, selectedSiteId, limit, views]);
 
   // Arrow keys do from the keyboard what the prev/next bar does with a tap.
@@ -330,7 +343,13 @@ export function NearMeList() {
               >
                 <button
                   className="row-head"
-                  onClick={() => setSelected(expanded ? null : site.id)}
+                  onClick={() => {
+                    if (!expanded) {
+                      pendingScroll.current = true;
+                      smoothScroll.current = true;
+                    }
+                    setSelected(expanded ? null : site.id);
+                  }}
                   aria-expanded={expanded}
                 >
                   <RowThumb site={site} />
