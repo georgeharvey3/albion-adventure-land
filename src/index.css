@@ -246,37 +246,6 @@ body,
   filter: var(--map-watercolor-filter);
 }
 
-/* The neatline (src/map/mapFrame.ts): a paper margin, two ink rules, and the
-   alternating degree bars between them. */
-.map-frame-host,
-.map-frame {
-  position: absolute;
-  inset: 0;
-}
-.map-frame-band {
-  fill: var(--color-paper-2);
-}
-.map-frame-bars {
-  fill: var(--color-ink);
-}
-.map-frame-rule {
-  fill: none;
-  stroke: var(--color-ink);
-  stroke-width: 1;
-  shape-rendering: crispEdges;
-}
-.map-frame-values {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  font-variant-numeric: tabular-nums;
-  fill: var(--color-muted);
-  paint-order: stroke;
-  stroke: var(--map-name-halo);
-  stroke-width: 3px;
-  stroke-linejoin: round;
-}
-
 /* Names on the overview map (src/map/mapLabels.ts). Each span is placed at its
    point; the centred kinds are pulled back over it, the point kinds hang off a
    mark drawn in ::before. Every name is Cardo — a name on the map is a place
@@ -391,7 +360,6 @@ body,
    takes no tap itself, so the next tap still reaches the map. */
 .map-hint {
   position: absolute;
-  /* Clear of the neatline and its degree labels. */
   top: var(--space-lg);
   left: 50%;
   transform: translateX(-50%);
@@ -1971,7 +1939,7 @@ body,
   background: var(--color-paper-2);
   /* Room under the lower half of the seal. */
   padding: calc(var(--space-md) + 56px) var(--space-xl) var(--space-lg);
-  /* Two ink rules with a paper gap between them, like the neatline. */
+  /* Two ink rules with a paper gap between them, like the border of a plate. */
   border: var(--rule-hairline) solid var(--color-ink);
   outline: var(--rule-hairline) solid var(--color-ink);
   outline-offset: 4px;

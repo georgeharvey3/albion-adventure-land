@@ -11,7 +11,6 @@ import { loadViewState, saveViewState } from '../state/viewState';
 import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
-import { frameMarkup } from './mapFrame';
 import { GlowLayer, glowAmount, pinScale, SPECK_BELOW } from './glowLayer';
 import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
 
@@ -232,15 +231,11 @@ export function MapView() {
     const finish = L.DomUtil.create('div', 'map-finish', finishPane);
     L.DomUtil.create('div', 'map-grain', finish);
     L.DomUtil.create('div', 'map-vignette', finish);
-    const frame = L.DomUtil.create('div', 'map-frame-host', finish);
     const pinFinish = () => {
       const size = map.getSize();
       finish.style.width = `${size.x}px`;
       finish.style.height = `${size.y}px`;
       L.DomUtil.setPosition(finish, map.containerPointToLayerPoint([0, 0]));
-      // The neatline's bars sit where the degrees fall, so it redraws with
-      // every step of a pan, not only when the pan ends.
-      frame.innerHTML = frameMarkup(map);
     };
     map.on('move zoom viewreset resize', pinFinish);
     pinFinish();

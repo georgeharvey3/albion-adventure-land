@@ -126,8 +126,8 @@ const METRICS: Record<LabelKind, { size: number; perChar: number; centred: boole
 // Point labels hang off a mark at their anchor: the text starts this far right.
 const MARK_OFFSET = 9;
 const GAP = 6;
-/** Keep names inside the neatline (mapFrame.ts): a name cut by the frame reads as a mistake. */
-const FRAME = 12;
+/** Keep names clear of the map's edge: a name cut by the edge reads as a mistake. */
+const EDGE = 12;
 
 type Box = [number, number, number, number];
 
@@ -201,10 +201,10 @@ export class MapLabels extends L.Layer {
     // Layer points place the names; container points decide whether one fits.
     const origin = map.containerPointToLayerPoint([0, 0]);
     const inside = (b: Box) =>
-      b[0] - origin.x >= FRAME &&
-      b[1] - origin.y >= FRAME &&
-      b[2] - origin.x <= size.x - FRAME &&
-      b[3] - origin.y <= size.y - FRAME;
+      b[0] - origin.x >= EDGE &&
+      b[1] - origin.y >= EDGE &&
+      b[2] - origin.x <= size.x - EDGE &&
+      b[3] - origin.y <= size.y - EDGE;
     const taken: Box[] = [];
     const html: string[] = [];
     const kept: MapLabel[] = [];
