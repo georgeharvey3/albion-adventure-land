@@ -86,7 +86,11 @@ export class GlowLayer extends L.Layer {
   private drawnZoom = 0;
 
   constructor(options?: L.LayerOptions) {
-    super(options);
+    super();
+    // L.Layer's constructor ignores its argument. Without this the `pane`
+    // option is lost: the canvas lands in the overlay pane, and the glow pane's
+    // fade in MapView.tsx never reaches it.
+    L.setOptions(this, options);
   }
 
   setViews(views: readonly FilteredSiteView[]): this {
