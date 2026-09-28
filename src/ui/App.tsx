@@ -28,7 +28,9 @@ export function App() {
   const browse = useStore((s) => s.browse);
   const setBrowse = useStore((s) => s.setBrowse);
   // Reopen on the tab that was open when the app was last closed.
-  const [tab, setTab] = useState<SheetTab>(() => loadViewState().tab ?? 'filters');
+  // A first visit opens on Nearby: "what is close to me now" is the question
+  // the app exists to answer.
+  const [tab, setTab] = useState<SheetTab>(() => loadViewState().tab ?? 'near');
   const [collapsed, setCollapsed] = useState(false);
 
   // Tapping a tab while collapsed expands the sheet to that tab; tapping the
