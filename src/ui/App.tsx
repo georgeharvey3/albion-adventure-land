@@ -9,6 +9,7 @@ import { Outing } from './Outing';
 import { Stats } from './Stats';
 import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
+import { TitleCardPrototype } from './TitleCard.prototype';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 
 const TABS: { id: SheetTab; label: string }[] = [
@@ -84,6 +85,8 @@ export function App() {
       <div className={browse ? 'map-area hidden' : 'map-area'}>
         <MapView />
         {selectedSiteId && <SiteDetail />}
+        {/* PROTOTYPE — issue #76 title card variants. */}
+        <TitleCardPrototype />
       </div>
 
       {!dataLoaded && <div className="overlay">Loading sites…</div>}

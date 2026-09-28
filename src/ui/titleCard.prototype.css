@@ -1,0 +1,330 @@
+/* PROTOTYPE — throwaway, issue #76. Styles for TitleCard.prototype.tsx.
+   Every card ignores taps: the map under it must stay usable. */
+
+.tc-root {
+  position: absolute;
+  inset: 0;
+  /* Above Leaflet's controls (1000), so the zoom buttons never cut the card. */
+  z-index: var(--z-search);
+  pointer-events: none;
+  animation: tc-fade-in var(--dur-long) var(--ease-out) both;
+}
+.tc-root * {
+  pointer-events: none;
+}
+.tc-root.tc-fading {
+  animation: tc-fade-out var(--dur-long) var(--ease-in) both;
+}
+@keyframes tc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tc-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* --- A · Cartouche --------------------------------------------------------- */
+.tc-a {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg);
+}
+.tc-a-plate {
+  max-width: 26rem;
+  text-align: center;
+  background: var(--color-paper-2);
+  padding: var(--space-lg) var(--space-xl);
+  /* Two ink rules with a paper gap between them, like the neatline. */
+  border: var(--rule-hairline) solid var(--color-ink);
+  outline: var(--rule-hairline) solid var(--color-ink);
+  outline-offset: 4px;
+  box-shadow: var(--shadow-float);
+}
+.tc-a-kicker,
+.tc-a-hint {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.tc-a-title {
+  margin: var(--space-xs) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  line-height: var(--leading-display);
+  color: var(--color-ink);
+}
+.tc-a-flourish {
+  font-family: var(--font-display);
+  color: var(--color-accent);
+  margin: var(--space-2xs) 0;
+}
+.tc-a-tagline {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-md);
+  line-height: var(--leading-prose);
+  color: var(--color-ink);
+}
+
+/* --- B · Map lettering ----------------------------------------------------- */
+.tc-b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--space-md);
+}
+.tc-b-arc {
+  width: min(100%, 44rem);
+  height: auto;
+  overflow: visible;
+}
+.tc-b-letters {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 40px;
+  letter-spacing: 0.12em;
+  fill: var(--map-name-land);
+  paint-order: stroke;
+  stroke: var(--map-name-halo);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+.tc-b-tagline {
+  margin: var(--space-2xs) 0 0;
+  max-width: 24rem;
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-md);
+  line-height: var(--leading-prose);
+  color: var(--color-ink);
+  /* Halo, not a box: the tagline is lettered on the map too. */
+  text-shadow:
+    0 0 3px var(--map-name-halo),
+    0 0 6px var(--map-name-halo),
+    0 0 10px var(--map-name-halo);
+}
+
+/* --- C · Masthead ---------------------------------------------------------- */
+.tc-c {
+  position: absolute;
+  inset: 0 0 auto 0;
+}
+.tc-c-band {
+  background: var(--color-paper-2);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  border-bottom: 3px double var(--color-ink);
+  box-shadow: var(--shadow-float);
+  animation: tc-drop var(--dur-long) var(--ease-out) both;
+}
+@keyframes tc-drop {
+  from { transform: translateY(-100%); }
+  to { transform: none; }
+}
+.tc-c-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 7vw, 2.5rem);
+  line-height: var(--leading-display);
+  color: var(--color-ink);
+}
+.tc-c-tagline {
+  margin: var(--space-2xs) 0 0;
+  max-width: 34rem;
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-ui);
+  color: var(--color-muted);
+}
+
+/* --- D · Legend ------------------------------------------------------------ */
+.tc-d {
+  position: absolute;
+  left: var(--space-md);
+  bottom: var(--space-xl);
+  max-width: calc(100% - 2 * var(--space-md));
+}
+.tc-d-key {
+  width: 16rem;
+  max-width: 100%;
+  background: var(--color-paper-2);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: var(--shadow-float);
+}
+.tc-d-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-display);
+  color: var(--color-ink);
+}
+.tc-d-tagline {
+  margin: var(--space-2xs) 0 var(--space-sm);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-md);
+  line-height: var(--leading-ui);
+  color: var(--color-muted);
+}
+.tc-d-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-xs) 0 0;
+  border-top: var(--rule-hairline) solid var(--color-rule);
+  display: grid;
+  gap: var(--space-2xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-ink);
+}
+.tc-d-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.tc-d-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--color-marker-ring);
+}
+
+/* --- The prototype bar: deliberately not part of the design. -------------- */
+.proto-switcher {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font: 600 13px/1 system-ui, sans-serif;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.35);
+  white-space: nowrap;
+}
+.proto-switcher button {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #333;
+}
+.proto-switcher button:hover {
+  background: #555;
+}
+
+/* The side panel lies over the map's right 380px on wide screens, so the
+   cards centre on the visible map, not the viewport. */
+@media (min-width: 760px) {
+  .tc-root {
+    right: 380px;
+  }
+  .tc-b-arc {
+    width: min(100%, 36rem);
+  }
+}
+
+/* --- Round 2: A with the logo --------------------------------------------- */
+.tc-a1-logo {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto var(--space-sm);
+}
+.tc-a-sub {
+  margin: var(--space-2xs) 0 var(--space-md);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-lg);
+  line-height: var(--leading-ui);
+  color: var(--color-muted);
+}
+
+.tc-a2-plate {
+  position: relative;
+  /* Room under the seal's lower half. */
+  padding-top: calc(var(--space-md) + 56px);
+}
+.tc-a2-seal {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 112px;
+  height: 112px;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 4px var(--ink-shadow));
+}
+.tc-a2-tagline {
+  margin-top: var(--space-sm);
+}
+
+.tc-a3-plate {
+  padding: var(--space-md) var(--space-lg);
+}
+.tc-a3-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  text-align: left;
+}
+.tc-a3-logo {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+}
+.tc-a3-lockup .tc-a-sub {
+  margin-bottom: 0;
+}
+.tc-a3-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 6.5vw, 2.25rem);
+}
+.tc-a3-plate .tc-a-hint {
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+
+/* A2's triskele turns about the logo's centre, 256,256 in its viewBox. */
+.tc-triskele {
+  transform-box: view-box;
+  transform-origin: 256px 256px;
+}
+.tc-triskele.spinning {
+  animation: tc-spin 1.6s linear infinite;
+}
+@keyframes tc-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-triskele.spinning {
+    animation: none;
+  }
+}
+
+/* The card says "Loading sites…" itself, so the app's own loading pill would
+   say it twice. */
+.map-area:has(.tc-a2-plate) ~ .overlay:not(.error) {
+  display: none;
+}
