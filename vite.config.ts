@@ -76,22 +76,25 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            // OSM raster tiles — cache-first with generous expiry (offline tiles).
-            urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,
+            // Street tiles (CARTO Positron, land and labels) — cache-first with
+            // generous expiry (offline tiles). A street view costs two tiles
+            // here, where the old single OSM layer cost one, so the cap is
+            // doubled. Its relief layer is Esri, and lands in the rule below.
+            urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'osm-tiles',
-              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheName: 'street-tiles',
+              expiration: { maxEntries: 4000, maxAgeSeconds: 60 * 60 * 24 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // The satellite basemap — Esri imagery plus its two transparent
-            // reference layers (labels and roads) — cached on the same terms as
-            // the street tiles, so either layer works offline once it has been
-            // seen. One cache covers all three services: they are requested
-            // together and are only useful together. The entry cap is per tile,
-            // and a hybrid view costs three tiles where street costs one.
+            // Every Esri service: the satellite basemap — imagery plus its two
+            // transparent reference layers (labels and roads) — and the street
+            // map's shaded relief. Cached on the same terms as the street
+            // tiles, so either basemap works offline once it has been seen.
+            // The entry cap is per tile, and a hybrid view costs three tiles.
+            // The relief stops at z16 and is few tiles by comparison.
             urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/.*/i,
             handler: 'CacheFirst',
             options: {

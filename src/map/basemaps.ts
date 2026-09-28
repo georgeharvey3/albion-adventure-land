@@ -1,7 +1,12 @@
 import L from 'leaflet';
 
 // The two base layers the map can wear. Street is the default: it carries the
-// paths, lanes and place names that get you to a site. Satellite answers the
+// paths, lanes and place names that get you to a site. It is also most of the
+// first screen a visitor sees, so it is drawn to match the almanac rather than
+// borrowed as-is: a quiet CARTO Positron base, Esri shaded relief pressed into
+// it, a wash of the app's paper colour, and Positron's labels on top. The hills
+// that the sites sit on (tors, hillforts, scrambles) read at a glance, and the
+// map and the sheet under it look like one page. Satellite answers the
 // other question a visiting companion gets asked — what does this place
 // actually look like — is that "lake" a pond, where is the parking pull-in,
 // how thick is the tree cover over the fall.
@@ -31,13 +36,15 @@ interface TileSpec {
   /** Zoom past which the last real tile is upscaled rather than requested. */
   maxNativeZoom?: number;
   subdomains?: string;
+  /** Class on the layer's container — how the CSS reaches a single layer. */
+  className?: string;
 }
 
 interface BasemapSpec extends TileSpec {
   label: string;
   attribution: string;
-  /** Transparent layers drawn over the base, in back-to-front order. */
-  overlays?: TileSpec[];
+  /** Layers drawn over the base, in back-to-front order. */
+  overlays?: (TileSpec | 'tint')[];
 }
 
 // Imagery over rural Britain runs out around z19; keep zooming past it with
@@ -46,6 +53,18 @@ interface BasemapSpec extends TileSpec {
 // zoom, so labels and imagery blur together rather than drifting apart.
 const ESRI_MAX_ZOOM = 21;
 const ESRI_MAX_NATIVE_ZOOM = 19;
+
+// CARTO's Positron, split into its land and label halves so the relief and the
+// tint can go between them. `{r}` asks for the @2x tiles on a high-density
+// screen: this is the first screen a visitor sees, and blurry type is the
+// quickest way to look unfinished.
+function carto(style: string): TileSpec {
+  return {
+    url: `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
+    maxZoom: 20,
+    subdomains: 'abcd',
+  };
+}
 
 // Note the {y}/{x} order on every ArcGIS URL — those tiles are row-then-column,
 // the reverse of the XYZ convention. Swapping them silently serves the wrong
@@ -61,10 +80,23 @@ function esri(service: string): TileSpec {
 const SPECS: Record<BasemapId, BasemapSpec> = {
   street: {
     label: 'Street',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-    subdomains: 'abc',
+    ...carto('light_nolabels'),
+    attribution: '© OpenStreetMap contributors © CARTO · Relief © Esri',
+    // Relief under the tint, so its shadows take the paper's hue; labels over
+    // it, so the type keeps its full contrast.
+    overlays: [
+      {
+        ...esri('World_Shaded_Relief'),
+        // Esri draws this service only to z13. Upscaled a few levels it is a
+        // soft wash that still says "hill"; past z16 it is a blur that fights
+        // the lanes, so the layer bows out and the base carries on alone.
+        maxZoom: 16,
+        maxNativeZoom: 13,
+        className: 'tiles-relief',
+      },
+      'tint',
+      carto('light_only_labels'),
+    ],
   },
   satellite: {
     label: 'Satellite',
@@ -89,6 +121,7 @@ function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: numb
     maxZoom: spec.maxZoom,
     maxNativeZoom: spec.maxNativeZoom,
     subdomains: spec.subdomains ?? 'abc',
+    className: spec.className,
     // All tile layers share one pane, where DOM order decides what covers what.
     // An explicit z-index pins the stack instead of leaving it to the order the
     // layers happen to be added in.
@@ -103,9 +136,29 @@ function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: numb
  */
 export function createBasemap(id: BasemapId): L.LayerGroup {
   const spec = SPECS[id];
-  const layers = [tileLayer(spec, spec.attribution, 1)];
-  // The attribution belongs to the imagery. Repeating it per reference layer
-  // would print the same Esri credit three times.
-  spec.overlays?.forEach((o, i) => layers.push(tileLayer(o, undefined, 2 + i)));
+  const layers: L.GridLayer[] = [tileLayer(spec, spec.attribution, 1)];
+  // The attribution belongs to the base. Repeating it per overlay would print
+  // the same credit on every layer.
+  spec.overlays?.forEach((o, i) =>
+    layers.push(o === 'tint' ? tintLayer(2 + i) : tileLayer(o, undefined, 2 + i)),
+  );
   return L.layerGroup(layers);
+}
+
+/**
+ * A flat wash of `--map-tint`, multiplied into the layers under it. Positron's
+ * land is a near-white that sits slightly warm next to the app's cool paper,
+ * and a CSS filter cannot move a grey towards green without shifting it
+ * brown first. Multiplying by one colour can: the tint is the paper divided by
+ * Positron's land, so land comes out exactly as the paper (see tokens.css).
+ * The tiles are empty divs, so the wash costs no request and works offline.
+ */
+class TintLayer extends L.GridLayer {
+  protected createTile(): HTMLElement {
+    return document.createElement('div');
+  }
+}
+
+function tintLayer(zIndex: number): L.GridLayer {
+  return new TintLayer({ className: 'tiles-tint', zIndex, maxZoom: 20 });
 }

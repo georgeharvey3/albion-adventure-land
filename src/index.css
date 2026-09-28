@@ -173,6 +173,20 @@ body,
   font-family: var(--font-ui);
 }
 
+/* The street basemap's layers (src/map/basemaps.ts). Each blend works inside
+   the tile pane, which is its own stacking context: the relief darkens the
+   land under it and nothing else, and the tint never reaches the pins. */
+.tiles-relief {
+  mix-blend-mode: multiply;
+  opacity: var(--map-relief-opacity);
+}
+.tiles-tint {
+  mix-blend-mode: multiply;
+}
+.tiles-tint .leaflet-tile {
+  background: var(--map-tint);
+}
+
 /* Leaflet hard-sets `font: bold 18px 'Lucida Console', Monaco, monospace` on
    its own zoom buttons, which puts a face on the page that this system never
    chose. The `+` and the `−` take the UI face like every other control. */

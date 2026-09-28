@@ -115,10 +115,10 @@ visited state, and outing mode (which is all local math).
 | Build/dev | Vite + TypeScript | `npm run build` = ingest → typecheck → PWA build. |
 | UI | **React 18** | Decided (was open React-vs-Svelte). Leaflet used directly, no react-leaflet. |
 | Map | Leaflet | Circle markers for folklore, square DivIcons for pubs. |
-| Tiles | Keyless OSM raster | Swap to a keyed provider (MapTiler/Thunderforest) for topo styles — still open (§11). |
+| Tiles | Keyless CARTO Positron + Esri shaded relief, tinted to the paper colour | Decided (§11.2). Satellite stays Esri imagery. |
 | CSV ingest | Papa Parse (build-time, via `tsx`) | Never naive splitting — descriptions embed commas/newlines. |
 | Persistence | IndexedDB via `idb` | Versioned schema; photos/matrices land as new stores without losing state. |
-| Service worker | Workbox via `vite-plugin-pwa` | Precache shell + `sites.json`; runtime cache-first OSM tiles. |
+| Service worker | Workbox via `vite-plugin-pwa` | Precache shell + `sites.json`; runtime cache-first street and Esri tiles. |
 | State | Zustand | Single store: sites, user state mirror, filters, position, selection. |
 | Geometry/routing | **Hand-rolled, dependency-free** | haversine today; outing search + NN/2-opt in Phase 2. Fully offline. |
 
@@ -514,8 +514,8 @@ because the type selection changes per query and anchoring matters.
 
 - **App shell + data:** Workbox precache via `vite-plugin-pwa`
   (`globPatterns` includes `sites.json`); `registerType: 'autoUpdate'`.
-- **Tiles:** runtime cache-first on `*.tile.openstreetmap.org` (2,000 entries,
-  60-day expiry). A “download this region” pre-warm action remains future work.
+- **Tiles:** runtime cache-first on `*.basemaps.cartocdn.com` (4,000 entries)
+  and `server.arcgisonline.com` (3,000 entries), 60-day expiry. A “download this region” pre-warm action remains future work.
 - **User state (+ future matrices/photos):** IndexedDB.
 - Phase 2 adds no new offline surface: stats and outing mode are pure local
   computation over already-cached data.
@@ -599,8 +599,13 @@ Still open — surface these rather than silently picking:
    candidate pool instead of rejecting whole clusters — which would change point
    mode too. Field-test route mode first; if the stops it picks feel like
    detours rather than discoveries, that's the change to make.
-2. **Tile provider** — keyless OSM works; a keyed MapTiler/Thunderforest
-   outdoor style would suit rural footpaths. Costs a key + attribution change.
+2. **Tile provider** — **decided:** keyless CARTO Positron (land and labels as
+   separate layers) with Esri World Shaded Relief multiplied between them and a
+   flat tint that turns the land into `--color-paper`
+   (`src/map/basemaps.ts`). Chosen for the first impression: the map is most of
+   the opening screen, and default OSM clashed with the almanac palette. Still
+   keyless, so still backend-free. A keyed outdoor style (MapTiler /
+   Thunderforest) remains the upgrade if rural footpaths prove to be missing.
 3. **Photo storage (Phase 3)** — IndexedDB blobs (recommended, offline-safe)
    vs object-URL references.
 4. **Routing matrix provider (Phase 4)** — ORS free key vs self-hosted OSRM vs

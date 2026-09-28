@@ -47,7 +47,15 @@
      that keeps a map marker legible over any tile, and the tile background. */
   --color-me: oklch(55% 0.19 258);
   --color-marker-ring: oklch(99.5% 0.002 160);
-  --color-water: oklch(87% 0.055 235);
+  /* The street basemap's own colours (src/map/basemaps.ts). CARTO Positron
+     draws land at rgb(250 250 248) and sea at rgb(212 218 220); the tint is
+     --color-paper divided by that land, per channel, so a multiply turns the
+     land into the paper exactly and the sea into --color-water. The water
+     token is also the map's background, so a tile still loading is sea, not
+     a blue flash. */
+  --map-tint: rgb(247 251 251);
+  --map-relief-opacity: 0.45;
+  --color-water: rgb(205 215 216);
 
   /* Overlay / shadow inks. Transparency is a modifier here, never a palette
      entry — these exist because a shadow and a lightbox scrim have no opaque
