@@ -13,6 +13,7 @@ import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
 import { frameMarkup } from './mapFrame';
 import { GlowLayer, glowAmount, pinScale, SPECK_BELOW } from './glowLayer';
+import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -161,17 +162,31 @@ export function MapView() {
     // came back at the whole-of-Britain view.
     const saved = loadViewState().map;
     // The map's own zoom floor. Without one Leaflet takes it from the tile
-    // layers, and the street map's Positron starts at z10 (it hands the
-    // overview to the watercolor), so the first view snapped to z10 as the
-    // basemap was added. Four still shows the whole of Britain on a phone.
+    // layers, and the topo sheet starts at z11 (it hands the overview to the
+    // watercolor), so the first view snapped to z11 as the basemap was added.
+    // The floor is refined below, once the map knows its size.
+    //
+    // The map ends at the plate (fenceToPlate, plate.ts). A drag stops dead
+    // at its edge instead of springing back.
     const map = L.map(containerRef.current, {
       zoomControl: true,
       preferCanvas: true,
-      minZoom: 4,
+      minZoom: PLATE_MIN_ZOOM,
+      maxBoundsViscosity: 1,
     }).setView(
       saved ? [saved.lat, saved.lng] : GB_CENTER,
       saved ? saved.zoom : 6,
     );
+    // Zoomed all the way out, the whole plate fits the screen and fills it one
+    // way. Never further out, where Britain would shrink to a stamp.
+    const fitFloor = () => {
+      const size = map.getSize();
+      if (!size.x || !size.y) return;
+      map.setMinZoom(Math.max(PLATE_MIN_ZOOM, map.getBoundsZoom(PLATE_BOUNDS)));
+    };
+    fitFloor();
+    map.on('resize', fitFloor);
+    fenceToPlate(map);
     // A restored view is the user's view — don't let the fit-to-all-pins pass
     // below throw it away once the site data lands.
     if (saved) didFitRef.current = true;

@@ -264,6 +264,31 @@ It says what the app is, and nothing else.
   Change both together.
 - The card shows no site counts. The no-counts rule holds here too.
 
+## Painted plate
+
+The watercolor map ships with the app. The plate is the box round every shown
+site, plus 80 km. The map does not pan past it.
+
+- The tiles are in `public/tiles/watercolor/`. They are the Stamen Watercolor
+  archive at Cooper Hewitt (CC BY 3.0), z5–z10. `npm run plate` downloads them
+  and writes the box and the tile ranges to `src/map/plate.json`. The output
+  is committed, and `npm run build` does not run the script.
+- Keep the watercolor off any metered provider. It came from Stadia Maps until
+  September 2026. The Stadia free plan caps credits and forbids commercial use.
+- Run `npm run plate` again when a source moves the edge of the pins, for
+  example when a source leaves `HIDDEN_SOURCES`. `isShown` in
+  `src/data/shown.ts` is the one rule for which sites the store and the plate
+  use.
+- The pan limit is `fenceToPlate` (`src/map/plate.ts`). Leaflet's own
+  `maxBounds` breaks on an axis where the view is bigger than the bounds: a
+  drag runs onto blank map and springs back. So the limit widens that axis to
+  exactly the view at each zoom, and the axis cannot move.
+- The zoom floor is the zoom where the whole plate fits the screen
+  (`src/map/MapView.tsx`).
+- Zoomed out on a wide screen, the view is bigger than the plate. So the tiles
+  also cover a surround, sized for a 4K screen. `plateHasTile` asks Leaflet for
+  shipped tiles only, so a missing tile is never a 404.
+
 ## Build order (each phase independently shippable)
 
 - **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter

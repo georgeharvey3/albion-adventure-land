@@ -47,7 +47,7 @@ runs fully offline.
 
 Client-only single-page PWA. Read-only **site data** (CSV → normalized JSON)
 plus read-write **user state** (visited, wishlist, notes, photos, cached travel
-matrices) in IndexedDB. Map tiles from Stadia Maps and Esri (keyless), cached offline. Turn-by-turn
+matrices) in IndexedDB. Map tiles from Esri and OpenStreetMap (keyless) and a painted plate that ships with the app, cached offline. Turn-by-turn
 navigation is delegated to Google Maps via deep links. No backend.
 
 ## Data
@@ -92,6 +92,8 @@ offline and reload.
 > OpenStreetMap. Satellite is Esri imagery. Atlas is two maps that change at zoom 11, built in
 > `src/map/basemaps.ts`. The overview is Stamen Watercolor with Esri relief,
 > and the app sets the place names itself (`src/map/mapLabels.ts`). The field
-> view is Esri World Topo. Stadia Maps serves the watercolor and authorizes by
-> domain, not by key. Localhost works without setup. Register the deployed
-> domain once in the Stadia dashboard, or the watercolor tiles fail there.
+> view is Esri World Topo. The watercolor tiles ship with the app, in
+> `public/tiles/watercolor/`. `npm run plate` downloads them once from the
+> Cooper Hewitt archive (CC BY 3.0) for the box round the pins, and for the
+> area that a big screen shows round it. The map does not pan past the box
+> (`src/map/plate.ts`).

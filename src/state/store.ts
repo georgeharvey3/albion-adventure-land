@@ -14,6 +14,7 @@ import {
   ROUTE_SPREAD_WEIGHT,
   type SlotNearest,
 } from "../geo/outing";
+import { isShown } from "../data/shown";
 import { orderRoute } from "../geo/tsp";
 import { haversine, type LatLng } from "../geo/haversine";
 import { DEFAULT_DETOUR_BUDGET, detour } from "../geo/corridor";
@@ -340,10 +341,6 @@ const EMPTY_TRIP: OutingResult = {
   edited: true,
 };
 
-// Sources kept in sites.json but left out of the app for now. Filtered at the
-// load seam below, like a closed pub, so no user state keyed on them is lost.
-const HIDDEN_SOURCES = new Set(['magical_france_north']);
-
 // --- Cross-source duplicates (issue #37) ---------------------------------
 // Two guidebooks describe one place, so the data holds two rows with two stable
 // ids. The merge is done at ingest (src/data/duplicates.ts): the representative
@@ -476,7 +473,7 @@ export const useStore = create<AppState>((set, get) => ({
         return r.json() as Promise<Site[]>;
       })
       .then((all) => {
-        // THE seam. Two kinds of row leave the app here, before anything
+        // THE seam. Three kinds of row leave the app here, before anything
         // derives from the list, and every other consumer — the map, the
         // near-me list, search and the outing pool — reads what comes out and
         // knows about neither.
@@ -490,10 +487,9 @@ export const useStore = create<AppState>((set, get) => ({
         // be widened or undone in a JSON file and no user state is orphaned.
         //
         // The French guidebook is hidden for now. Its rows stay in sites.json,
-        // so deleting it from HIDDEN_SOURCES brings them back.
-        const sites = all.filter(
-          (s) => !s.closure && !s.duplicateOf && !HIDDEN_SOURCES.has(s.source),
-        );
+        // so deleting it from HIDDEN_SOURCES (src/data/shown.ts) brings them
+        // back.
+        const sites = all.filter(isShown);
         set({ sites, dataLoaded: true });
         // A restored selection is only a remembered id: drop it if a CSV
         // re-import has since removed that site, rather than leaving the store

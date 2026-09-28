@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { MapLabels } from './mapLabels';
+import { PLATE_MAX_ZOOM, plateHasTile } from './plate';
 
 // The three base layers the map can wear. Street is plain OpenStreetMap, the
 // map every reader already knows how to read, with the lanes and the names
@@ -32,7 +33,7 @@ import { MapLabels } from './mapLabels';
 // Every provider here is keyless raster tiles, which is what keeps the app
 // backend-free and lets the service worker cache tiles by URL for offline use
 // (see the runtimeCaching rules in vite.config.ts). Esri asks for attribution,
-// which the layer carries. Stadia authorises by domain instead of by key. CARTO
+// which the layer carries. The watercolor plate is the app's own files. CARTO
 // was the street map until it started to require a key (September 2026); a key
 // in a client-only app is public, and Esri Topo is the better field map anyway.
 
@@ -56,6 +57,8 @@ interface TileSpec {
   minZoom?: number;
   /** Opacity by zoom, for a layer that hands over to the one under it. */
   fade?: (zoom: number) => number;
+  /** For a layer with a fixed set of tiles: whether a tile exists. */
+  covers?: (coords: L.Coords) => boolean;
 }
 
 interface BasemapSpec extends TileSpec {
@@ -74,19 +77,23 @@ interface BasemapSpec extends TileSpec {
 const ESRI_MAX_ZOOM = 21;
 const ESRI_MAX_NATIVE_ZOOM = 19;
 
-// Stamen Watercolor, served by Stadia Maps, for the country-scale view. It is
-// the part of the map that tells the story: Britain as a hand-tinted plate in a
-// book of wonders, not as a road atlas. It has no roads or names at all, which
-// is why it only owns the overview — mapLabels.ts sets the names in the app's
-// own type — and why it hands over to Positron as the reader zooms in to find
-// the lane to a site. Stadia authorises by domain, not by key: localhost works
-// as is, and the deployed domain is registered once in the Stadia dashboard.
+// Stamen Watercolor for the country-scale view. It is the part of the map that
+// tells the story: Britain as a hand-tinted plate in a book of wonders, not as
+// a road atlas. It has no names at all, which is why it only owns the overview
+// — mapLabels.ts sets the names in the app's own type — and why it hands over
+// to the topo sheet as the reader zooms in to find the lane to a site.
+//
+// The tiles ship with the app (src/map/plate.ts, `npm run plate`), so the plate
+// needs no provider, no key and no quota. They stop at z10; z11 is the z10
+// tile upscaled, which the fade over the topo sheet hides.
 const WATERCOLOR_LAST_ZOOM = 11;
 
 function watercolor(): TileSpec {
   return {
-    url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
+    url: `${import.meta.env.BASE_URL}tiles/watercolor/{z}/{x}/{y}.jpg`,
     maxZoom: WATERCOLOR_LAST_ZOOM,
+    maxNativeZoom: PLATE_MAX_ZOOM,
+    covers: plateHasTile,
     className: 'tiles-watercolor',
     // Full strength to z10, under half at z11 over the topo sheet that is
     // loading beneath it, gone from z12. With the default whole-number zoom
@@ -122,7 +129,7 @@ const SPECS: Record<BasemapId, BasemapSpec> = {
     // Nothing is fetched from the topo sheet until the crossing.
     minZoom: WATERCOLOR_LAST_ZOOM,
     attribution:
-      '© Stamen Design © Stadia Maps © OpenStreetMap contributors · Topo © Esri and its data providers · © GeoNames',
+      'Watercolor © Stamen Design, CC BY 3.0 · © OpenStreetMap contributors · Topo © Esri and its data providers · © GeoNames',
     // The topo sheet, the plate over it, the relief multiplied into the plate
     // so the uplands read in paint, and the paper wash over everything.
     overlays: [
@@ -172,9 +179,22 @@ function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: numb
     // layers happen to be added in.
     zIndex,
   };
-  return spec.fade
+  const layer = spec.fade
     ? new FadingTileLayer(spec.url, options, spec.fade)
     : L.tileLayer(spec.url, options);
+  if (spec.covers) limitTiles(layer, spec.covers);
+  return layer;
+}
+
+/**
+ * Ask only for the tiles in a fixed set, so a missing one is never a 404.
+ * Leaflet checks each tile with `_isValidTile` before it asks for it; the
+ * typings leave that method out.
+ */
+function limitTiles(layer: L.TileLayer, covers: (coords: L.Coords) => boolean): void {
+  const check = layer as unknown as { _isValidTile(coords: L.Coords): boolean };
+  const leaflet = check._isValidTile.bind(layer);
+  check._isValidTile = (coords) => covers(coords) && leaflet(coords);
 }
 
 /**

@@ -57,7 +57,14 @@ export default defineConfig(({ command }) => ({
         // woff2 is in the list because the serif and mono faces are self-hosted
         // (src/fonts). Without it a device with no signal falls back to its own
         // serif and monospace defaults, which is a different page.
-        globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
+        //
+        // The painted plate's two outermost zooms (z5–z6, 320 tiles and about
+        // 4 MB) are precached too, so the first screen is whole on a first
+        // launch with no signal. The closer zooms are runtime-cached (below).
+        globPatterns: [
+          '**/*.{js,css,html,svg,json,woff2}',
+          'tiles/watercolor/{5,6}/**/*.jpg',
+        ],
         // sites.json is the whole dataset and must be precached for offline-first
         // (see spec §9) — it has already grown past Workbox's 2 MiB default as
         // sources were added, and the 2-star and 1-star heritage pubs took it
@@ -87,14 +94,14 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            // The overview plate (Stamen Watercolor via Stadia Maps). It only
-            // runs to z11, so a whole country of it is few tiles. Cache-first
-            // with a long expiry, so the first screen is there with no signal.
-            urlPattern: /^https:\/\/tiles\.stadiamaps\.com\/tiles\/stamen_watercolor\/.*/i,
+            // The painted plate's closer zooms (z7–z10), which ship with the
+            // app (src/map/plate.ts) but are too many to precache. The archive
+            // is frozen, so a tile once seen never needs fetching again.
+            urlPattern: /\/tiles\/watercolor\/.*\.jpg$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'watercolor-tiles',
-              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
