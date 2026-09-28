@@ -142,6 +142,8 @@ function escape(s: string): string {
 export class MapLabels extends L.Layer {
   private container: HTMLElement | null = null;
   private labels: MapLabel[] = WATER_LABELS;
+  /** The names on the map now, with their spans, so a pinch can move them. */
+  private placed: { el: HTMLElement; lat: number; lng: number }[] = [];
 
   onAdd(map: L.Map): this {
     // Above the tiles (200) and under the paper finish (250), so the grain
@@ -153,6 +155,7 @@ export class MapLabels extends L.Layer {
     // afresh when it lands, instead of sliding off their places.
     this.container = L.DomUtil.create('div', 'map-labels leaflet-zoom-hide', pane);
     map.on('moveend resize', this.draw, this);
+    map.on('zoom', this.follow, this);
     loadGazetteer().then((g) => {
       const places = g.places.map(fromPlace).filter((l): l is MapLabel => l !== null);
       this.labels = [...WATER_LABELS, ...places].sort(
@@ -166,9 +169,27 @@ export class MapLabels extends L.Layer {
 
   onRemove(map: L.Map): this {
     map.off('moveend resize', this.draw, this);
+    map.off('zoom', this.follow, this);
     this.container?.remove();
     this.container = null;
+    this.placed = [];
     return this;
+  }
+
+  // A pinch zooms without a `zoomanim`: one `zoom` event per frame, and each
+  // one moves the pixel origin, so a name left at its old layer point floats
+  // off its place until the fingers lift. Pin every name to its place through
+  // the gesture, at its own size. Only the names already set are moved — which
+  // names fit is decided again on `moveend`, as before. An animated zoom hides
+  // the names instead (leaflet-zoom-hide), so this has nothing to do then.
+  private follow(): void {
+    const map = this._map;
+    if (!map || (map as L.Map & { _animatingZoom?: boolean })._animatingZoom) return;
+    for (const { el, lat, lng } of this.placed) {
+      const { x, y } = map.latLngToLayerPoint([lat, lng]);
+      el.style.left = `${Math.round(x)}px`;
+      el.style.top = `${Math.round(y)}px`;
+    }
   }
 
   private draw(): void {
@@ -186,6 +207,7 @@ export class MapLabels extends L.Layer {
       b[3] - origin.y <= size.y - FRAME;
     const taken: Box[] = [];
     const html: string[] = [];
+    const kept: MapLabel[] = [];
 
     for (const label of this.labels) {
       if (zoom < label.minZoom || zoom > label.maxZoom) continue;
@@ -200,6 +222,7 @@ export class MapLabels extends L.Layer {
         : [x - 4, y - height / 2, x + MARK_OFFSET + width, y + height / 2];
       if (!inside(box) || taken.some((t) => overlaps(t, box))) continue;
       taken.push(box);
+      kept.push(label);
       html.push(
         `<span class="map-label map-label--${label.kind}" style="left:${Math.round(x)}px;top:${Math.round(y)}px">${lines
           .map(escape)
@@ -207,5 +230,7 @@ export class MapLabels extends L.Layer {
       );
     }
     this.container.innerHTML = html.join('');
+    const spans = this.container.children;
+    this.placed = kept.map((l, i) => ({ el: spans[i] as HTMLElement, lat: l.lat, lng: l.lng }));
   }
 }
