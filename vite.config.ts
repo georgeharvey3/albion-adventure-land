@@ -76,25 +76,49 @@ export default defineConfig(({ command }) => ({
             },
           },
           {
-            // Street tiles (CARTO Positron, land and labels) — cache-first with
-            // generous expiry (offline tiles). A street view costs two tiles
-            // here, where the old single OSM layer cost one, so the cap is
-            // doubled. Its relief layer is Esri, and lands in the rule below.
-            urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
+            // The default Street map (OSM raster tiles) — cache-first with a
+            // generous expiry, so a region seen online stays in airplane mode.
+            urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'street-tiles',
+              cacheName: 'osm-tiles',
+              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // The overview plate (Stamen Watercolor via Stadia Maps). It only
+            // runs to z11, so a whole country of it is few tiles. Cache-first
+            // with a long expiry, so the first screen is there with no signal.
+            urlPattern: /^https:\/\/tiles\.stadiamaps\.com\/tiles\/stamen_watercolor\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'watercolor-tiles',
+              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // The street map's field sheet (Esri World Topo, z11 and closer) —
+            // the tiles a reader needs offline in a valley with no signal. Its
+            // own cache, and before the Esri rule below, so satellite browsing
+            // can never push a region's footpaths out. Workbox takes the first
+            // rule that matches.
+            urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/World_Topo_Map\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'topo-tiles',
               expiration: { maxEntries: 4000, maxAgeSeconds: 60 * 60 * 24 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // Every Esri service: the satellite basemap — imagery plus its two
-            // transparent reference layers (labels and roads) — and the street
-            // map's shaded relief. Cached on the same terms as the street
-            // tiles, so either basemap works offline once it has been seen.
-            // The entry cap is per tile, and a hybrid view costs three tiles.
-            // The relief stops at z16 and is few tiles by comparison.
+            // Every other Esri service: the satellite basemap — imagery plus
+            // its two transparent reference layers (labels and roads) — and
+            // the overview plate's shaded relief. Cached on the same terms as
+            // the topo sheet, so either basemap works offline once it has been
+            // seen. The entry cap is per tile, and a hybrid view costs three
+            // tiles. The relief stops at z11 and is few tiles by comparison.
             urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/.*/i,
             handler: 'CacheFirst',
             options: {

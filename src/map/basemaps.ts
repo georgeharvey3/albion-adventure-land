@@ -1,15 +1,27 @@
 import L from 'leaflet';
+import { MapLabels } from './mapLabels';
 
-// The two base layers the map can wear. Street is the default: it carries the
-// paths, lanes and place names that get you to a site. It is also most of the
-// first screen a visitor sees, so it is drawn to match the almanac rather than
-// borrowed as-is: a quiet CARTO Positron base, Esri shaded relief pressed into
-// it, a wash of the app's paper colour, and Positron's labels on top. The hills
-// that the sites sit on (tors, hillforts, scrambles) read at a glance, and the
-// map and the sheet under it look like one page. Satellite answers the
-// other question a visiting companion gets asked — what does this place
-// actually look like — is that "lake" a pond, where is the parking pull-in,
-// how thick is the tree cover over the fall.
+// The three base layers the map can wear. Street is plain OpenStreetMap, the
+// map every reader already knows how to read, with the lanes and the names
+// that get you to a site and nothing drawn over them.
+//
+// Atlas is the default, and the one drawn for the app. It is two maps that
+// hand over by zoom,
+// the way a guidebook pairs a plate with a sheet map (issue #73):
+//
+// - At country scale, a hand-tinted plate: Stamen Watercolor, toned to the
+//   almanac, with Esri relief pressed into it and the names lettered by the
+//   app itself in Cardo (mapLabels.ts). This is where the story is told —
+//   Britain as a book of wonders, not a road atlas.
+// - From z12, Esri World Topo: an Ordnance Survey–based sheet with contours,
+//   footpaths, soft relief and fell names in serif italic. This is where the
+//   reader finds the stile. z11 is the crossing, both at once.
+//
+// A wash of the app's paper colour lies over both, so the map and the sheet
+// under it read as one page. Satellite answers the other question a visiting
+// companion gets asked — what does this place actually look like — is that
+// "lake" a pond, where is the parking pull-in, how thick is the tree cover over
+// the fall.
 //
 // Satellite is a *hybrid*: bare imagery loses every place name and every road,
 // which is exactly what you need in a village or at a junction. So the imagery
@@ -19,14 +31,16 @@ import L from 'leaflet';
 //
 // Every provider here is keyless raster tiles, which is what keeps the app
 // backend-free and lets the service worker cache tiles by URL for offline use
-// (see the runtimeCaching rules in vite.config.ts). Esri World Imagery is the
-// keyless imagery source that fits: it asks for attribution, which the layer
-// carries. Mapbox, Google and Bing all want a key, and a key wants a server to
-// hide it behind — see the no-backend rule in CLAUDE.md.
+// (see the runtimeCaching rules in vite.config.ts). Esri asks for attribution,
+// which the layer carries. Stadia authorises by domain instead of by key. CARTO
+// was the street map until it started to require a key (September 2026); a key
+// in a client-only app is public, and Esri Topo is the better field map anyway.
 
-export type BasemapId = 'street' | 'satellite';
+// `street` keeps the id it had when it was the only street map, so a choice
+// remembered from then still opens the same map.
+export type BasemapId = 'street' | 'atlas' | 'satellite';
 
-export const BASEMAP_IDS: BasemapId[] = ['street', 'satellite'];
+export const BASEMAP_IDS: BasemapId[] = ['street', 'atlas', 'satellite'];
 
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 
@@ -38,6 +52,10 @@ interface TileSpec {
   subdomains?: string;
   /** Class on the layer's container — how the CSS reaches a single layer. */
   className?: string;
+  /** Zoom below which the layer draws nothing and requests nothing. */
+  minZoom?: number;
+  /** Opacity by zoom, for a layer that hands over to the one under it. */
+  fade?: (zoom: number) => number;
 }
 
 interface BasemapSpec extends TileSpec {
@@ -45,6 +63,8 @@ interface BasemapSpec extends TileSpec {
   attribution: string;
   /** Layers drawn over the base, in back-to-front order. */
   overlays?: (TileSpec | 'tint')[];
+  /** Whether the app sets its own place names over it (mapLabels.ts). */
+  names?: boolean;
 }
 
 // Imagery over rural Britain runs out around z19; keep zooming past it with
@@ -54,15 +74,24 @@ interface BasemapSpec extends TileSpec {
 const ESRI_MAX_ZOOM = 21;
 const ESRI_MAX_NATIVE_ZOOM = 19;
 
-// CARTO's Positron, split into its land and label halves so the relief and the
-// tint can go between them. `{r}` asks for the @2x tiles on a high-density
-// screen: this is the first screen a visitor sees, and blurry type is the
-// quickest way to look unfinished.
-function carto(style: string): TileSpec {
+// Stamen Watercolor, served by Stadia Maps, for the country-scale view. It is
+// the part of the map that tells the story: Britain as a hand-tinted plate in a
+// book of wonders, not as a road atlas. It has no roads or names at all, which
+// is why it only owns the overview — mapLabels.ts sets the names in the app's
+// own type — and why it hands over to Positron as the reader zooms in to find
+// the lane to a site. Stadia authorises by domain, not by key: localhost works
+// as is, and the deployed domain is registered once in the Stadia dashboard.
+const WATERCOLOR_LAST_ZOOM = 11;
+
+function watercolor(): TileSpec {
   return {
-    url: `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
-    maxZoom: 20,
-    subdomains: 'abcd',
+    url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg',
+    maxZoom: WATERCOLOR_LAST_ZOOM,
+    className: 'tiles-watercolor',
+    // Full strength to z10, under half at z11 over the topo sheet that is
+    // loading beneath it, gone from z12. With the default whole-number zoom
+    // steps, the crossing is one step and never a smear of both.
+    fade: (z) => (z < WATERCOLOR_LAST_ZOOM ? 1 : z === WATERCOLOR_LAST_ZOOM ? 0.45 : 0),
   };
 }
 
@@ -80,23 +109,35 @@ function esri(service: string): TileSpec {
 const SPECS: Record<BasemapId, BasemapSpec> = {
   street: {
     label: 'Street',
-    ...carto('light_nolabels'),
-    attribution: '© OpenStreetMap contributors © CARTO · Relief © Esri',
-    // Relief under the tint, so its shadows take the paper's hue; labels over
-    // it, so the type keeps its full contrast.
+    // OSM's own tiles have no @2x and stop at z19. Their usage policy asks for
+    // the attribution below and for light use, which a visiting companion is.
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+    subdomains: 'abc',
+  },
+  atlas: {
+    label: 'Atlas',
+    ...esri('World_Topo_Map'),
+    // Nothing is fetched from the topo sheet until the crossing.
+    minZoom: WATERCOLOR_LAST_ZOOM,
+    attribution:
+      '© Stamen Design © Stadia Maps © OpenStreetMap contributors · Topo © Esri and its data providers · © GeoNames',
+    // The topo sheet, the plate over it, the relief multiplied into the plate
+    // so the uplands read in paint, and the paper wash over everything.
     overlays: [
+      watercolor(),
       {
         ...esri('World_Shaded_Relief'),
-        // Esri draws this service only to z13. Upscaled a few levels it is a
-        // soft wash that still says "hill"; past z16 it is a blur that fights
-        // the lanes, so the layer bows out and the base carries on alone.
-        maxZoom: 16,
+        // The topo sheet carries its own relief, so this one belongs to the
+        // plate alone and leaves with it.
+        maxZoom: WATERCOLOR_LAST_ZOOM,
         maxNativeZoom: 13,
         className: 'tiles-relief',
       },
       'tint',
-      carto('light_only_labels'),
     ],
+    names: true,
   },
   satellite: {
     label: 'Satellite',
@@ -116,17 +157,24 @@ export function basemapLabel(id: BasemapId): string {
 }
 
 function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: number): L.TileLayer {
-  return L.tileLayer(spec.url, {
+  const options: L.TileLayerOptions = {
     attribution,
     maxZoom: spec.maxZoom,
     maxNativeZoom: spec.maxNativeZoom,
+    // Never undefined. TileLayer takes `Math.max(minZoom, maxZoom)`, so an
+    // undefined floor makes the ceiling NaN, and a layer with a NaN ceiling
+    // draws at every zoom — the plate and its relief smeared over the topo.
+    minZoom: spec.minZoom ?? 0,
     subdomains: spec.subdomains ?? 'abc',
     className: spec.className,
     // All tile layers share one pane, where DOM order decides what covers what.
     // An explicit z-index pins the stack instead of leaving it to the order the
     // layers happen to be added in.
     zIndex,
-  });
+  };
+  return spec.fade
+    ? new FadingTileLayer(spec.url, options, spec.fade)
+    : L.tileLayer(spec.url, options);
 }
 
 /**
@@ -136,13 +184,48 @@ function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: numb
  */
 export function createBasemap(id: BasemapId): L.LayerGroup {
   const spec = SPECS[id];
-  const layers: L.GridLayer[] = [tileLayer(spec, spec.attribution, 1)];
+  const layers: L.Layer[] = [tileLayer(spec, spec.attribution, 1)];
   // The attribution belongs to the base. Repeating it per overlay would print
   // the same credit on every layer.
-  spec.overlays?.forEach((o, i) =>
-    layers.push(o === 'tint' ? tintLayer(2 + i) : tileLayer(o, undefined, 2 + i)),
-  );
+  spec.overlays?.forEach((o, i) => {
+    if (o === 'tint') {
+      layers.push(tintLayer(2 + i));
+      return;
+    }
+    layers.push(tileLayer(o, undefined, 2 + i));
+  });
+  if (spec.names) layers.push(new MapLabels());
   return L.layerGroup(layers);
+}
+
+/**
+ * A tile layer whose opacity follows the zoom, for a layer that hands the map
+ * over to the one under it. The zoom steps are whole numbers, so the opacity
+ * is set once per step, after the zoom lands.
+ */
+class FadingTileLayer extends L.TileLayer {
+  constructor(
+    url: string,
+    options: L.TileLayerOptions,
+    private readonly fade: (zoom: number) => number,
+  ) {
+    super(url, options);
+  }
+
+  private readonly follow = (e: L.LeafletEvent) =>
+    this.setOpacity(this.fade((e.target as L.Map).getZoom()));
+
+  onAdd(map: L.Map): this {
+    super.onAdd(map);
+    this.setOpacity(this.fade(map.getZoom()));
+    map.on('zoomend', this.follow);
+    return this;
+  }
+
+  onRemove(map: L.Map): this {
+    map.off('zoomend', this.follow);
+    return super.onRemove(map);
+  }
 }
 
 /**
@@ -154,8 +237,16 @@ export function createBasemap(id: BasemapId): L.LayerGroup {
  * The tiles are empty divs, so the wash costs no request and works offline.
  */
 class TintLayer extends L.GridLayer {
-  protected createTile(): HTMLElement {
-    return document.createElement('div');
+  // Finished asynchronously and only while the layer is still on a map. A
+  // tile returned without a `done` is finished by Leaflet on the next frame
+  // with no such check, and a map torn down in between (React's dev-mode
+  // double mount does exactly that) threw on every tile.
+  protected createTile(_coords: L.Coords, done: L.DoneCallback): HTMLElement {
+    const tile = document.createElement('div');
+    requestAnimationFrame(() => {
+      if (this._map) done(undefined, tile);
+    });
+    return tile;
   }
 }
 

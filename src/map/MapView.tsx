@@ -8,8 +8,10 @@ import { shapeMarker, type MarkerShape, type ShapeMarkerOptions } from './shapeM
 import { corridorEllipse } from '../geo/corridor';
 import { OSRM_ATTRIBUTION } from '../geo/osrm';
 import { loadViewState, saveViewState } from '../state/viewState';
-import { basemapLabel, createBasemap, type BasemapId } from './basemaps';
+import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
+import { COMPASS_ROSE } from './compassRose';
+import { frameMarkup } from './mapFrame';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -143,7 +145,15 @@ export function MapView() {
     // PWA (iOS cold-starts it after a few minutes in the background) always
     // came back at the whole-of-Britain view.
     const saved = loadViewState().map;
-    const map = L.map(containerRef.current, { zoomControl: true, preferCanvas: true }).setView(
+    // The map's own zoom floor. Without one Leaflet takes it from the tile
+    // layers, and the street map's Positron starts at z10 (it hands the
+    // overview to the watercolor), so the first view snapped to z10 as the
+    // basemap was added. Four still shows the whole of Britain on a phone.
+    const map = L.map(containerRef.current, {
+      zoomControl: true,
+      preferCanvas: true,
+      minZoom: 4,
+    }).setView(
       saved ? [saved.lat, saved.lng] : GB_CENTER,
       saved ? saved.zoom : 6,
     );
@@ -151,7 +161,8 @@ export function MapView() {
     // below throw it away once the site data lands.
     if (saved) didFitRef.current = true;
     mapRef.current = map;
-    let basemapId: BasemapId = loadViewState().basemap ?? 'street';
+    // Atlas is the map drawn for the app, so a first visit opens on it.
+    let basemapId: BasemapId = loadViewState().basemap ?? 'atlas';
     basemapRef.current = createBasemap(basemapId).addTo(map);
 
     // Dedicated panes for the "you are here" marker. The accuracy ring sits
@@ -166,36 +177,111 @@ export function MapView() {
     // pins underneath through (the dot itself re-enables pointer events).
     mePane.style.pointerEvents = 'none';
 
+    // The old-map finish (issue #73): paper grain and a soft vignette. They sit
+    // in their own pane between the tiles (200) and everything drawn on the
+    // map, so they age the paper without dulling a single pin. A pane scrolls
+    // with the map, so the finish is pinned back to the viewport on every move.
+    const finishPane = map.createPane('finishPane');
+    finishPane.style.zIndex = '250';
+    finishPane.style.pointerEvents = 'none';
+    const finish = L.DomUtil.create('div', 'map-finish', finishPane);
+    L.DomUtil.create('div', 'map-grain', finish);
+    L.DomUtil.create('div', 'map-vignette', finish);
+    const frame = L.DomUtil.create('div', 'map-frame-host', finish);
+    const pinFinish = () => {
+      const size = map.getSize();
+      finish.style.width = `${size.x}px`;
+      finish.style.height = `${size.y}px`;
+      L.DomUtil.setPosition(finish, map.containerPointToLayerPoint([0, 0]));
+      // The neatline's bars sit where the degrees fall, so it redraws with
+      // every step of a pan, not only when the pan ends.
+      frame.innerHTML = frameMarkup(map);
+    };
+    map.on('move zoom viewreset resize', pinFinish);
+    pinFinish();
+
+    // Scale bar and compass rose, stacked in the bottom-left corner like the
+    // key of a printed sheet. Metric, because every distance in the app is.
+    // Bottom corners stack upward, so the rose, added second, sits on top.
+    L.control.scale({ position: 'bottomleft', imperial: false, maxWidth: 96 }).addTo(map);
+    const CompassCtl = L.Control.extend({
+      options: { position: 'bottomleft' as L.ControlPosition },
+      onAdd() {
+        const rose = L.DomUtil.create('div', 'compass-rose');
+        rose.setAttribute('aria-hidden', 'true');
+        rose.innerHTML = COMPASS_ROSE;
+        return rose;
+      },
+    });
+    map.addControl(new CompassCtl());
+
     // Corridor first so its shaded ellipse sits under the pins, not over them.
     corridorLayerRef.current = L.layerGroup().addTo(map);
     siteLayerRef.current = L.layerGroup().addTo(map);
     outingLayerRef.current = L.layerGroup().addTo(map);
     meLayerRef.current = L.layerGroup().addTo(map);
 
-    // Basemap switcher. Street tiles carry the lanes and place names that get
-    // you there; satellite imagery answers what the place looks like when you
-    // arrive — how big that pool really is, where a track pulls in, how much
-    // tree cover sits over a fall. The choice is remembered across launches,
-    // and the service worker caches both providers, so a region browsed on
-    // either layer stays available with no signal.
+    // Basemap switcher. Street is the plain map everyone knows; Atlas is the
+    // map drawn for the app — a painted plate at country scale that turns into
+    // a topo sheet as you zoom in; satellite imagery answers what the place
+    // looks like when you arrive — how big that pool really is, where a track
+    // pulls in, how much tree cover sits over a fall. Three is one too many for
+    // a toggle, so the button opens a short menu. The choice is remembered
+    // across launches, and the service worker caches every provider, so a
+    // region browsed on any layer stays available with no signal.
     const BasemapCtl = L.Control.extend({
       options: { position: 'topleft' as L.ControlPosition },
       onAdd() {
-        const btn = L.DomUtil.create('button', 'drop-pin-btn basemap-btn');
+        const root = L.DomUtil.create('div', 'basemap-ctl');
+        const btn = L.DomUtil.create('button', 'drop-pin-btn basemap-btn', root);
         btn.type = 'button';
         btn.innerHTML = iconMarkup('layers', 20);
-        // The label names where the tap goes, not where you are — the pressed
-        // state carries "you are on satellite" on its own.
+        btn.title = 'Map layers';
+        btn.setAttribute('aria-label', 'Map layers');
+        btn.setAttribute('aria-haspopup', 'menu');
+        const menu = L.DomUtil.create('div', 'basemap-menu', root);
+        menu.setAttribute('role', 'menu');
+        menu.hidden = true;
+        const items = BASEMAP_IDS.map((id) => {
+          const item = L.DomUtil.create('button', 'basemap-item', menu);
+          item.type = 'button';
+          item.setAttribute('role', 'menuitemradio');
+          item.innerHTML = `<span>${basemapLabel(id)}</span>${iconMarkup('check', 16)}`;
+          L.DomEvent.on(item, 'click', () => {
+            pick(id);
+            setOpen(false);
+            btn.focus();
+          });
+          return { id, item };
+        });
         const paint = () => {
-          const next: BasemapId = basemapId === 'street' ? 'satellite' : 'street';
-          btn.title = `Switch to ${basemapLabel(next).toLowerCase()} tiles`;
-          btn.setAttribute('aria-label', btn.title);
-          btn.classList.toggle('active', basemapId === 'satellite');
+          for (const { id, item } of items) item.setAttribute('aria-checked', String(id === basemapId));
         };
-        paint();
-        L.DomEvent.disableClickPropagation(btn);
-        L.DomEvent.on(btn, 'click', () => {
-          basemapId = basemapId === 'street' ? 'satellite' : 'street';
+        const onOutside = (e: PointerEvent) => {
+          if (!root.contains(e.target as Node)) setOpen(false);
+        };
+        const onKey = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            setOpen(false);
+            btn.focus();
+          }
+        };
+        const setOpen = (open: boolean) => {
+          menu.hidden = !open;
+          btn.setAttribute('aria-expanded', String(open));
+          btn.classList.toggle('active', open);
+          if (open) {
+            document.addEventListener('pointerdown', onOutside, true);
+            document.addEventListener('keydown', onKey);
+            items.find((i) => i.id === basemapId)?.item.focus();
+          } else {
+            document.removeEventListener('pointerdown', onOutside, true);
+            document.removeEventListener('keydown', onKey);
+          }
+        };
+        const pick = (id: BasemapId) => {
+          if (id === basemapId) return;
+          basemapId = id;
           // Add the replacement before removing the old one: dropping the only
           // tile layer first flashes the bare container between the two.
           const prev = basemapRef.current;
@@ -203,8 +289,13 @@ export function MapView() {
           if (prev) map.removeLayer(prev);
           saveViewState({ basemap: basemapId });
           paint();
-        });
-        return btn;
+        };
+        paint();
+        setOpen(false);
+        L.DomEvent.disableClickPropagation(root);
+        L.DomEvent.disableScrollPropagation(root);
+        L.DomEvent.on(btn, 'click', () => setOpen(menu.hidden));
+        return root;
       },
     });
     map.addControl(new BasemapCtl());
@@ -267,8 +358,37 @@ export function MapView() {
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(containerRef.current);
 
+    // On a phone the full credits run to three lines of the map. They rest as
+    // one line that ends in an ellipsis, and a tap opens them (index.css). The
+    // height still changes — open or shut, and with the routing credit — so it
+    // is measured, and index.css lifts the bottom-left corner by it.
+    const credits = map.attributionControl.getContainer();
+    const creditsRo = new ResizeObserver(() =>
+      map.getContainer().style.setProperty('--credits-h', `${credits?.offsetHeight ?? 0}px`),
+    );
+    if (credits) {
+      creditsRo.observe(credits);
+      credits.setAttribute('role', 'button');
+      credits.tabIndex = 0;
+      credits.setAttribute('aria-expanded', 'false');
+      const toggle = (e: Event) => {
+        // A link inside the credits goes where it says; only the text toggles.
+        if ((e.target as HTMLElement).closest('a')) return;
+        const open = credits.classList.toggle('is-open');
+        credits.setAttribute('aria-expanded', String(open));
+      };
+      L.DomEvent.on(credits, 'click', toggle);
+      L.DomEvent.on(credits, 'keydown', (e) => {
+        if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+          e.preventDefault();
+          toggle(e);
+        }
+      });
+    }
+
     return () => {
       ro.disconnect();
+      creditsRo.disconnect();
       window.removeEventListener('pagehide', persist);
       map.off('moveend', persist);
       map.remove();
