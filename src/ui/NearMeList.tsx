@@ -100,6 +100,10 @@ export function NearMeList() {
   // scroll effect below. `smoothScroll` marks a row the reader tapped open.
   const pendingScroll = useRef(false);
   const smoothScroll = useRef(false);
+  // The selection the scroll effect last saw, so it can tell when something
+  // outside the list — a "Part of" or "Nearby in this listing" link inside an
+  // open write-up — has moved the selection to another row.
+  const lastSelected = useRef(selectedSiteId);
 
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
@@ -151,7 +155,18 @@ export function NearMeList() {
   // The site can sit past the paging limit (a distant pin, or a long walk down
   // the list), so the limit is raised first and the effect runs again once the
   // row actually exists.
+  //
+  // A listing link inside the open write-up selects another site without going
+  // through the list, and that row can be anywhere — above or below. It glides
+  // there like a tapped row, or the reader is left looking at a closed entry
+  // with no sign that anything opened.
   useEffect(() => {
+    const changed = selectedSiteId !== lastSelected.current;
+    lastSelected.current = selectedSiteId;
+    if (browse && selectedSiteId && changed && !pendingScroll.current) {
+      pendingScroll.current = true;
+      smoothScroll.current = true;
+    }
     if (!browse || !selectedSiteId || !pendingScroll.current) return;
     const index = views.findIndex((v) => v.site.id === selectedSiteId);
     if (index < 0) {
