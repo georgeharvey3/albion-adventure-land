@@ -155,6 +155,9 @@
   --z-sheet: 500;
   --z-card: 600;
   --z-overlay: 700;
+  /* The title card sits over the zoom buttons too, because it frames the
+     whole map. It takes no taps, so a tap on a covered button still lands. */
+  --z-title: 1050;
   /* Above Leaflet's own control layer, which hard-codes z-index 1000 and would
      otherwise punch the zoom buttons and attribution through a full-screen
      overlay. Still below the lightbox. */

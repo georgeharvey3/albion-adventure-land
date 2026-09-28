@@ -232,6 +232,12 @@ animation.
 The "you are here" halo is the one loop. It is not a primitive of the system: it
 marks live position, and it stops under reduced motion.
 
+The title card (issue #76) has two motions, and neither is a primitive. The card
+fades in and out on opacity over `--dur-long`. The triskele in its logo turns
+once every 1.6 s while the site data loads. When the load ends, the triskele
+slows down to the next third of a turn, where its three arms look at rest. The
+turn does not start under reduced motion.
+
 Never transition `width`, `height`, `top`, `left`, `margin` or `padding`. These
 are layout properties and each frame costs a reflow. Use `transform` and
 `opacity`.

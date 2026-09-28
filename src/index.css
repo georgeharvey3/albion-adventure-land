@@ -1936,6 +1936,85 @@ body,
   color: var(--color-accent);
 }
 
+/* --- Title card (issue #76) ------------------------------------------------
+   The title cartouche of an old map, shown once over a first visit. The logo
+   sits on the top edge of the frame like a seal, half in and half out. The
+   card takes no taps: the map under it must stay usable. On wide screens the
+   side panel covers the map's right 380px, so the card centres on the rest. */
+.title-card {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-title);
+  display: grid;
+  place-items: center;
+  padding: var(--space-lg);
+  pointer-events: none;
+  animation: title-card-in var(--dur-long) var(--ease-out) both;
+}
+.title-card.leaving {
+  animation: title-card-out var(--dur-long) var(--ease-in) both;
+}
+@keyframes title-card-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes title-card-out {
+  to {
+    opacity: 0;
+  }
+}
+.title-card-plate {
+  position: relative;
+  max-width: 26rem;
+  text-align: center;
+  background: var(--color-paper-2);
+  /* Room under the lower half of the seal. */
+  padding: calc(var(--space-md) + 56px) var(--space-xl) var(--space-lg);
+  /* Two ink rules with a paper gap between them, like the neatline. */
+  border: var(--rule-hairline) solid var(--color-ink);
+  outline: var(--rule-hairline) solid var(--color-ink);
+  outline-offset: 4px;
+  box-shadow: var(--shadow-float);
+}
+.title-card-seal {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 112px;
+  height: 112px;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 4px var(--ink-shadow));
+}
+.title-card-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  line-height: var(--leading-display);
+  color: var(--color-ink);
+}
+.title-card-sub {
+  margin: var(--space-2xs) 0 var(--space-md);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--text-lg);
+  line-height: var(--leading-ui);
+  color: var(--color-muted);
+}
+.title-card-hint {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+/* The triskele turns about the centre of the logo, 256,256 in its viewBox. */
+.logo-triskele {
+  transform-box: view-box;
+  transform-origin: 256px 256px;
+}
+
 /* --- Overlays -------------------------------------------------------------- */
 .overlay {
   position: absolute;
@@ -1969,6 +2048,9 @@ body,
   /* Collapsed side panel shrinks to the tab bar at the top, freeing the map. */
   .sheet.collapsed {
     bottom: auto;
+  }
+  .title-card {
+    right: 380px;
   }
   .app {
     flex-direction: row;

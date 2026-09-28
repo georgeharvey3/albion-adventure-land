@@ -29,9 +29,11 @@ export interface ViewState {
   selectedSiteId: string | null;
   /** Street or satellite tiles. Null means the street default. */
   basemap: BasemapId | null;
+  /** The title card (issue #76) has been dismissed once, so it never shows again. */
+  titleSeen: boolean;
 }
 
-const EMPTY: ViewState = { map: null, tab: null, selectedSiteId: null, basemap: null };
+const EMPTY: ViewState = { map: null, tab: null, selectedSiteId: null, basemap: null, titleSeen: false };
 
 function validMap(v: unknown): v is MapView {
   if (!v || typeof v !== 'object') return false;
@@ -70,6 +72,7 @@ export function loadViewState(): ViewState {
         // is settled once the site data has loaded (see the store's init).
         selectedSiteId: typeof parsed.selectedSiteId === 'string' ? parsed.selectedSiteId : null,
         basemap: BASEMAP_IDS.includes(parsed.basemap as BasemapId) ? (parsed.basemap as BasemapId) : null,
+        titleSeen: parsed.titleSeen === true,
       };
     }
   } catch {
