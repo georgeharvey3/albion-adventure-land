@@ -12,6 +12,7 @@ import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './base
 import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
 import { frameMarkup } from './mapFrame';
+import { GlowLayer, glowAmount, pinScale, SPECK_BELOW } from './glowLayer';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -61,12 +62,20 @@ function shapeFor(category: SiteCategory): MarkerShape {
 // map), marked only by a dark ring. Wishlisted gets an orange ring; selected is
 // larger.
 //
+// At national zoom (issue #74) the pins shrink toward specks over the glow, by
+// `scale` from pinScale. Below SPECK_BELOW a pin loses its ring and stops
+// taking taps: a pin with a ring is a pin you can tap. A speck is a few pixels
+// across, far smaller than a finger, and they crowd, so a tap there opened
+// whatever card it hit when the user meant to pan, and swallowed the tap that
+// drops a location pin. The selected pin never shrinks — it is the one the
+// open card is about.
+//
 // A cross-source merge (issue #37) gets a HYBRID pin: the shape is still the
 // representative's, but the fill is striped across every category the place
 // answers to, so Old Sarum reads as ruins *and* hillfort under either filter.
 // `fillColor` stays set for the single-colour case and as the fallback if the
 // map ever runs on the SVG renderer, where the stripes aren't drawn.
-function markerStyle(view: FilteredSiteView, selected: boolean): ShapeMarkerOptions {
+function markerStyle(view: FilteredSiteView, selected: boolean, scale: number): ShapeMarkerOptions {
   const { site, visited, wishlisted } = view;
   const shape = shapeFor(site.category);
   const base = shape === 'triangle' || shape === 'diamond' || shape === 'chevron' ? 7.5 : 6;
@@ -74,10 +83,12 @@ function markerStyle(view: FilteredSiteView, selected: boolean): ShapeMarkerOpti
   // A merged pin is a fraction wider: two colours inside 12px of shape need the
   // room, and there are 33 of them on a map of ~2,600, so nothing is crowded.
   const radius = colors.length > 1 ? base + 1 : base;
+  const speck = !selected && scale < SPECK_BELOW;
   return {
-    radius: selected ? radius + 3 : radius,
+    radius: selected ? radius + 3 : Math.max(1.5, radius * scale),
     color: wishlisted ? '#f4a261' : visited ? '#2a2a2a' : '#fff',
-    weight: wishlisted ? 3 : visited ? 2 : 1.5,
+    weight: speck ? 0 : wishlisted ? 3 : visited ? 2 : 1.5,
+    interactive: !speck,
     fillColor: SITE_TYPE_COLORS[site.category],
     fillColors: colors,
     fillOpacity: 0.95,
@@ -123,6 +134,10 @@ export function MapView() {
   const journeyFitKeyRef = useRef<string | null>(null);
   const markersRef = useRef(new Map<string, { marker: L.CircleMarker; view: FilteredSiteView }>());
   const prevSelectedRef = useRef<string | null>(null);
+  const glowRef = useRef<GlowLayer | null>(null);
+  // The pin scale the markers were last styled at. Styling ~2,600 markers is
+  // only worth doing when a zoom has actually changed it.
+  const pinScaleRef = useRef(1);
 
   const views = useFilteredSites();
   const position = useStore((s) => s.position);
@@ -171,6 +186,21 @@ export function MapView() {
     // numbered outing stops in the default marker pane (z-index 600). It stays
     // under the tooltip pane (650) so its own label still reads on top.
     map.createPane('meAccuracyPane').style.zIndex = '350';
+
+    // The national-zoom glow (issue #74), under every overlay and the pins.
+    // Its opacity follows the zoom, and it starts fading with the zoom
+    // animation (`zoomanim` carries the target zoom), so the pins and the glow
+    // change together instead of one after the other.
+    const glowPane = map.createPane('glowPane');
+    glowPane.style.zIndex = '390';
+    glowPane.style.pointerEvents = 'none';
+    glowRef.current = new GlowLayer({ pane: 'glowPane' }).addTo(map);
+    const fadeGlow = (zoom: number) => {
+      glowPane.style.opacity = String(glowAmount(zoom));
+    };
+    map.on('zoomanim', (e: L.ZoomAnimEvent) => fadeGlow(e.zoom));
+    map.on('zoom', () => fadeGlow(map.getZoom()));
+    fadeGlow(map.getZoom());
     const mePane = map.createPane('mePane');
     mePane.style.zIndex = '645';
     // The pulse halo is decorative and much wider than the dot: let taps on
@@ -327,9 +357,40 @@ export function MapView() {
     });
     map.addControl(new LocateCtl());
 
+    // Specks take no tap (issue #74), so a tap on one would do nothing and look
+    // broken. Say why instead. Only a tap near a speck counts: a tap on the
+    // open sea is not an attempt to open a pin, and a hint there is noise.
+    const hint = L.DomUtil.create('div', 'map-hint', map.getContainer());
+    hint.setAttribute('role', 'status');
+    hint.hidden = true;
+    let hintTimer: number | undefined;
+    const hideHint = () => {
+      window.clearTimeout(hintTimer);
+      hint.hidden = true;
+    };
+    const showHint = () => {
+      hint.textContent = 'Zoom in to tap a pin';
+      hint.hidden = false;
+      window.clearTimeout(hintTimer);
+      hintTimer = window.setTimeout(hideHint, 2500);
+    };
+    map.on('zoomend', () => {
+      if (pinScale(map.getZoom()) >= SPECK_BELOW) hideHint();
+    });
+    const nearSpeck = (at: L.Point) => {
+      for (const { marker } of markersRef.current.values()) {
+        if (marker.options.interactive) continue;
+        if (map.latLngToContainerPoint(marker.getLatLng()).distanceTo(at) <= 20) return true;
+      }
+      return false;
+    };
+
     map.on('click', (e: L.LeafletMouseEvent) => {
       const { picking: armed } = useStore.getState();
-      if (!armed) return;
+      if (!armed) {
+        if (pinScale(map.getZoom()) < SPECK_BELOW && nearSpeck(e.containerPoint)) showHint();
+        return;
+      }
       const { lat, lng } = e.latlng;
       // Origin: a dropped "I am here" pin, which carries no label — the bar
       // calls it "Dropped pin" and the marker is the teardrop, both of which
@@ -391,6 +452,9 @@ export function MapView() {
       creditsRo.disconnect();
       window.removeEventListener('pagehide', persist);
       map.off('moveend', persist);
+      // The hint lives in the container, which outlives the map.
+      window.clearTimeout(hintTimer);
+      hint.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -407,16 +471,20 @@ export function MapView() {
     markersRef.current.clear();
 
     const selectedId = useStore.getState().selectedSiteId;
+    const scale = pinScale(map.getZoom());
+    pinScaleRef.current = scale;
     for (const view of views) {
       const { site } = view;
       const marker = shapeMarker([site.lat, site.lng], {
         shape: shapeFor(site.category),
-        ...markerStyle(view, site.id === selectedId),
+        ...markerStyle(view, site.id === selectedId, scale),
       });
       marker.on('click', () => setSelected(site.id));
       marker.addTo(layer);
       markersRef.current.set(site.id, { marker, view });
     }
+
+    glowRef.current?.setViews(views);
 
     // Fit to all pins on first data render.
     if (!didFitRef.current && views.length) {
@@ -432,12 +500,32 @@ export function MapView() {
     const markers = markersRef.current;
     const restyle = (id: string | null, selected: boolean) => {
       const entry = id ? markers.get(id) : undefined;
-      if (entry) entry.marker.setStyle(markerStyle(entry.view, selected));
+      if (entry) entry.marker.setStyle(markerStyle(entry.view, selected, pinScaleRef.current));
     };
     restyle(prevSelectedRef.current, false);
     restyle(selectedSiteId, true);
     prevSelectedRef.current = selectedSiteId;
   }, [selectedSiteId]);
+
+  // Resize the pins once a zoom settles (issue #74). Not on every frame of a
+  // pinch: the canvas scales the pins with the map through the gesture anyway.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const restyle = () => {
+      const scale = pinScale(map.getZoom());
+      if (scale === pinScaleRef.current) return;
+      pinScaleRef.current = scale;
+      const selectedId = useStore.getState().selectedSiteId;
+      for (const [id, { marker, view }] of markersRef.current) {
+        marker.setStyle(markerStyle(view, id === selectedId, scale));
+      }
+    };
+    map.on('zoomend', restyle);
+    return () => {
+      map.off('zoomend', restyle);
+    };
+  }, []);
 
   // Outing route overlay (spec §6 F12/F14): dashed polyline from the anchor
   // through the route-ordered stops, with numbered markers on top of the
