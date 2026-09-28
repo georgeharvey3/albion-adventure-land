@@ -226,6 +226,27 @@ two visited ticks and two outing slots.
   number of pins, by the number of merged places. A layer header counts sites,
   not chips.
 
+## National glow (issue #74)
+
+At national zoom, about 2,600 pins look like scattered crumbs. The map draws a
+soft glow in each layer's colour under the pins, and the pins shrink to specks.
+
+- The glow is hand-rolled on one canvas in `src/map/glowLayer.ts`. Do not add a
+  heatmap library.
+- The glow shows **no numbers**. It is a density, not a count, so the rule
+  against completion statistics still holds.
+- The glow gets the same `useFilteredSites` list as the pins, so it obeys
+  `matchesFilter`. A glow that shows a layer the filter hides is wrong.
+- The glow fades out between z6.5 and z8. At regional zoom the pins give all
+  the information.
+- **A pin with a ring is a pin you can tap.** Below 70% of full size
+  (`SPECK_BELOW`), a pin loses its ring and takes no tap. A speck is smaller
+  than a finger, so a tap on it opened a random card. The selected pin never
+  shrinks. A tap within 20 px of a speck shows "Zoom in to tap a pin" for
+  2.5 s. A tap on empty map shows nothing.
+- The glow repaints only when a pan or a zoom ends. During the gesture, the
+  canvas moves and scales with the map. Keep the pan free of work.
+
 ## Build order (each phase independently shippable)
 
 - **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter

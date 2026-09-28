@@ -386,6 +386,31 @@ body,
   font-style: normal;
 }
 
+/* "Zoom in to tap a pin" (src/map/MapView.tsx): a tap near a speck at
+   national zoom does nothing, so the map says why. It floats over the map and
+   takes no tap itself, so the next tap still reaches the map. */
+.map-hint {
+  position: absolute;
+  /* Clear of the neatline and its degree labels. */
+  top: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-overlay);
+  padding: var(--space-2xs) var(--space-xs);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  border: var(--rule-hairline) solid var(--color-edge);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.map-hint[hidden] {
+  display: none;
+}
+
 /* The key of the sheet: the compass rose over the scale bar, bottom left.
    Both are marks on the map, not controls, so neither takes a tap. */
 .compass-rose {
@@ -1956,6 +1981,11 @@ body,
     /* Side-panel layout — .map-area is the full viewport height, so let a long
        write-up show in full and only scroll if it exceeds the whole screen. */
     max-height: calc(100% - 32px);
+  }
+  /* The side panel lies over the map's right 380px — collapsed, its tab bar
+     still covers the top — so centre the hint in the map that shows. */
+  .map-hint {
+    left: calc((100% - 380px) / 2);
   }
 }
 
