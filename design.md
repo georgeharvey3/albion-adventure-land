@@ -82,6 +82,8 @@ Two web fonts and no system stack. The fonts are self-hosted under `src/fonts`
 and the service worker precaches them, because the app must work with no signal.
 
 - **Display and body** — Cardo 400. Self-hosted, Latin and Latin Extended.
+  Cardo Italic 400 is loaded for one job only: the names that the map sets on
+  water and on land (see Shell, below). Do not use the italic anywhere else.
 - **UI** — Instrument Sans, variable 400 to 700. Self-hosted, Latin and Latin
   Extended. The face is a sans, not a mono. It keeps the figure role because it
   carries a real `tnum` feature, so a column of distances still aligns.
@@ -281,7 +283,27 @@ are layout properties and each frame costs a reflow. Use `transform` and
 
 ## Per-family allowances
 
-- **Shell** — no ornament of any kind. The map is the content.
+- **Shell** — one ornament only: the old-map finish (issue #73). The map is
+  the content, and the finish makes it read as a printed sheet. Add no other
+  ornament. The finish has five parts:
+  - The Atlas layer is a toned watercolor plate to z10 and a topo sheet from
+    z12 (`src/map/basemaps.ts`).
+  - The app sets the names on the plate (`src/map/mapLabels.ts`). Seas,
+    waters, national parks, peaks and monuments use Cardo Italic. Cities and
+    towns use Cardo roman. A name on the map is a place name, so it uses the
+    serif. Land names take `--map-name-land` and water names take
+    `--map-name-water`. A name needs more weight than 400 to read over the
+    plate, and Cardo has no bold. A hairline stroke in the name's own colour
+    (`--map-name-stroke`) and a paper halo give that weight. Do not use this
+    stroke on any other text.
+  - A neatline frames the map (`src/map/mapFrame.ts`). Its bars mark real
+    degrees and minutes, and its values use the UI label role.
+  - A paper grain and a soft vignette lie over the tiles.
+  - A compass rose stands over the scale bar in the bottom-left corner. The
+    rose is the logo in one ink, `--color-muted` (`src/map/compassRose.ts`).
+  The names, the grain, the vignette and the neatline sit in panes under the
+  pins, so no pin loses contrast. None of them takes a tap. The scale bar and
+  the map credits use the UI label role.
 - **Index** — no pictures above 56px, no card fills, no reveal on scroll.
 - **Document** — pictures at the text measure, a snap strip when there are two
   or more, and a 65ch measure on prose.

@@ -47,7 +47,34 @@
      that keeps a map marker legible over any tile, and the tile background. */
   --color-me: oklch(55% 0.19 258);
   --color-marker-ring: oklch(99.5% 0.002 160);
-  --color-water: oklch(87% 0.055 235);
+  /* The Atlas basemap's own colours (src/map/basemaps.ts). The tint is a
+     near-white wash, multiplied over the plate and the topo sheet, that
+     cools both towards --color-paper so the map and the sheet read as one
+     page. The relief belongs to the overview plate only. The water token is
+     also the map's background, so a tile still loading is sea, not a blue
+     flash. */
+  --map-tint: rgb(247 251 251);
+  --map-relief-opacity: 0.35;
+  --color-water: rgb(205 215 216);
+  /* The old-map finish over the tiles (issue #73). Both are the ink at a low
+     alpha, like the shadows below: the grain is ink seen through a noise
+     mask, and the vignette is ink that gathers at the edges of the sheet. */
+  --map-grain-opacity: 0.16;
+  --map-vignette: oklch(24% 0.018 165 / 0.16);
+  /* The overview plate (Stamen Watercolor) is toned towards the almanac:
+     its rose land turns to a grey-olive parchment and its turquoise sea to
+     a quiet slate, like a hand-tinted plate that has aged in the book. */
+  --map-watercolor-filter: grayscale(0.55) sepia(0.25) hue-rotate(20deg) brightness(1.1) contrast(0.88);
+  /* The names the app letters on the map (src/map/mapLabels.ts). Land names
+     take a deep green from the accent's hue, water names a slate blue from
+     the sea; a paper halo lifts both off the painted plate. */
+  --map-name-land: oklch(32% 0.07 150);
+  --map-name-water: oklch(34% 0.06 235);
+  --map-name-halo: oklch(97% 0.006 160 / 0.95);
+  /* Cardo has no bold, and a synthesized bold breaks its letterforms. A
+     hairline stroke in the name's own colour thickens every stem evenly
+     instead, so a name holds its shape and still reads over the plate. */
+  --map-name-stroke: 0.4px;
 
   /* Overlay / shadow inks. Transparency is a modifier here, never a palette
      entry — these exist because a shadow and a lightbox scrim have no opaque
