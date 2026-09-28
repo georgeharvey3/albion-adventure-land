@@ -247,6 +247,23 @@ soft glow in each layer's colour under the pins, and the pins shrink to specks.
 - The glow repaints only when a pan or a zoom ends. During the gesture, the
   canvas moves and scales with the map. Keep the pan free of work.
 
+## Title card (issue #76)
+
+A first visit opens with a title card over the map (`src/ui/TitleCard.tsx`).
+It says what the app is, and nothing else.
+
+- The card takes no taps. The first tap, pan, zoom or key press fades it out,
+  and that gesture still reaches the map.
+- It shows until the first dismissal. `titleSeen` in the view state
+  (`src/state/viewState.ts`) records it, so a lost flag costs one more look.
+- It is also the loading state on a first visit. The triskele in the logo turns
+  and the hint reads "Loading sites…" until the site data is in. The app's own
+  loading pill stays hidden while the card is up.
+- `src/ui/LogoMark.tsx` draws the logo inline, so the triskele can turn alone.
+  It copies `public/favicon.svg`, which stays the source for the PWA icons.
+  Change both together.
+- The card shows no site counts. The no-counts rule holds here too.
+
 ## Build order (each phase independently shippable)
 
 - **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter

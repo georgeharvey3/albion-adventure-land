@@ -9,6 +9,7 @@ import { Outing } from './Outing';
 import { Stats } from './Stats';
 import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
+import { TitleCard } from './TitleCard';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 
 const TABS: { id: SheetTab; label: string }[] = [
@@ -32,6 +33,8 @@ export function App() {
   // the app exists to answer.
   const [tab, setTab] = useState<SheetTab>(() => loadViewState().tab ?? 'near');
   const [collapsed, setCollapsed] = useState(false);
+  // Only until the first dismissal: after that, the reader knows the app.
+  const [titleOpen, setTitleOpen] = useState(() => !loadViewState().titleSeen);
 
   // Tapping a tab while collapsed expands the sheet to that tab; tapping the
   // active tab toggles collapse. Keeps the map fully visible on small screens.
@@ -84,9 +87,11 @@ export function App() {
       <div className={browse ? 'map-area hidden' : 'map-area'}>
         <MapView />
         {selectedSiteId && <SiteDetail />}
+        {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
 
-      {!dataLoaded && <div className="overlay">Loading sites…</div>}
+      {/* The title card says it for itself while it is up. */}
+      {!dataLoaded && !titleOpen && <div className="overlay">Loading sites…</div>}
       {dataError && (
         <div className="overlay error">
           Couldn't load site data: {dataError}. Run <code>npm run ingest</code>.

@@ -1,0 +1,55 @@
+import { useEffect, useState } from 'react';
+import { useStore } from '../state/store';
+import { saveViewState } from '../state/viewState';
+import { LogoMark } from './LogoMark';
+
+// The first impression (issue #76): a title cartouche over the map, so a new
+// visitor can say what the app is within three seconds. It shows until the
+// first tap, pan or zoom, and only until it has been dismissed once.
+//
+// It never takes a tap. The map under it stays fully usable, so the gesture
+// that dismisses the card also does what the reader meant by it.
+//
+// It doubles as the loading state on a first visit, which is the one launch
+// with no service worker and a cold download of the site data: the triskele
+// turns and the hint says so until the sites are in.
+export function TitleCard({ onClosed }: { onClosed: () => void }) {
+  const dataLoaded = useStore((s) => s.dataLoaded);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    if (leaving) return;
+    // Capture phase on the window: Leaflet stops propagation on some of its
+    // own events, and any first touch of the app counts, not only the map.
+    const dismiss = () => {
+      saveViewState({ titleSeen: true });
+      setLeaving(true);
+    };
+    window.addEventListener('pointerdown', dismiss, true);
+    window.addEventListener('wheel', dismiss, { capture: true, passive: true });
+    window.addEventListener('keydown', dismiss, true);
+    return () => {
+      window.removeEventListener('pointerdown', dismiss, true);
+      window.removeEventListener('wheel', dismiss, true);
+      window.removeEventListener('keydown', dismiss, true);
+    };
+  }, [leaving]);
+
+  return (
+    <div
+      className={leaving ? 'title-card leaving' : 'title-card'}
+      onAnimationEnd={(e) => {
+        if (e.animationName === 'title-card-out') onClosed();
+      }}
+    >
+      <div className="title-card-plate">
+        <LogoMark className="title-card-seal" spinning={!dataLoaded} />
+        <h1 className="title-card-name">Albion Adventure Land</h1>
+        <p className="title-card-sub">A field companion for Britain</p>
+        <div className="title-card-hint" aria-live="polite">
+          {dataLoaded ? 'Tap the map to begin' : 'Loading sites…'}
+        </div>
+      </div>
+    </div>
+  );
+}
