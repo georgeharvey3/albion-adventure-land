@@ -302,12 +302,10 @@ are layout properties and each frame costs a reflow. Use `transform` and
     plate, and Cardo has no bold. A hairline stroke in the name's own colour
     (`--map-name-stroke`) and a paper halo give that weight. Do not use this
     stroke on any other text.
-  - A neatline frames the map (`src/map/mapFrame.ts`). Its bars mark real
-    degrees and minutes, and its values use the UI label role.
   - A paper grain and a soft vignette lie over the tiles.
   - A compass rose stands over the scale bar in the bottom-left corner. The
     rose is the logo in one ink, `--color-muted` (`src/map/compassRose.ts`).
-  The names, the grain, the vignette and the neatline sit in panes under the
+  The names, the grain and the vignette sit in panes under the
   pins, so no pin loses contrast. None of them takes a tap. The scale bar and
   the map credits use the UI label role.
 - **Index** — no pictures above 56px, no card fills, no reveal on scroll.

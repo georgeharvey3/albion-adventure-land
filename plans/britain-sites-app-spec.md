@@ -514,10 +514,12 @@ because the type selection changes per query and anchoring matters.
 
 - **App shell + data:** Workbox precache via `vite-plugin-pwa`
   (`globPatterns` includes `sites.json`); `registerType: 'autoUpdate'`.
-- **Tiles:** runtime cache-first, 60-day expiry, in four caches: OSM (2,000
-  entries), Esri World Topo (4,000 entries), Stamen Watercolor on
-  `tiles.stadiamaps.com` (2,000 entries) and the other Esri services (3,000
-  entries). A “download this region” pre-warm action remains future work.
+- **Tiles:** runtime cache-first, 60-day expiry, in three caches: OSM (2,000
+  entries), Esri World Topo (4,000 entries) and the other Esri services (3,000
+  entries). The watercolor plate ships with the app (`public/tiles/watercolor/`).
+  Its z5–z6 tiles are precached, and its z7–z10 tiles have their own
+  cache-first cache (3,000 entries, one year). A “download this region”
+  pre-warm action remains future work.
 - **User state (+ future matrices/photos):** IndexedDB.
 - Phase 2 adds no new offline surface: stats and outing mode are pure local
   computation over already-cached data.
@@ -603,16 +605,17 @@ Still open — surface these rather than silently picking:
    detours rather than discoveries, that's the change to make.
 2. **Tile provider** — **decided (issue #73):** two maps that change at z11
    (`src/map/basemaps.ts`). This is the Atlas layer, and it is the default.
-   Plain OpenStreetMap stays available as the Street layer. To z10 Atlas is Stamen Watercolor from
-   Stadia Maps, toned to the almanac, with Esri World Shaded Relief multiplied
+   Plain OpenStreetMap stays available as the Street layer. To z10 Atlas is Stamen Watercolor,
+   toned to the almanac, with Esri World Shaded Relief multiplied
    into it. The app sets the place names on it from `places.json`
    (`src/map/mapLabels.ts`). From z12 it is Esri World Topo, which has
    contours, footpaths and serif fell names. z11 shows both. A paper tint lies
    over both. The overview tells the story and the topo sheet finds the stile.
    CARTO Positron was the drawn street map until September 2026, when CARTO started
-   to require a key. Stadia authorizes by domain, so the app stays keyless and
-   backend-free. Esri lists World Topo as in mature support. If Esri retires
-   it, Stadia Outdoors is the nearest replacement.
+   to require a key. The watercolor came from Stadia Maps until September 2026.
+   Stadia's free plan has a monthly credit cap and does not allow commercial
+   use, so the app now ships the watercolor tiles itself (`src/map/plate.ts`). Esri lists World Topo as in mature support. If Esri
+   retires it, Stadia Outdoors is the nearest replacement.
 3. **Photo storage (Phase 3)** — IndexedDB blobs (recommended, offline-safe)
    vs object-URL references.
 4. **Routing matrix provider (Phase 4)** — ORS free key vs self-hosted OSRM vs
