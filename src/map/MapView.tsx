@@ -12,6 +12,10 @@ import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './base
 import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
 import { frameMarkup } from './mapFrame';
+// PROTOTYPE — issue #74 glow variants. Remove when a variant is folded in.
+import { useState } from 'react';
+import { GLOW_VARIANTS, GlowLayer, glowAmount, glowConfig, speckScale, type GlowVariant } from './glowPrototype';
+import { PrototypeSwitcher, useVariant } from '../ui/PrototypeSwitcher';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -137,6 +141,11 @@ export function MapView() {
   const picking = useStore((s) => s.picking);
   const focus = useStore((s) => s.focus);
   const setDestination = useStore((s) => s.setDestination);
+  const variant = useVariant<GlowVariant>(
+    GLOW_VARIANTS.map((v) => v.key),
+    'A',
+  );
+  const [readout, setReadout] = useState('');
 
   // One-time map init.
   useEffect(() => {
@@ -161,6 +170,8 @@ export function MapView() {
     // below throw it away once the site data lands.
     if (saved) didFitRef.current = true;
     mapRef.current = map;
+    // PROTOTYPE (#74): a handle for the screenshot script. Dev only.
+    if (import.meta.env.DEV) (window as any).__protoMap = map;
     // Atlas is the map drawn for the app, so a first visit opens on it.
     let basemapId: BasemapId = loadViewState().basemap ?? 'atlas';
     basemapRef.current = createBasemap(basemapId).addTo(map);
@@ -171,6 +182,14 @@ export function MapView() {
     // numbered outing stops in the default marker pane (z-index 600). It stays
     // under the tooltip pane (650) so its own label still reads on top.
     map.createPane('meAccuracyPane').style.zIndex = '350';
+    // PROTOTYPE (#74): the glow sits under every overlay; the site pins get a
+    // pane of their own so they can fade without fading the route lines.
+    const glowPane = map.createPane('glowPane');
+    glowPane.style.zIndex = '390';
+    glowPane.style.pointerEvents = 'none';
+    glowPane.style.transition = 'opacity 220ms linear';
+    map.createPane('sitesPane').style.zIndex = '410';
+    map.getPane('sitesPane')!.style.transition = 'opacity 220ms linear';
     const mePane = map.createPane('mePane');
     mePane.style.zIndex = '645';
     // The pulse halo is decorative and much wider than the dot: let taps on
@@ -411,6 +430,7 @@ export function MapView() {
       const { site } = view;
       const marker = shapeMarker([site.lat, site.lng], {
         shape: shapeFor(site.category),
+        pane: 'sitesPane',
         ...markerStyle(view, site.id === selectedId),
       });
       marker.on('click', () => setSelected(site.id));
@@ -425,6 +445,74 @@ export function MapView() {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
   }, [views, setSelected]);
+
+  // PROTOTYPE (#74): the glow layer, and the crossfade between it and the pins.
+  const glowRef = useRef<GlowLayer | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const cfg = glowConfig(variant);
+    const glow = cfg ? new GlowLayer(cfg).addTo(map) : null;
+    glowRef.current = glow;
+    const glowPane = map.getPane('glowPane')!;
+    const sitesPane = map.getPane('sitesPane')!;
+    let lastScale = -1;
+    const fade = (zoom: number) => {
+      const g = cfg ? glowAmount(cfg, zoom) : 0;
+      const pins = cfg?.crossfadePins ? 1 - g : 1;
+      glowPane.style.opacity = String(g);
+      sitesPane.style.opacity = String(pins);
+      // A pin you can't see shouldn't catch a tap meant for the map.
+      for (const c of sitesPane.querySelectorAll('canvas')) c.style.pointerEvents = pins < 0.4 ? 'none' : '';
+      setReadout(
+        `z ${zoom.toFixed(1)} · glow ${Math.round(g * 100)}% · pins ${Math.round(pins * 100)}%` +
+          (glow ? ` · draw ${glow.lastDrawMs.toFixed(0)} ms` : ''),
+      );
+    };
+    const specks = () => {
+      const scale = cfg ? speckScale(cfg, map.getZoom()) : 1;
+      if (scale === lastScale) return;
+      lastScale = scale;
+      const sel = useStore.getState().selectedSiteId;
+      for (const [id, { marker, view }] of markersRef.current) {
+        const st = markerStyle(view, id === sel);
+        // A speck drops its white ring, or the ring is all that shows.
+        // A pin with a ring is a pin you can tap; a speck is not.
+        marker.setStyle({ weight: scale < 0.7 ? 0 : st.weight, interactive: scale >= 0.7 } as L.PathOptions);
+        marker.setRadius(Math.max(1.5, (st.radius ?? 6) * scale));
+      }
+    };
+    // zoomanim carries the target zoom, so the fade runs alongside the zoom
+    // animation instead of after it.
+    const onAnim = (e: L.ZoomAnimEvent) => fade(e.zoom);
+    const onEnd = () => {
+      fade(map.getZoom());
+      specks();
+    };
+    map.on('zoomanim', onAnim);
+    map.on('zoom zoomend', onEnd);
+    onEnd();
+    return () => {
+      map.off('zoomanim', onAnim);
+      map.off('zoom zoomend', onEnd);
+      if (glow) map.removeLayer(glow);
+      glowRef.current = null;
+      glowPane.style.opacity = '';
+      sitesPane.style.opacity = '';
+      lastScale = -1;
+      for (const [id, { marker, view }] of markersRef.current) {
+        const st = markerStyle(view, id === useStore.getState().selectedSiteId);
+        marker.setStyle({ weight: st.weight, interactive: true } as L.PathOptions);
+        marker.setRadius(st.radius ?? 6);
+      }
+    };
+  }, [variant]);
+  useEffect(() => {
+    glowRef.current?.setViews(views);
+    // Embers: pins rebuilt by a filter change come back full size; re-speck.
+    const map = mapRef.current;
+    if (map) map.fire('zoomend');
+  }, [views, variant]);
 
   // Selection highlight: restyle only the previously- and newly-selected
   // markers instead of rebuilding the whole layer on every tap.
@@ -693,5 +781,10 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
 
-  return <div ref={containerRef} className="map" />;
+  return (
+    <>
+      <div ref={containerRef} className="map" />
+      <PrototypeSwitcher variants={GLOW_VARIANTS} current={variant} readout={readout} />
+    </>
+  );
 }
