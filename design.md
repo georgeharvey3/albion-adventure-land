@@ -42,7 +42,8 @@ belongs to one macrostructure family.
     `.stats-nudge` are in `src/index.css` and follow this system, but no
     component uses them. They wait for the completion-stats feature (F6).
 - **Document** — Long Document (02). Continuous prose at a 65ch measure.
-  Negative space divides the sections. Pictures sit at the text measure.
+  Negative space divides the sections. The pictures lead: a carousel across
+  the full width, above the name (issue #108).
 
 ## Theme
 
@@ -309,8 +310,9 @@ are layout properties and each frame costs a reflow. Use `transform` and
   pins, so no pin loses contrast. None of them takes a tap. The scale bar and
   the map credits use the UI label role.
 - **Index** — no pictures above 56px, no card fills, no reveal on scroll.
-- **Document** — pictures at the text measure, a snap strip when there are two
-  or more, and a 65ch measure on prose.
+- **Document** — the pictures lead, as a carousel across the full width with
+  one picture at a time, and a 65ch measure on prose. The card and the browse
+  row cap the carousel at 240px, so the map stays in view.
 
 ## Banned in this app
 

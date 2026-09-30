@@ -3415,9 +3415,11 @@ body,
 }
 /* The hero of the phone card and the browse row (issue #108): the lead,
    shorter, bled to the edges of the card. The card keeps a strip of map above
-   it, so the hero stops at 240 px, or less on a short screen. The thumbs become dots, because a phone
-   swipes, and the ‹ › buttons show only where a pointer can hover. */
+   it, so the hero stops at 240 px, or less on a short screen. The thumbs
+   become dots, because a phone swipes, and the ‹ › buttons show only where a
+   pointer can hover. */
 .spread-lead.hero {
+  --dot: var(--space-xs);
   height: clamp(160px, var(--lead-h, 240px), min(240px, 36vh));
   margin: 0 calc(-1 * var(--space-md)) var(--space-xs);
 }
@@ -3430,8 +3432,8 @@ body,
   transform: translateX(-50%);
 }
 .spread-lead.hero .lead-thumbs button {
-  width: 8px;
-  height: 8px;
+  width: var(--dot);
+  height: var(--dot);
   border: 0;
   border-radius: var(--radius-pill);
   background: color-mix(in oklch, var(--color-paper-2) 45%, transparent);
@@ -3444,7 +3446,8 @@ body,
   display: none;
 }
 .spread-lead.hero.multi .spread-caption {
-  bottom: calc(var(--space-xs) + 16px);
+  /* Clear the dots, with the same gap as they keep from the foot. */
+  bottom: calc(2 * var(--space-xs) + var(--dot));
 }
 @media (hover: none) {
   .spread-lead.hero .lead-step {
@@ -3454,8 +3457,8 @@ body,
 /* The × sits on the picture, so it takes a dark disc to stay in view. */
 .card:has(> .spread-lead.hero) .card-close {
   z-index: 1;
-  width: 32px;
-  height: 32px;
+  width: calc(2 * var(--space-md));
+  height: calc(2 * var(--space-md));
   border-radius: var(--radius-pill);
   background: color-mix(in oklch, var(--color-ink) 60%, transparent);
   color: var(--color-paper-2);
