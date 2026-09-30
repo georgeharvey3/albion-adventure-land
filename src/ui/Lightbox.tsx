@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { type SiteImage } from '../data/types';
+import { KEY_RANK } from '../state/keys';
+import { useKeyLayer } from './useKeyLayer';
 
 // Full-screen viewer for a listing's guidebook pictures. Hand-rolled rather than
 // pulled from a library, for the same reason the geometry is (see CLAUDE.md):
@@ -238,16 +240,21 @@ export function Lightbox({
     return () => stage.removeEventListener('wheel', onWheel);
   }, [maxScale, zoomAbout]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowRight') go(1);
-      else if (e.key === 'ArrowLeft') go(-1);
-      else if (e.key === '0') reset();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [go, onClose, reset]);
+  // Modal: while the viewer is up, the arrows belong to the pictures and no key
+  // reaches the list or the card underneath.
+  useKeyLayer(
+    true,
+    KEY_RANK.lightbox,
+    ({ key }) => {
+      if (key === 'Escape') onClose();
+      else if (key === 'ArrowRight') go(1);
+      else if (key === 'ArrowLeft') go(-1);
+      else if (key === '0') reset();
+      else return false;
+      return true;
+    },
+    { modal: true },
+  );
 
   // Rendered into <body>, not in place. The detail card sets `z-index: 600`, which
   // makes it a stacking context: any z-index used inside it is resolved against

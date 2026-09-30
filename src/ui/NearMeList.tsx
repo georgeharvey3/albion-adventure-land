@@ -19,6 +19,8 @@ import {
   useFinderResults,
   useSiteFinder,
 } from "./SiteFinder";
+import { KEY_RANK, onEscape, stepCursor } from "../state/keys";
+import { useKeyLayer } from "./useKeyLayer";
 
 // Near me now (spec F4): every visible site sorted by haversine distance from
 // the current position, respecting the active type filter. Tap a row to open it
@@ -87,6 +89,11 @@ export function NearMeList() {
   const browse = useStore((s) => s.browse);
   const setBrowse = useStore((s) => s.setBrowse);
   const revealSite = useStore((s) => s.revealSite);
+  const lifted = useStore((s) => s.lifted);
+  const setLifted = useStore((s) => s.setLifted);
+  const dropLifted = useStore((s) => s.dropLifted);
+  const finderWanted = useStore((s) => s.finderWanted);
+  const takeFinderRequest = useStore((s) => s.takeFinderRequest);
 
   // Finding a site by name is a way of reading THIS list, like browse mode, so
   // it lives in the list's header rather than in the app chrome.
@@ -95,6 +102,7 @@ export function NearMeList() {
 
   const routeMode = !!position && !!destination;
   const expandedRef = useRef<HTMLLIElement | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
   const headRef = useRef<HTMLDivElement | null>(null);
   // Set when the open row should be brought to the top of the list — see the
   // scroll effect below. `smoothScroll` marks a row the reader tapped open.
@@ -196,21 +204,85 @@ export function NearMeList() {
     smoothScroll.current = false;
   }, [browse, selectedSiteId, limit, views]);
 
-  // Arrow keys do from the keyboard what the prev/next bar does with a tap.
-  // Skipped while a modal is up: the picture viewer binds the same two keys,
-  // and there the arrows belong to the pictures.
+  // Keys (issue #88). `j` and `k` move the cursor down and up the list, and
+  // the cursor lifts the row and its pin. `Enter` opens the row the cursor is
+  // on. In browse mode with a site open, `j`, `k` and the arrow keys do what
+  // the prev/next bar does with a tap. The picture viewer is a modal key
+  // layer, so none of this happens under it.
+  useKeyLayer(!finder.filtering, KEY_RANK.list, ({ key }) => {
+    const step = key === "j" || key === "ArrowRight" ? 1 : key === "k" || key === "ArrowLeft" ? -1 : 0;
+    if (browse && selectedSiteId && step) {
+      goToNeighbour(step);
+      return true;
+    }
+    if (key === "j" || key === "k") {
+      const next = stepCursor(
+        views.map((v) => v.site.id),
+        lifted?.id ?? selectedSiteId,
+        step as 1 | -1,
+      );
+      if (!next) return false;
+      setLifted({ id: next, by: "key" });
+      return true;
+    }
+    // Enter opens the keyboard cursor's row, never a site the mouse happens to
+    // rest on. And only a row the list shows: a lift can outlive the filter.
+    if (
+      key === "Enter" &&
+      lifted?.by === "key" &&
+      views.some((v) => v.site.id === lifted.id)
+    ) {
+      if (browse) {
+        pendingScroll.current = true;
+        smoothScroll.current = true;
+      }
+      setSelected(lifted.id);
+      return true;
+    }
+    return false;
+  });
+
+  useKeyLayer(finder.open, KEY_RANK.search, onEscape(finder.close));
+
+  // The `/` key asked for the finder. It may have switched the tab to this list
+  // first, so the request waits in the store until the list is here to take it.
   useEffect(() => {
-    if (!browse || !selectedSiteId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (document.querySelector('[aria-modal="true"]')) return;
-      e.preventDefault();
-      goToNeighbour(e.key === "ArrowRight" ? 1 : -1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [browse, selectedSiteId, goToNeighbour]);
+    if (!finderWanted) return;
+    takeFinderRequest();
+    finder.show();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finderWanted, takeFinderRequest]);
+
+  // Keep the cursor row on screen. Only a key moves the view: a row lifted by
+  // the mouse is already under it, and a pin lift must not scroll the list away
+  // from what the reader is looking at. The rows are read through a ref, so a
+  // GPS tick that re-sorts the list does not scroll it again.
+  const viewsRef = useRef(views);
+  viewsRef.current = views;
+  useEffect(() => {
+    if (lifted?.by !== "key") return;
+    const index = viewsRef.current.findIndex((v) => v.site.id === lifted.id);
+    if (index < 0) return;
+    if (index >= limit) {
+      setLimit(Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
+      return;
+    }
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-site-id="${CSS.escape(lifted.id)}"]`,
+    );
+    if (!row) return;
+    row.style.scrollMarginTop = `${headRef.current?.offsetHeight ?? 0}px`;
+    row.scrollIntoView({ block: "nearest" });
+  }, [lifted, limit]);
+
+  // A row lifts its pin under a mouse only. A touch has no hover, and the tap
+  // that follows it opens the site anyway.
+  const hoverProps = (id: string) => ({
+    onPointerEnter: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") setLifted({ id, by: "row" });
+    },
+    onPointerLeave: () => dropLifted(id),
+  });
 
   return (
     <div className={browse ? "list browse" : "list"}>
@@ -252,6 +324,7 @@ export function NearMeList() {
             const first = finderResults[0];
             if (first) pickFound(first.site);
           }}
+          focusRequest={finder.focusRequest}
         />
       )}
       {finder.filtering && (
@@ -289,12 +362,13 @@ export function NearMeList() {
         </p>
       )}
       {!finder.filtering && (
-        <ul>
+        <ul ref={listRef}>
           {views.slice(0, limit).map((view, i) => {
             const { site, distance, detour, progress, visited, wishlisted } =
               view;
             const selected = site.id === selectedSiteId;
             const expanded = browse && selected;
+            const liftedRow = lifted?.id === site.id;
             const trailing =
               detour !== null && progress !== null ? (
                 <span className="row-dist row-route">
@@ -315,8 +389,10 @@ export function NearMeList() {
               return (
                 <li
                   key={site.id}
-                  className={`row ${selected ? "selected" : ""} ${visited ? "is-visited" : ""}`}
+                  data-site-id={site.id}
+                  className={`row ${selected ? "selected" : ""} ${visited ? "is-visited" : ""} ${liftedRow ? "lifted" : ""}`}
                   onClick={() => setSelected(site.id)}
+                  {...hoverProps(site.id)}
                 >
                   <span
                     className="dot"
@@ -351,10 +427,12 @@ export function NearMeList() {
             return (
               <li
                 key={site.id}
+                data-site-id={site.id}
                 ref={expanded ? expandedRef : undefined}
                 className={`row browse ${expanded ? "expanded" : ""} ${
                   visited ? "is-visited" : ""
-                }`}
+                } ${liftedRow ? "lifted" : ""}`}
+                {...hoverProps(site.id)}
               >
                 <button
                   className="row-head"

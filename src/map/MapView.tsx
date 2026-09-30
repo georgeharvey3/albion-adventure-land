@@ -13,6 +13,9 @@ import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
 import { GlowLayer, glowAmount, pinScale, SPECK_BELOW } from './glowLayer';
 import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
+import { KEY_RANK, onEscape } from '../state/keys';
+import { PinPeek } from './pinPeek';
+import { registerKeyLayer } from '../ui/useKeyLayer';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -75,7 +78,16 @@ function shapeFor(category: SiteCategory): MarkerShape {
 // answers to, so Old Sarum reads as ruins *and* hillfort under either filter.
 // `fillColor` stays set for the single-colour case and as the fallback if the
 // map ever runs on the SVG renderer, where the stripes aren't drawn.
-function markerStyle(view: FilteredSiteView, selected: boolean, scale: number): ShapeMarkerOptions {
+//
+// A lifted pin (issue #88) — under the mouse, or the pin of the list row under
+// the mouse or the keyboard cursor — grows a little and takes a heavier ring.
+// A speck does not lift: it takes no tap, so it takes no hover either.
+function markerStyle(
+  view: FilteredSiteView,
+  selected: boolean,
+  scale: number,
+  lifted = false,
+): ShapeMarkerOptions {
   const { site, visited, wishlisted } = view;
   const shape = shapeFor(site.category);
   const base = shape === 'triangle' || shape === 'diamond' || shape === 'chevron' ? 7.5 : 6;
@@ -84,15 +96,22 @@ function markerStyle(view: FilteredSiteView, selected: boolean, scale: number): 
   // room, and there are 33 of them on a map of ~2,600, so nothing is crowded.
   const radius = colors.length > 1 ? base + 1 : base;
   const speck = !selected && scale < SPECK_BELOW;
+  const lift = lifted && !speck ? 1 : 0;
   return {
-    radius: selected ? radius + 3 : Math.max(1.5, radius * scale),
+    radius: selected ? radius + 3 : Math.max(1.5, radius * scale) + lift * 2.5,
     color: wishlisted ? '#f4a261' : visited ? '#2a2a2a' : '#fff',
-    weight: speck ? 0 : wishlisted ? 3 : visited ? 2 : 1.5,
+    weight: speck ? 0 : (wishlisted ? 3 : visited ? 2 : 1.5) + lift,
     interactive: !speck,
     fillColor: SITE_TYPE_COLORS[site.category],
     fillColors: colors,
     fillOpacity: 0.95,
   };
+}
+
+// A hover effect needs a mouse. On a touch screen a tap can send a synthetic
+// mouseover, and a peek left behind by a tap is noise (issue #87, Q9).
+function canHover(): boolean {
+  return window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false;
 }
 
 // "You are here" iconography. Blue is reserved for the user across the app —
@@ -138,6 +157,8 @@ export function MapView() {
   // The pin scale the markers were last styled at. Styling ~2,600 markers is
   // only worth doing when a zoom has actually changed it.
   const pinScaleRef = useRef(1);
+  const peekRef = useRef<PinPeek | null>(null);
+  const prevLiftedRef = useRef<string | null>(null);
 
   const views = useFilteredSites();
   const position = useStore((s) => s.position);
@@ -152,6 +173,20 @@ export function MapView() {
   const picking = useStore((s) => s.picking);
   const focus = useStore((s) => s.focus);
   const setDestination = useStore((s) => s.setDestination);
+  const lifted = useStore((s) => s.lifted);
+  const setLifted = useStore((s) => s.setLifted);
+  const dropLifted = useStore((s) => s.dropLifted);
+
+  /** Restyle one pin for the store's selection and lift, at the current pin
+   *  scale. A loop over every pin passes the store state in, read once. */
+  const restylePin = (id: string | null, state = useStore.getState()) => {
+    const entry = id ? markersRef.current.get(id) : undefined;
+    if (!entry) return;
+    const { selectedSiteId: selectedId, lifted: lift } = state;
+    entry.marker.setStyle(
+      markerStyle(entry.view, id === selectedId, pinScaleRef.current, id === lift?.id),
+    );
+  };
 
   // One-time map init.
   useEffect(() => {
@@ -269,6 +304,9 @@ export function MapView() {
     // a toggle, so the button opens a short menu. The choice is remembered
     // across launches, and the service worker caches every provider, so a
     // region browsed on any layer stays available with no signal.
+    // Released on unmount too, or an open menu's layer would outlive the map
+    // and take every Esc from then on.
+    let dropMenuKeys: (() => void) | null = null;
     const BasemapCtl = L.Control.extend({
       options: { position: 'topleft' as L.ControlPosition },
       onAdd() {
@@ -300,23 +338,25 @@ export function MapView() {
         const onOutside = (e: PointerEvent) => {
           if (!root.contains(e.target as Node)) setOpen(false);
         };
-        const onKey = (e: KeyboardEvent) => {
-          if (e.key === 'Escape') {
-            setOpen(false);
-            btn.focus();
-          }
-        };
+        // The open menu is the top key layer: Esc shuts it before anything else.
         const setOpen = (open: boolean) => {
           menu.hidden = !open;
           btn.setAttribute('aria-expanded', String(open));
           btn.classList.toggle('active', open);
+          dropMenuKeys?.();
+          dropMenuKeys = null;
           if (open) {
             document.addEventListener('pointerdown', onOutside, true);
-            document.addEventListener('keydown', onKey);
+            dropMenuKeys = registerKeyLayer({
+              rank: KEY_RANK.menu,
+              onKey: onEscape(() => {
+                setOpen(false);
+                btn.focus();
+              }),
+            });
             items.find((i) => i.id === basemapId)?.item.focus();
           } else {
             document.removeEventListener('pointerdown', onOutside, true);
-            document.removeEventListener('keydown', onKey);
           }
         };
         const pick = (id: BasemapId) => {
@@ -370,6 +410,8 @@ export function MapView() {
     // Specks take no tap (issue #74), so a tap on one would do nothing and look
     // broken. Say why instead. Only a tap near a speck counts: a tap on the
     // open sea is not an attempt to open a pin, and a hint there is noise.
+    peekRef.current = new PinPeek(map.getContainer());
+
     const hint = L.DomUtil.create('div', 'map-hint', map.getContainer());
     hint.setAttribute('role', 'status');
     hint.hidden = true;
@@ -465,6 +507,9 @@ export function MapView() {
       // The hint lives in the container, which outlives the map.
       window.clearTimeout(hintTimer);
       hint.remove();
+      dropMenuKeys?.();
+      peekRef.current?.remove();
+      peekRef.current = null;
       map.remove();
       mapRef.current = null;
     };
@@ -480,16 +525,21 @@ export function MapView() {
     layer.clearLayers();
     markersRef.current.clear();
 
-    const selectedId = useStore.getState().selectedSiteId;
+    const { selectedSiteId: selectedId, lifted: lift } = useStore.getState();
     const scale = pinScale(map.getZoom());
     pinScaleRef.current = scale;
     for (const view of views) {
       const { site } = view;
       const marker = shapeMarker([site.lat, site.lng], {
         shape: shapeFor(site.category),
-        ...markerStyle(view, site.id === selectedId, scale),
+        ...markerStyle(view, site.id === selectedId, scale, site.id === lift?.id),
       });
       marker.on('click', () => setSelected(site.id));
+      // Only an interactive pin gets these, so a speck never lifts.
+      marker.on('mouseover', () => {
+        if (canHover()) setLifted({ id: site.id, by: 'pin' });
+      });
+      marker.on('mouseout', () => dropLifted(site.id));
       marker.addTo(layer);
       markersRef.current.set(site.id, { marker, view });
     }
@@ -502,20 +552,78 @@ export function MapView() {
       const bounds = L.latLngBounds(views.map((v) => [v.site.lat, v.site.lng]));
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [views, setSelected]);
+  }, [views, setSelected, setLifted, dropLifted]);
 
   // Selection highlight: restyle only the previously- and newly-selected
   // markers instead of rebuilding the whole layer on every tap.
   useEffect(() => {
-    const markers = markersRef.current;
-    const restyle = (id: string | null, selected: boolean) => {
-      const entry = id ? markers.get(id) : undefined;
-      if (entry) entry.marker.setStyle(markerStyle(entry.view, selected, pinScaleRef.current));
-    };
-    restyle(prevSelectedRef.current, false);
-    restyle(selectedSiteId, true);
+    restylePin(prevSelectedRef.current);
+    restylePin(selectedSiteId);
     prevSelectedRef.current = selectedSiteId;
   }, [selectedSiteId]);
+
+  // The lift (issue #88), restyled the same way: only the two pins involved.
+  // A lifted pin comes to the front, so a neighbour never covers it.
+  useEffect(() => {
+    const id = lifted?.id ?? null;
+    if (id === prevLiftedRef.current) return;
+    restylePin(prevLiftedRef.current);
+    restylePin(id);
+    if (id) markersRef.current.get(id)?.marker.bringToFront();
+    prevLiftedRef.current = id;
+  }, [lifted]);
+
+  // The peek over a pin lifted by the mouse or by the keyboard. A row lift
+  // shows none: the row already names the site. Nor does the open site's pin:
+  // its card says more. The peek follows the pin as the map moves, and hides
+  // below the speck zoom, where no pin takes a hover.
+  //
+  // Keyed on the views too, so a filter change that hides the lifted site
+  // takes its peek away with it. The markers are rebuilt first (the effect
+  // above), so the lookup here always sees the current set.
+  useEffect(() => {
+    const map = mapRef.current;
+    const peek = peekRef.current;
+    if (!map || !peek) return;
+    const entry =
+      lifted && lifted.by !== 'row' && lifted.id !== selectedSiteId
+        ? markersRef.current.get(lifted.id)
+        : undefined;
+    if (!entry) {
+      peek.hide();
+      return;
+    }
+    const latlng = entry.marker.getLatLng();
+    const place = () => {
+      if (pinScale(map.getZoom()) < SPECK_BELOW) return peek.hide();
+      const at = map.latLngToContainerPoint(latlng);
+      const size = map.getSize();
+      if (at.x < 0 || at.y < 0 || at.x > size.x || at.y > size.y) return peek.hide();
+      peek.show(entry.view.site, at);
+    };
+    const hide = () => peek.hide();
+    place();
+    map.on('move zoomend', place);
+    map.on('zoomstart', hide);
+    return () => {
+      map.off('move zoomend', place);
+      map.off('zoomstart', hide);
+      peek.hide();
+    };
+  }, [lifted, selectedSiteId, views]);
+
+  // The keyboard cursor can land on a pin off the screen. Bring it in, so the
+  // keyboard previews a site as the mouse does. Keyed on the lift alone: a
+  // filter change or a tick must not pull the map back to the cursor after the
+  // user has panned away.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || lifted?.by !== 'key') return;
+    const entry = markersRef.current.get(lifted.id);
+    if (entry && pinScale(map.getZoom()) >= SPECK_BELOW) {
+      map.panInside(entry.marker.getLatLng(), { padding: [80, 80] });
+    }
+  }, [lifted]);
 
   // Resize the pins once a zoom settles (issue #74). Not on every frame of a
   // pinch: the canvas scales the pins with the map through the gesture anyway.
@@ -526,10 +634,8 @@ export function MapView() {
       const scale = pinScale(map.getZoom());
       if (scale === pinScaleRef.current) return;
       pinScaleRef.current = scale;
-      const selectedId = useStore.getState().selectedSiteId;
-      for (const [id, { marker, view }] of markersRef.current) {
-        marker.setStyle(markerStyle(view, id === selectedId, scale));
-      }
+      const state = useStore.getState();
+      for (const id of markersRef.current.keys()) restylePin(id, state);
     };
     map.on('zoomend', restyle);
     return () => {

@@ -2808,3 +2808,125 @@ body,
 .backup-status.error {
   color: var(--color-danger);
 }
+
+/* --- Hover and keyboard (issue #88) ------------------------------------------
+   The peek: a small plate over a pin under the mouse or the keyboard cursor
+   (src/map/pinPeek.ts). It sits above the pin on the map's own paper, and
+   takes no pointer events, so the pin under it keeps the hover. */
+.pin-peek {
+  position: absolute;
+  z-index: var(--z-overlay);
+  width: 168px;
+  transform: translate(-50%, calc(-100% - 14px));
+  padding: var(--space-2xs);
+  background: var(--color-paper-2);
+  border: var(--rule-hairline) solid var(--color-edge);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  pointer-events: none;
+}
+.pin-peek.below {
+  transform: translate(-50%, 14px);
+}
+.pin-peek[hidden] {
+  display: none;
+}
+.pin-peek-plate {
+  position: relative;
+  height: 96px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-3);
+}
+.pin-peek-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* No picture: the layer colour laid on like a wash — pale at the edges, the
+   pigment pooled off-centre, and the same paper grain as the map finish. */
+.pin-peek-plate.blank::before,
+.pin-peek-plate.blank::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.pin-peek-plate.blank::before {
+  background:
+    radial-gradient(ellipse 70% 60% at 35% 40%, transparent 0 40%, var(--color-paper-2) 100%),
+    linear-gradient(160deg, color-mix(in oklch, var(--color-paper-2) 45%, transparent), transparent 60%);
+}
+.pin-peek-plate.blank::after {
+  background: var(--color-ink);
+  opacity: 0.18;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0 -1.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-mask-image: var(--grain);
+  mask-image: var(--grain);
+  -webkit-mask-size: 160px;
+  mask-size: 160px;
+}
+.pin-peek-name {
+  margin-top: var(--space-2xs);
+  padding: 0 var(--space-3xs);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.2;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+.pin-peek-type {
+  padding: 0 var(--space-3xs) var(--space-3xs);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* A lifted row: the one whose pin the mouse is on, or the keyboard cursor.
+   A pencil rule down the left edge and a light wash — lighter than the accent
+   band a selected row wears, because a lift is a pointer, not a choice. */
+.row.lifted {
+  background: var(--color-paper-3);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+.row.selected.lifted {
+  background: var(--color-accent-soft);
+}
+
+/* Hover styles for a mouse only. A touch screen keeps a hover state after a
+   tap, and a lasting wash on the row you just tapped reads as a fault. */
+@media (hover: hover) and (pointer: fine) {
+  .row:not(.browse):hover,
+  .row-head:hover {
+    background: var(--color-paper-3);
+  }
+  .browse-toggle:hover,
+  .finder-toggle:hover,
+  .drop-pin-btn:hover,
+  .row-nav-btn:hover:not(:disabled) {
+    border-color: var(--color-ink);
+    background: var(--color-paper-3);
+  }
+  .basemap-item:not([aria-checked="true"]):hover {
+    background: var(--color-paper-3);
+  }
+  .browse-toggle.on:hover,
+  .finder-toggle.on:hover,
+  .drop-pin-btn.active:hover {
+    background: var(--color-accent-soft);
+    border-color: var(--color-accent-deep);
+  }
+  .chip:hover:not(:disabled),
+  .tab:not(.active):hover {
+    background: var(--color-paper-3);
+  }
+  .mode-opt:not(.on):hover {
+    color: var(--color-ink);
+    background: var(--color-paper-3);
+  }
+  .card-close:hover {
+    color: var(--color-ink);
+  }
+}
