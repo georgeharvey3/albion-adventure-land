@@ -20,6 +20,7 @@ import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
 import { pinSheet } from '../state/sheet';
+import { protoList, protoPinHeight, siteInSheet } from '../ui/SiteSheet.prototype';
 import { useSidePanel } from '../ui/useWideScreen';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
@@ -208,8 +209,12 @@ export function MapView({ desktop }: { desktop: boolean }) {
   const pickPin = useRef((_id: string) => {});
   pickPin.current = (id: string) => {
     if (!desktop) {
-      const { sheet, setSheet } = useStore.getState();
-      setSheet(pinSheet(sheet, sidePanel));
+      const { sheet, setSheet, selectedSiteId } = useStore.getState();
+      if (siteInSheet && !sidePanel) {
+        // PROTOTYPE: the site opens in the sheet.
+        if (!selectedSiteId) protoList.height = sheet;
+        setSheet(protoPinHeight());
+      } else setSheet(pinSheet(sheet, sidePanel));
     }
     setSelected(id);
   };
@@ -980,7 +985,9 @@ export function MapView({ desktop }: { desktop: boolean }) {
     if (!v) return;
     const latlng = L.latLng(v.site.lat, v.site.lng);
     const container = map.getContainer();
-    const card = container.parentElement?.querySelector<HTMLElement>('.card');
+    // PROTOTYPE: the site sheet stands in for the card.
+    const card = container.parentElement?.querySelector<HTMLElement>('.card') ??
+      document.querySelector<HTMLElement>('.sheet.site-mode');
     // The floating finder (issue #109) spans the top of the map, so the free
     // strip above the card starts under it.
     const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');

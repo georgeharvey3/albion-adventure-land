@@ -227,6 +227,8 @@ interface SiteBodyProps {
   /** The desktop spread (issue #90) shows the pictures as a carousel across
    *  the top, and lays the parts out in two columns. See siteBodyLayout.ts. */
   variant?: 'card' | 'spread';
+  /** PROTOTYPE: the card's parts in this order instead. */
+  order?: readonly SiteBodyPart[];
 }
 
 /** Everything there is to say about one site: pictures, write-up, listing links
@@ -238,6 +240,7 @@ export function SiteBody({
   showHeader = true,
   collapseDescription = true,
   variant = 'card',
+  order,
 }: SiteBodyProps) {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
@@ -477,7 +480,7 @@ export function SiteBody({
   const place = (names: readonly SiteBodyPart[]) =>
     names.map((name) => <Fragment key={name}>{parts[name]}</Fragment>);
 
-  if (variant === 'card') return <>{place(SITE_BODY_LAYOUT.card)}</>;
+  if (variant === 'card') return <>{place(order ?? SITE_BODY_LAYOUT.card)}</>;
   const { lead, main, side } = SITE_BODY_LAYOUT.spread;
   return (
     <>

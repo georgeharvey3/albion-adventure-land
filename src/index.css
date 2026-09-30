@@ -3648,3 +3648,72 @@ body,
 .desk-card .finder-field:has(input:placeholder-shown) .finder-close {
   display: none;
 }
+
+/* --- PROTOTYPE — throwaway (src/ui/SiteSheet.prototype.tsx) --------------- */
+.proto-site-head {
+  position: relative;
+  padding: 0 var(--space-md) var(--space-2xs);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.proto-site-head .card-title {
+  margin-bottom: var(--space-2xs);
+}
+.proto-close {
+  top: calc(var(--space-xs) * -1);
+}
+.proto-peek {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md) var(--space-sm);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.proto-peek-main {
+  flex: 1;
+  min-width: 0;
+}
+.proto-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: var(--leading-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proto-peek .proto-go {
+  flex: 0 0 auto;
+  margin-right: var(--space-lg);
+}
+.sheet.site-mode .sheet-body {
+  padding: 0;
+}
+.proto-site-body {
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-lg);
+}
+.proto-switcher {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-lightbox);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: #111;
+  color: #fff;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  white-space: nowrap;
+}
+.proto-switcher button {
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 18px;
+  padding: 0 var(--space-2xs);
+  cursor: pointer;
+}

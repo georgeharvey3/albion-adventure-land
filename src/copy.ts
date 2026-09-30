@@ -325,4 +325,16 @@ export const copy = {
     wrongApp: 'That file is not an Albion Adventure Land backup.',
     tooNew: 'That backup was made by a newer version of the app. Update the app first.',
   },
+
+  // PROTOTYPE — throwaway, see src/ui/SiteSheet.prototype.tsx.
+  prototype: {
+    previous: 'Previous variant',
+    next: 'Next variant',
+    labels: {
+      now: 'Now: card + rows',
+      A: 'A: site sheet, photos first',
+      B: 'B: site sheet, facts first',
+      C: 'C: peek, then page',
+    },
+  },
 } as const;

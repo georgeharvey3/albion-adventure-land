@@ -29,6 +29,13 @@ import {
 import { NO_INSETS } from '../map/insets';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
+import {
+  PrototypeSwitcher,
+  SiteSheetBody,
+  SiteSheetHead,
+  protoList,
+  siteInSheet,
+} from './SiteSheet.prototype';
 
 const TABS: SheetTab[] = ['near', 'filters', 'outing', 'stats'];
 
@@ -112,8 +119,21 @@ export function App() {
   // there closes the open site. A pin tap and a row tap move the sheet off the
   // middle height before they select, so they never land here.
   useEffect(() => {
+    if (siteInSheet) return; // PROTOTYPE
     if (!desktop && selectedSiteId && !opensAt(sheet, sidePanel)) setSelected(null);
   }, [desktop, sheet, sidePanel, selectedSiteId, setSelected]);
+
+  // PROTOTYPE: the site shows in the sheet in place of the list.
+  const sites = useStore((s) => s.sites);
+  const siteMode = siteInSheet && !desktop && !sidePanel;
+  const openSite = siteMode ? sites.find((x) => x.id === selectedSiteId) : undefined;
+  const hadSite = useRef(false);
+  useEffect(() => {
+    if (!siteMode) return;
+    // Closing the site (✕ or Esc) goes back to the list at its height.
+    if (hadSite.current && !openSite) setSheet(protoList.height);
+    hadSite.current = !!openSite;
+  }, [siteMode, openSite, setSheet]);
 
   // The middle sheet covers the lower half of the map, so a fitted journey or
   // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
@@ -192,7 +212,7 @@ export function App() {
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder />}
         {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
-        {selectedSiteId && !desktop && !inPlace && <SiteDetail />}
+        {selectedSiteId && !desktop && !inPlace && !siteMode && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
 
@@ -211,7 +231,7 @@ export function App() {
         <>
         <div
           ref={sheetRef}
-          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}`}
+          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}${openSite ? ' site-mode' : ''}`}
           style={{ ['--sheet-h' as string]: sheetPx !== null ? `${sheetPx}px` : undefined }}
         >
           {/* The head is the low height, so it shows at every height. The
@@ -225,7 +245,9 @@ export function App() {
             >
               <span className="sheet-grip" aria-hidden="true" />
             </button>
-            <JourneyBar />
+            {openSite && <SiteSheetHead site={openSite} />}
+            {!openSite && <JourneyBar />}
+            {!openSite && (
             <nav className="tabs">
               {TABS.map((id) => (
                 <button
@@ -240,15 +262,17 @@ export function App() {
                 </button>
               ))}
             </nav>
+            )}
           </div>
           {/* Mounted while a drag lifts the sheet off the low height, so the
               list rises with the finger. */}
           {(sheet !== 'low' || dragging) && (
-            <div className="sheet-body" ref={setSheetBody}>
-              {tab === 'near' && <NearMeList inPlace={inPlace} />}
-              {tab === 'filters' && <Filters />}
-              {tab === 'outing' && <Outing />}
-              {tab === 'stats' && <Stats />}
+            <div className="sheet-body" ref={setSheetBody} key={openSite?.id ?? 'list'}>
+              {openSite && <SiteSheetBody site={openSite} />}
+              {!openSite && tab === 'near' && <NearMeList inPlace={inPlace} />}
+              {!openSite && tab === 'filters' && <Filters />}
+              {!openSite && tab === 'outing' && <Outing />}
+              {!openSite && tab === 'stats' && <Stats />}
             </div>
           )}
         </div>
@@ -256,6 +280,7 @@ export function App() {
         {/* A panel over the sheet's own footprint, not a full screen: you are
             naming one end of a journey you can still see. */}
         <SearchOverlay />
+        <PrototypeSwitcher />
         </>
       )}
     </div>

@@ -14,6 +14,7 @@ import { SiteBody } from "./SiteDetail";
 import { CheckIcon, MapPinIcon, StarIcon } from "./icons";
 import { KEY_RANK, stepCursor } from "../state/keys";
 import { rowSheet, showOnMap } from "../state/sheet";
+import { protoList, siteInSheet } from "./SiteSheet.prototype";
 import { useKeyLayer } from "./useKeyLayer";
 import { useSidePanel } from "./useWideScreen";
 import { copy } from "../copy";
@@ -106,6 +107,12 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   /** Open a site from the list. A row opened at the middle height raises the
    *  sheet to full, so the write-up has the room to be read (state/sheet.ts). */
   const openRow = (id: string) => {
+    // PROTOTYPE: the site opens in the sheet at the height the list is at.
+    if (siteInSheet && !sidePanel) {
+      protoList.height = sheet;
+      setSelected(id);
+      return;
+    }
     setSheet(rowSheet(sheet, sidePanel));
     setSelected(id);
   };
