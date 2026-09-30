@@ -11,7 +11,8 @@ import { loadViewState, saveViewState } from '../state/viewState';
 import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
 import { COMPASS_ROSE } from './compassRose';
-import { GlowLayer, glowAmount, pinScale, SPECK_BELOW } from './glowLayer';
+import { GlowLayer, glowAmount } from './glowLayer';
+import { pinScale, SPECK_BELOW } from './zoomScale';
 import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
@@ -28,6 +29,13 @@ import { copy } from '../copy';
 // selecting a pin restyles just the two markers involved.
 
 const GB_CENTER: L.LatLngTuple = [53.0, -3.5];
+
+/** Padding that also keeps clear of the covered insets, so a fitted journey
+ *  or trip, or a pin brought into view, never lands under the chrome. */
+function fitPadding(pad: number): L.FitBoundsOptions & L.PanInsideOptions {
+  const { top, right, bottom, left } = useStore.getState().coveredInsets;
+  return { paddingTopLeft: [pad + left, pad + top], paddingBottomRight: [pad + right, pad + bottom] };
+}
 
 // Leaflet's vector options take a colour string, not a CSS variable, so the
 // accent has to be resolved out of the token layer once and cached. Reading it
@@ -140,7 +148,18 @@ const MANUAL_ICON = L.divIcon({
   iconAnchor: [13, 35],
 });
 
-export function MapView() {
+// Where the controls sit. On a phone: zoom and basemap at the top left, locate
+// at the bottom right, in thumb reach. In the desktop shell (issue #89) the
+// card has the top left, so all three stack in one column at the top right.
+// A top corner stacks down in the order the controls are placed.
+type ControlSet = { zoom: L.Control; basemap: L.Control; locate: L.Control };
+function placeControls({ zoom, basemap, locate }: ControlSet, desktop: boolean) {
+  zoom.setPosition(desktop ? 'topright' : 'topleft');
+  basemap.setPosition(desktop ? 'topright' : 'topleft');
+  locate.setPosition(desktop ? 'topright' : 'bottomright');
+}
+
+export function MapView({ desktop }: { desktop: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const siteLayerRef = useRef<L.LayerGroup | null>(null);
@@ -160,6 +179,11 @@ export function MapView() {
   const pinScaleRef = useRef(1);
   const peekRef = useRef<PinPeek | null>(null);
   const prevLiftedRef = useRef<string | null>(null);
+  const controlsRef = useRef<ControlSet | null>(null);
+  // Set the fence again, and report the view again, after the covered insets
+  // change. Both are set up with the map.
+  const refenceRef = useRef<(() => void) | null>(null);
+  const reportViewRef = useRef<(() => void) | null>(null);
 
   const views = useFilteredSites();
   const position = useStore((s) => s.position);
@@ -177,6 +201,8 @@ export function MapView() {
   const lifted = useStore((s) => s.lifted);
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
+  const coveredInsets = useStore((s) => s.coveredInsets);
+  const setViewport = useStore((s) => s.setViewport);
 
   /** Restyle one pin for the store's selection and lift, at the current pin
    *  scale. A loop over every pin passes the store state in, read once. */
@@ -221,7 +247,10 @@ export function MapView() {
     };
     fitFloor();
     map.on('resize', fitFloor);
-    fenceToPlate(map);
+    // The fence knows the covered insets (issue #87, Q19): the edge of the
+    // plate can go under the strip or the drawer, never into the part of the
+    // map that shows.
+    refenceRef.current = fenceToPlate(map, () => useStore.getState().coveredInsets);
     // A restored view is the user's view — don't let the fit-to-all-pins pass
     // below throw it away once the site data lands.
     if (saved) didFitRef.current = true;
@@ -229,6 +258,8 @@ export function MapView() {
     // Atlas is the map drawn for the app, so a first visit opens on it.
     let basemapId: BasemapId = loadViewState().basemap ?? 'atlas';
     basemapRef.current = createBasemap(basemapId).addTo(map);
+    // The CSS reads it: the desktop shell keeps the paper finish for Atlas.
+    map.getContainer().dataset.basemap = basemapId;
 
     // Dedicated panes for the "you are here" marker. The accuracy ring sits
     // *below* the site pins (it's a translucent wash — it must not tint them),
@@ -368,6 +399,7 @@ export function MapView() {
           const prev = basemapRef.current;
           basemapRef.current = createBasemap(basemapId).addTo(map);
           if (prev) map.removeLayer(prev);
+          map.getContainer().dataset.basemap = basemapId;
           saveViewState({ basemap: basemapId });
           paint();
         };
@@ -379,7 +411,8 @@ export function MapView() {
         return root;
       },
     });
-    map.addControl(new BasemapCtl());
+    const basemapCtl = new BasemapCtl();
+    map.addControl(basemapCtl);
 
     // "Zoom to me" control — bottom right, in thumb reach on a phone. It only
     // recentres; it never asks for a fix, so it is hidden until a location
@@ -406,7 +439,9 @@ export function MapView() {
         return btn;
       },
     });
-    map.addControl(new LocateCtl());
+    const locateCtl = new LocateCtl();
+    map.addControl(locateCtl);
+    controlsRef.current = { zoom: map.zoomControl, basemap: basemapCtl, locate: locateCtl };
 
     // Specks take no tap (issue #74), so a tap on one would do nothing and look
     // broken. Say why instead. Only a tap near a speck counts: a tap on the
@@ -467,6 +502,28 @@ export function MapView() {
     map.on('moveend', persist);
     window.addEventListener('pagehide', persist);
 
+    // Tell the strip what the user can see (issue #89): the view less the
+    // covered insets. On `moveend` only, so a pan stays free of work.
+    const reportView = () => {
+      const size = map.getSize();
+      if (!size.x || !size.y) return;
+      const { top, right, bottom, left } = useStore.getState().coveredInsets;
+      const nw = map.containerPointToLatLng([left, top]);
+      const se = map.containerPointToLatLng([size.x - right, size.y - bottom]);
+      const centre = map.containerPointToLatLng([
+        (left + size.x - right) / 2,
+        (top + size.y - bottom) / 2,
+      ]);
+      setViewport({
+        box: { south: se.lat, west: nw.lng, north: nw.lat, east: se.lng },
+        centre: { lat: centre.lat, lng: centre.lng },
+        zoom: map.getZoom(),
+      });
+    };
+    reportViewRef.current = reportView;
+    map.on('moveend', reportView);
+    reportView();
+
     // The map's height changes when the bottom sheet expands/collapses;
     // Leaflet only watches window resize, so track the container directly.
     const ro = new ResizeObserver(() => map.invalidateSize());
@@ -505,6 +562,7 @@ export function MapView() {
       creditsRo.disconnect();
       window.removeEventListener('pagehide', persist);
       map.off('moveend', persist);
+      map.off('moveend', reportView);
       // The hint lives in the container, which outlives the map.
       window.clearTimeout(hintTimer);
       hint.remove();
@@ -514,7 +572,18 @@ export function MapView() {
       map.remove();
       mapRef.current = null;
     };
-  }, [setPosition, setDestination]);
+  }, [setPosition, setDestination, setViewport]);
+
+  useEffect(() => {
+    if (controlsRef.current) placeControls(controlsRef.current, desktop);
+  }, [desktop]);
+
+  // The chrome moved, so the fence and the part of the map that shows moved
+  // with it. Setting the fence pans the map back inside it if needed.
+  useEffect(() => {
+    refenceRef.current?.();
+    reportViewRef.current?.();
+  }, [coveredInsets]);
 
   // Render site pins whenever the filtered set or visited/wishlist state
   // changes. Deliberately NOT keyed on position or selection: GPS ticks must
@@ -551,7 +620,7 @@ export function MapView() {
     if (!didFitRef.current && views.length) {
       didFitRef.current = true;
       const bounds = L.latLngBounds(views.map((v) => [v.site.lat, v.site.lng]));
-      map.fitBounds(bounds, { padding: [40, 40] });
+      map.fitBounds(bounds, fitPadding(40));
     }
   }, [views, setSelected, setLifted, dropLifted]);
 
@@ -599,7 +668,11 @@ export function MapView() {
       if (pinScale(map.getZoom()) < SPECK_BELOW) return peek.hide();
       const at = map.latLngToContainerPoint(latlng);
       const size = map.getSize();
-      if (at.x < 0 || at.y < 0 || at.x > size.x || at.y > size.y) return peek.hide();
+      // A pin under the desktop chrome is out of sight, like one off the map.
+      const { top, right, bottom, left } = useStore.getState().coveredInsets;
+      if (at.x < left || at.y < top || at.x > size.x - right || at.y > size.y - bottom) {
+        return peek.hide();
+      }
       peek.show(entry.view.site, at);
     };
     const hide = () => peek.hide();
@@ -611,7 +684,7 @@ export function MapView() {
       map.off('zoomstart', hide);
       peek.hide();
     };
-  }, [lifted, selectedSiteId, views]);
+  }, [lifted, selectedSiteId, views, coveredInsets]);
 
   // The keyboard cursor can land on a pin off the screen. Bring it in, so the
   // keyboard previews a site as the mouse does. Keyed on the lift alone: a
@@ -622,7 +695,8 @@ export function MapView() {
     if (!map || lifted?.by !== 'key') return;
     const entry = markersRef.current.get(lifted.id);
     if (entry && pinScale(map.getZoom()) >= SPECK_BELOW) {
-      map.panInside(entry.marker.getLatLng(), { padding: [80, 80] });
+      // Clear of the covered insets too, or the pin lands under the strip.
+      map.panInside(entry.marker.getLatLng(), fitPadding(80));
     }
   }, [lifted]);
 
@@ -688,7 +762,7 @@ export function MapView() {
     const fitKey = outing.stopIds.join(',');
     if (outingFitKeyRef.current !== fitKey) {
       outingFitKeyRef.current = fitKey;
-      map.fitBounds(L.latLngBounds(points), { padding: [50, 50] });
+      map.fitBounds(L.latLngBounds(points), fitPadding(50));
     }
   }, [outing, sites, position, setSelected]);
 
@@ -773,7 +847,7 @@ export function MapView() {
         [destination.lat, destination.lng],
       ]);
       if (route) for (const p of route.route.points) bounds.extend([p.lat, p.lng]);
-      map.fitBounds(bounds, { padding: [60, 60] });
+      map.fitBounds(bounds, fitPadding(60));
     }
   }, [position, destination, detourBudget, route]);
 
@@ -881,7 +955,11 @@ export function MapView() {
         const best = strips.reduce((a, b) => (b.area > a.area ? b : a));
         if (best.area > 0) target = best.at;
       }
-      map.panBy(map.latLngToContainerPoint(latlng).subtract(target));
+      // panTo, not panBy: panTo goes through setView, which holds the new
+      // centre inside the plate fence first. A panBy ran past the edge of the
+      // plate for a site near the coast, then sprang back on `moveend`.
+      const offset = map.latLngToContainerPoint(latlng).subtract(target);
+      map.panTo(map.containerPointToLatLng(size.divideBy(2).add(offset)));
     };
 
     pan();

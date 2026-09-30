@@ -2499,6 +2499,9 @@ body,
    carry. The focus ring is deliberately absent from this block: it has no
    transition to remove. */
 @media (prefers-reduced-motion: reduce) {
+  .frame {
+    transition: none;
+  }
   .me-marker--live .me-pulse {
     animation: none;
     opacity: 0.35;
@@ -2639,6 +2642,9 @@ body,
   padding: 0 var(--space-sm) var(--space-xs);
 }
 .search-shortcuts button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
   border: var(--rule-hairline) solid var(--color-edge);
   background: var(--color-paper-2);
   color: var(--color-accent);
@@ -2929,4 +2935,303 @@ body,
   .card-close:hover {
     color: var(--color-ink);
   }
+}
+
+/* --- Desktop shell (issue #89) ----------------------------------------------
+   From 1024 px (src/ui/useWideScreen.ts) the map fills the window. A card at
+   the top left holds the brand, the finder, the journey, the layer chips and
+   the tab buttons; the drawer opens under it; the strip runs along the bottom.
+   The shell sets --covered-left, --covered-right and --covered-bottom on .app
+   (the covered insets, src/map/insets.ts), and everything that floats over the
+   map keeps clear of them. */
+
+.app.desk .title-card {
+  right: 0;
+}
+
+.desk-rail {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: var(--z-sheet);
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+/* Open, the card and the drawer are one column down to the strip, so the
+   covered inset on the left is a true band. */
+.desk-rail.open {
+  bottom: calc(var(--covered-bottom) + var(--space-sm));
+}
+
+.desk-card,
+.desk-drawer {
+  background: var(--color-paper);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+.desk-card {
+  flex: 0 0 auto;
+  padding: var(--space-xs) var(--space-sm) 0;
+}
+.desk-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.desk-logo {
+  width: 28px;
+  height: 28px;
+}
+.desk-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-ink);
+}
+/* The journey bar spans the card edge to edge, as it spans the sheet. */
+.desk-card .journey-bar {
+  margin: var(--space-xs) calc(-1 * var(--space-sm)) 0;
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+.desk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: var(--space-xs);
+}
+.desk-chips .chip.mixed {
+  opacity: 0.7;
+}
+.desk-tabs {
+  display: flex;
+  margin: 0 calc(-1 * var(--space-sm));
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+
+.desk-drawer {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-xs) var(--space-sm) var(--space-md);
+}
+/* The journey search fills the drawer. It is not a modal here: the map, the
+   card and the strip stay in reach, and Esc or the ✕ close it. */
+.desk-drawer.bare {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+.desk-drawer .search-scrim {
+  display: none;
+}
+.desk-drawer .search-overlay {
+  position: static;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The strip: one row of frames floating on the bottom of the map. The paper
+   comes up from the bottom edge and fades out above the frames, so the map
+   shows through behind the heading and never ends in a hard band. It sits
+   under Leaflet's controls (z-index 1000), so the collapsed credits rest in
+   its right corner, in the band the padding keeps free under the frames. */
+.strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-sheet);
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  background: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--color-paper) 96%, transparent) 60%,
+    color-mix(in oklch, var(--color-paper) 0%, transparent)
+  );
+  pointer-events: none;
+}
+.strip > * {
+  pointer-events: auto;
+}
+/* What the order is measured from. A line of the page, so the serif. */
+.strip-head {
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-md);
+  color: var(--color-ink);
+}
+.strip-head.empty {
+  padding: var(--space-md) 0;
+  color: var(--color-muted);
+}
+.strip-row {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0;
+  /* Room for a frame to rise on hover without being clipped. */
+  padding: var(--space-xs) var(--space-3xs) var(--space-2xs);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.frame {
+  display: flex;
+  flex-direction: column;
+  width: 150px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-paper-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px var(--ink-shadow);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
+}
+.frame.lifted {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px var(--ink-shadow);
+}
+.frame.selected {
+  box-shadow: 0 0 0 2px var(--color-ink), 0 6px 18px var(--ink-shadow);
+}
+.strip-plate {
+  position: relative;
+  display: block;
+  height: 74px;
+  background: var(--color-paper-3);
+}
+.strip-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* No picture: the site's colour, pooled off-centre and darkening to the
+   edge, with the kind of site written across it. */
+.strip-plate.painted {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--tint),
+    color-mix(in oklch, var(--tint) 55%, var(--color-ink))
+  );
+}
+.strip-plate.painted i {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  color: var(--color-paper-2);
+  text-shadow: 0 1px 2px var(--ink-shadow);
+}
+.strip-badge {
+  position: absolute;
+  right: var(--space-2xs);
+  bottom: var(--space-2xs);
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-paper-2) 88%, transparent);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+.frame-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  /* Two lines of name, then the padding. */
+  box-sizing: content-box;
+  height: 2.3em;
+  padding: var(--space-2xs) var(--space-xs) var(--space-xs);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: var(--leading-display);
+}
+.frame-name .dot {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--radius-pill);
+}
+.frame-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.frame-text .icon {
+  vertical-align: -0.1em;
+  margin-right: var(--space-3xs);
+}
+
+/* The controls stack at the top right, clear of the spread when it comes. The
+   scale and the rose sit above the strip, clear of the open drawer. */
+.app.desk .leaflet-top.leaflet-right {
+  right: var(--covered-right);
+}
+.app.desk .leaflet-bottom.leaflet-left {
+  left: var(--covered-left);
+  bottom: var(--covered-bottom);
+}
+.app.desk .leaflet-bottom.leaflet-right {
+  right: var(--covered-right);
+}
+.leaflet-right .basemap-menu {
+  left: auto;
+  right: calc(100% + var(--space-2xs));
+}
+/* The credits rest as one line in the strip's corner, as on a phone, and a
+   click opens them (MapView.tsx). */
+.app.desk .leaflet-control-attribution {
+  cursor: pointer;
+}
+.app.desk .leaflet-control-attribution:not(.is-open) {
+  max-width: 16rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app.desk .leaflet-control-attribution.is-open {
+  max-width: min(40rem, 60vw);
+}
+
+/* The site card keeps clear of the control column and the strip. */
+.app.desk .card {
+  right: calc(var(--covered-right) + 56px);
+  bottom: calc(var(--covered-bottom) + var(--space-sm));
+  max-height: calc(100% - var(--covered-bottom) - 2 * var(--space-sm));
+}
+.app.desk .map-hint {
+  left: calc(var(--covered-left) + (100% - var(--covered-left) - var(--covered-right)) / 2);
+}
+
+/* The paper finish is for the Atlas basemap only in this shell. */
+.app.desk .map:not([data-basemap="atlas"]) .map-finish {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .frame:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px var(--ink-shadow);
+  }
+  .frame.selected:hover {
+    box-shadow: 0 0 0 2px var(--color-ink), 0 6px 18px var(--ink-shadow);
+  }
+}
+
+/* The finder is always open in the card, so its ✕ shows only with a query. */
+.desk-card .finder-field:has(input:placeholder-shown) .finder-close {
+  display: none;
 }

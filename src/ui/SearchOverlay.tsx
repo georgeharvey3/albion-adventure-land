@@ -7,7 +7,7 @@ import { parsePostcode } from '../search/postcode';
 import { canonical, matchScore } from '../search/normalize';
 import type { SearchResult } from '../search/types';
 import { formatDistance } from '../geo/haversine';
-import { FlagIcon, MapPinIcon } from './icons';
+import { FlagIcon, LocateFixedIcon, MapIcon, MapPinIcon } from './icons';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
@@ -239,6 +239,7 @@ export function SearchOverlay() {
               closeSearch();
             }}
           >
+            <LocateFixedIcon />
             {copy.search.useMyLocation}
           </button>
         )}
@@ -248,6 +249,7 @@ export function SearchOverlay() {
             closeSearch();
           }}
         >
+          <MapIcon />
           {copy.search.pickOnMap}
         </button>
       </div>

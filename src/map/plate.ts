@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import plate from './plate.json';
+import { fenceBox, type CoveredInsets } from './insets';
 
 // The painted plate: the Stamen Watercolor tiles that ship with the app
 // (`npm run plate`, scripts/build-plate.ts). They cover the box round every
@@ -26,24 +27,32 @@ export function plateHasTile({ x, y, z }: L.Coords): boolean {
 }
 
 /**
- * The pan limit at a zoom: the plate, widened on any axis where the view is
- * bigger than the plate, to exactly the view. That axis then cannot move.
- * Leaflet's own limit breaks there: a drag runs past the plate onto blank
- * map and springs back when it is let go.
+ * The pan limit at a zoom: the plate, grown by the covered insets and widened
+ * on any axis where the view is bigger (fenceBox, insets.ts). Leaflet's own
+ * limit breaks there: a drag runs past the plate onto blank map and springs
+ * back when it is let go.
  */
-function limitAt(map: L.Map, zoom: number): L.LatLngBounds {
-  const size = map.getSize();
-  const nw = map.project(PLATE_BOUNDS.getNorthWest(), zoom);
-  const se = map.project(PLATE_BOUNDS.getSouthEast(), zoom);
-  const pad = L.point(
-    Math.max(0, (size.x - (se.x - nw.x)) / 2),
-    Math.max(0, (size.y - (se.y - nw.y)) / 2),
+function limitAt(map: L.Map, zoom: number, insets: CoveredInsets): L.LatLngBounds {
+  const box = fenceBox(
+    {
+      min: map.project(PLATE_BOUNDS.getNorthWest(), zoom),
+      max: map.project(PLATE_BOUNDS.getSouthEast(), zoom),
+    },
+    map.getSize(),
+    insets,
   );
-  return L.latLngBounds(map.unproject(nw.subtract(pad), zoom), map.unproject(se.add(pad), zoom));
+  return L.latLngBounds(
+    map.unproject(L.point(box.min.x, box.min.y), zoom),
+    map.unproject(L.point(box.max.x, box.max.y), zoom),
+  );
 }
 
-/** Keep the map on the plate at every zoom and every screen size. */
-export function fenceToPlate(map: L.Map): void {
+/**
+ * Keep the part of the map that the user can see on the plate, at every zoom
+ * and every screen size. `insets` reads the covered insets now. Call the
+ * returned function when they change.
+ */
+export function fenceToPlate(map: L.Map, insets: () => CoveredInsets): () => void {
   // A zoom is limited before it lands, against the limit of the zoom it lands
   // on, so a zoom in near the edge never shows past the plate for a moment.
   // `_limitCenter` is Leaflet's, and the typings leave it out.
@@ -51,9 +60,12 @@ export function fenceToPlate(map: L.Map): void {
     _limitCenter(center: L.LatLng, zoom: number, bounds?: L.LatLngBounds): L.LatLng;
   };
   const leaflet = m._limitCenter.bind(map);
-  m._limitCenter = (center, zoom, bounds) => leaflet(center, zoom, bounds && limitAt(map, zoom));
+  m._limitCenter = (center, zoom, bounds) =>
+    leaflet(center, zoom, bounds && limitAt(map, zoom, insets()));
   // A drag reads the limit when it starts, so the limit follows the zoom.
-  const update = () => map.setMaxBounds(limitAt(map, map.getZoom()));
+  // Leaflet pans the map back inside a new limit when one is set.
+  const update = () => map.setMaxBounds(limitAt(map, map.getZoom(), insets()));
   map.on('zoomend resize', update);
   update();
+  return update;
 }

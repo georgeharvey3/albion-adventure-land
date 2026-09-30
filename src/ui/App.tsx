@@ -10,6 +10,8 @@ import { Stats } from './Stats';
 import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
+import { DesktopShell } from './DesktopShell';
+import { useWideScreen } from './useWideScreen';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
@@ -28,6 +30,10 @@ export function App() {
   const setBrowse = useStore((s) => s.setBrowse);
   const setSelected = useStore((s) => s.setSelected);
   const requestFinder = useStore((s) => s.requestFinder);
+  const insets = useStore((s) => s.coveredInsets);
+  // The shell (issue #89): the desktop shell from 1024 px, the sheet below.
+  // Both share the store, the map and the site card.
+  const desktop = useWideScreen();
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
@@ -67,10 +73,17 @@ export function App() {
   // behind whichever tab happened to be open. Clearing it changes nothing —
   // the user goes back to what they were doing.
   useEffect(() => {
-    if (!destination) return;
+    if (!destination || desktop) return;
     setTab('near');
     setCollapsed(false);
+    // Only a new destination moves the sheet, not a change of shell.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination]);
+
+  // The desktop shell has no browse mode: the map and the strip show together.
+  useEffect(() => {
+    if (desktop && browse) setBrowse(false);
+  }, [desktop, browse, setBrowse]);
 
   useGeolocation();
 
@@ -80,21 +93,31 @@ export function App() {
   useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
   // Last, the sheet: browse mode ends first, then the sheet folds down.
   useKeyLayer(
-    browse || !collapsed,
+    !desktop && (browse || !collapsed),
     KEY_RANK.sheet,
     onEscape(() => (browse ? setBrowse(false) : setCollapsed(true))),
   );
-  // `/` puts the cursor in the site finder, which lives in the Nearby tab.
+  // `/` puts the cursor in the site finder. On a phone it lives in the Nearby
+  // tab; on a desktop it is in the card.
   useKeyLayer(true, KEY_RANK.list, ({ key }) => {
     if (key !== '/') return false;
-    setTab('near');
-    setCollapsed(false);
+    if (!desktop) {
+      setTab('near');
+      setCollapsed(false);
+    }
     requestFinder();
     return true;
   });
 
   return (
-    <div className="app">
+    <div
+      className={desktop ? 'app desk' : 'app'}
+      style={{
+        ['--covered-left' as string]: `${insets.left}px`,
+        ['--covered-right' as string]: `${insets.right}px`,
+        ['--covered-bottom' as string]: `${insets.bottom}px`,
+      }}
+    >
       {/* The card is positioned inside .map-area so it hugs the bottom of the
           map — i.e. it sits just above the sheet whether the sheet is expanded
           or collapsed, and never depends on viewport-height math.
@@ -103,8 +126,8 @@ export function App() {
           the Leaflet map down would throw away the view the reader is coming
           back to and rebuild every marker on return. Its ResizeObserver picks
           the size back up. */}
-      <div className={browse ? 'map-area hidden' : 'map-area'}>
-        <MapView />
+      <div className={browse && !desktop ? 'map-area hidden' : 'map-area'}>
+        <MapView desktop={desktop} />
         {selectedSiteId && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
@@ -118,49 +141,55 @@ export function App() {
         </div>
       )}
 
-      <div className={`sheet ${collapsed ? 'collapsed' : ''} ${browse ? 'browse' : ''}`}>
-        {/* Persistent, above the tabs and outside the collapse: the journey
-            anchor governs every tab, so it must not disappear with the body. */}
-        <JourneyBar />
-        <nav className="tabs">
-          {TABS.map((id) => (
-            <button
-              key={id}
-              className={!collapsed && tab === id ? 'tab active' : 'tab'}
-              onClick={() => selectTab(id)}
-            >
-              {copy.app.tabs[id]}
-              {id === 'outing' && tripCount > 0 && (
-                <span className="tab-badge">{tripCount}</span>
-              )}
-            </button>
-          ))}
-          {/* Nothing to collapse towards while the map is hidden. */}
-          {!browse && (
-            <button
-              className="tab collapse-toggle"
-              onClick={() => setCollapsed((c) => !c)}
-              aria-expanded={!collapsed}
-              aria-label={collapsed ? copy.app.expand : copy.app.collapse}
-              title={collapsed ? copy.app.expand : copy.app.collapse}
-            >
-              {collapsed ? '▲' : '▼'}
-            </button>
+      {desktop ? (
+        <DesktopShell />
+      ) : (
+        <>
+        <div className={`sheet ${collapsed ? 'collapsed' : ''} ${browse ? 'browse' : ''}`}>
+          {/* Persistent, above the tabs and outside the collapse: the journey
+              anchor governs every tab, so it must not disappear with the body. */}
+          <JourneyBar />
+          <nav className="tabs">
+            {TABS.map((id) => (
+              <button
+                key={id}
+                className={!collapsed && tab === id ? 'tab active' : 'tab'}
+                onClick={() => selectTab(id)}
+              >
+                {copy.app.tabs[id]}
+                {id === 'outing' && tripCount > 0 && (
+                  <span className="tab-badge">{tripCount}</span>
+                )}
+              </button>
+            ))}
+            {/* Nothing to collapse towards while the map is hidden. */}
+            {!browse && (
+              <button
+                className="tab collapse-toggle"
+                onClick={() => setCollapsed((c) => !c)}
+                aria-expanded={!collapsed}
+                aria-label={collapsed ? copy.app.expand : copy.app.collapse}
+                title={collapsed ? copy.app.expand : copy.app.collapse}
+              >
+                {collapsed ? '▲' : '▼'}
+              </button>
+            )}
+          </nav>
+          {!collapsed && (
+            <div className="sheet-body">
+              {tab === 'near' && <NearMeList />}
+              {tab === 'filters' && <Filters />}
+              {tab === 'outing' && <Outing />}
+              {tab === 'stats' && <Stats />}
+            </div>
           )}
-        </nav>
-        {!collapsed && (
-          <div className="sheet-body">
-            {tab === 'near' && <NearMeList />}
-            {tab === 'filters' && <Filters />}
-            {tab === 'outing' && <Outing />}
-            {tab === 'stats' && <Stats />}
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* A panel over the sheet's own footprint, not a full screen: you are
-          naming one end of a journey you can still see. */}
-      <SearchOverlay />
+        {/* A panel over the sheet's own footprint, not a full screen: you are
+            naming one end of a journey you can still see. */}
+        <SearchOverlay />
+        </>
+      )}
     </div>
   );
 }

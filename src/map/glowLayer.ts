@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import { categoryColorsOf } from '../data/types';
 import type { FilteredSiteView } from '../state/selectors';
+import { smoothstep } from './zoomScale';
 
 // The national-zoom glow (issue #74). Across the whole of Britain ~2,600 pins
 // read as scattered crumbs; a soft wash in each layer's colour shows where the
@@ -26,9 +27,6 @@ import type { FilteredSiteView } from '../state/selectors';
 const FADE_FROM = 6.5;
 const FADE_TO = 8;
 
-/** Below this share of full size a pin is a speck: no ring, no tap. */
-export const SPECK_BELOW = 0.7;
-
 // Glow radius on the ground, clamped in pixels so it neither vanishes at z4
 // nor floods a county at z7.
 const RADIUS_M = 14000;
@@ -42,19 +40,9 @@ const GLOW_ALPHA = 0.8;
 /** Share of the viewport drawn beyond each edge, so a pan shows no bare edge. */
 const PAD = 0.4;
 
-function smoothstep(t: number): number {
-  const c = Math.min(1, Math.max(0, t));
-  return c * c * (3 - 2 * c);
-}
-
 /** 1 at national zoom, 0 from z8. */
 export function glowAmount(zoom: number): number {
   return 1 - smoothstep((zoom - FADE_FROM) / (FADE_TO - FADE_FROM));
-}
-
-/** Pin size as a share of full size: a speck at z5, full size by z9. */
-export function pinScale(zoom: number): number {
-  return 0.3 + 0.7 * smoothstep((zoom - 5) / 4);
 }
 
 const SPRITE_SIZE = 128;

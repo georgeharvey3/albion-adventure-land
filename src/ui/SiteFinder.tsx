@@ -132,6 +132,7 @@ export function SiteFinderField({
   onClose,
   onPickFirst,
   focusRequest,
+  focusOnMount = true,
 }: {
   query: string;
   onQuery: (next: string) => void;
@@ -139,10 +140,15 @@ export function SiteFinderField({
   onPickFirst: () => void;
   /** A change puts the cursor back in the field (the `/` key, issue #88). */
   focusRequest: number;
+  /** In the Nearby list the field opens on a tap, so it takes the cursor. In
+   *  the desktop card it is always there, and the cursor waits for `/`. */
+  focusOnMount?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+  const firstRequest = useRef(focusRequest);
   useEffect(() => {
-    ref.current?.focus();
+    if (focusOnMount || focusRequest !== firstRequest.current) ref.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusRequest]);
 
   return (

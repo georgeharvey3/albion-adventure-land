@@ -98,6 +98,7 @@ export const CheckIcon = (p: IconProps) => <Icon name="check" {...p} />;
 export const StarIcon = (p: IconProps) => <Icon name="star" {...p} />;
 export const LayersIcon = (p: IconProps) => <Icon name="layers" {...p} />;
 export const SearchIcon = (p: IconProps) => <Icon name="search" {...p} />;
+export const LocateFixedIcon = (p: IconProps) => <Icon name="locateFixed" {...p} />;
 
 /**
  * The same icon as a standalone SVG string, for the two places that build their
