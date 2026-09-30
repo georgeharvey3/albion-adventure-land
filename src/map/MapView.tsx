@@ -19,7 +19,6 @@ import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
-import { pinSheet } from '../state/sheet';
 import { useSidePanel } from '../ui/useWideScreen';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
@@ -200,19 +199,12 @@ export function MapView({ desktop }: { desktop: boolean }) {
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
   // A pin tap on a phone (issue #112) opens the site in the sheet at the
-  // peek, so the pin stays in view above it (state/sheet.ts). The site is
-  // selected first, so the store keeps the height the list was at. Both
-  // updates land in one render. The pins are built in effects, so they call
-  // it through a ref.
+  // height the sheet is at: the peek from the low height, the hero picture
+  // from the middle one. The pins are built in effects, so they call it
+  // through a ref.
   const sidePanel = useSidePanel();
   const pickPin = useRef((_id: string) => {});
-  pickPin.current = (id: string) => {
-    setSelected(id);
-    if (!desktop) {
-      const { sheet, setSheet } = useStore.getState();
-      setSheet(pinSheet(sheet, sidePanel));
-    }
-  };
+  pickPin.current = (id: string) => setSelected(id);
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);

@@ -66,13 +66,9 @@ export function listInPlace(s: {
 // The tabs hide, and the journey bar stays. At the low height the sheet is
 // the peek: one row with a thumbnail, the name, the type and distance,
 // Directions and ×, and the pin stays in view above it. The middle height adds
-// the hero picture, and the full height is the whole page. The side panel
-// keeps the floating card and the rows that open in place.
-
-/** The height after a tap on a pin: a phone opens the peek. */
-export function pinSheet(height: SheetHeight, sidePanel: boolean): SheetHeight {
-  return sidePanel ? height : 'low';
-}
+// the hero picture, and the full height is the whole page. A site opens at
+// the height the sheet is at, from a pin or from a row. The side panel keeps
+// the floating card and the rows that open in place.
 
 /** The height the list comes back at when the open site closes: the height
  *  when the site opened. A step to another site keeps it. */

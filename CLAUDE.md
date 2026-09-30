@@ -430,11 +430,14 @@ owner chose this design from a prototype (variant C, the branch
   sheet head. So the peek is the low height, and a drag on it moves the sheet.
 - The peek is one row: a thumbnail, the name, the type and distance,
   Directions and ×. It shows no number except the distance.
-- A pin tap opens the site at the peek (`pinSheet`). The middle height adds
-  the hero picture under the peek. The full height shows the whole page. A
-  tap on the name raises the sheet one height, as the handle does.
-- A row tap, or any other selection, opens the site at the current height.
-  A site saved from the last session opens at the middle height.
+- A site opens at the height that the sheet is at. A pin tap from the low
+  height opens the peek. A pin tap from the middle height keeps the middle
+  height, where the hero picture shows under the peek. The full height shows
+  the whole page. A tap on the name raises the sheet one height, as the
+  handle does.
+- A row tap follows the same rule. A site found by the map search opens at
+  the peek, because the search lowers the sheet to show the map. A site saved
+  from the last session opens at the middle height.
 - The body is the card layout without its header (`SiteSheetBody`). So
   `siteBodyLayout.ts` has no phone layout.
 - × or `Esc` closes the site. The list comes back at the height it was at

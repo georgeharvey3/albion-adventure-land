@@ -5,7 +5,6 @@ import {
   dragIntent,
   listHeight,
   listInPlace,
-  pinSheet,
   sameStops,
   sheetStops,
   showOnMap,
@@ -103,14 +102,6 @@ test('the same three heights are the same stops', () => {
   assert.equal(sameStops(stops, sheetStops(667, 96)), true);
   assert.equal(sameStops(stops, sheetStops(668, 96)), false);
   assert.equal(sameStops(null, stops), false);
-});
-
-test('a pin tap on a phone opens the site at the peek', () => {
-  assert.equal(pinSheet('mid', false), 'low');
-  assert.equal(pinSheet('low', false), 'low');
-  assert.equal(pinSheet('full', false), 'low');
-  // The side panel shows the card beside the list already.
-  assert.equal(pinSheet('mid', true), 'mid');
 });
 
 test('the list height is the height when a site opened', () => {
