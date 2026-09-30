@@ -18,6 +18,7 @@
 // one shared pair of legs rather than each helper redoing the work.
 
 import { haversine, type LatLng } from './haversine';
+import { copy } from '../copy';
 
 export interface CorridorMetrics {
   /** Extra metres driven by stopping here versus going straight through. */
@@ -67,15 +68,15 @@ function projectionAlong(legFrom: number, legTo: number, direct: number): number
 
 /** "62% of the way" — progress as a whole-number percentage. */
 export function formatProgress(p: number): string {
-  return `${Math.round(p * 100)}% of the way`;
+  return copy.route.progress(Math.round(p * 100));
 }
 
 /** "+4 km detour" / "on the route" when the extra distance rounds to nothing. */
 export function formatDetour(metres: number): string {
-  if (metres < 100) return 'on the route';
-  if (metres < 1000) return `+${Math.round(metres / 50) * 50} m detour`;
-  if (metres < 10000) return `+${(metres / 1000).toFixed(1)} km detour`;
-  return `+${Math.round(metres / 1000)} km detour`;
+  if (metres < 100) return copy.route.onRoute;
+  if (metres < 1000) return copy.route.detour(copy.units.m(Math.round(metres / 50) * 50));
+  if (metres < 10000) return copy.route.detour(copy.units.km((metres / 1000).toFixed(1)));
+  return copy.route.detour(copy.units.km(Math.round(metres / 1000)));
 }
 
 /** Detour budgets offered in the UI, metres. Deliberately coarse — this is a

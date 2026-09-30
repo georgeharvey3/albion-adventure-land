@@ -30,6 +30,7 @@
 
 import type { LatLng } from './haversine';
 import type { CorridorMetrics } from './corridor';
+import { copy } from '../copy';
 
 /** A resolved road route: the driven line, and what driving it costs. */
 export interface Route {
@@ -144,8 +145,8 @@ export function routeDetour(site: LatLng, prep: PreparedRoute): number {
 /** "2 h 40" / "45 min" — driving time, rounded the way a driver reads it. */
 export function formatDuration(seconds: number): string {
   const mins = Math.round(seconds / 60);
-  if (mins < 60) return `${mins} min`;
+  if (mins < 60) return copy.units.min(mins);
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  return m === 0 ? `${h} h` : `${h} h ${m}`;
+  return m === 0 ? copy.units.h(h) : copy.units.hMin(h, m);
 }

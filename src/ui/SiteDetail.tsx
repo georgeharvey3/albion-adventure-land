@@ -17,6 +17,7 @@ import { Lightbox } from './Lightbox';
 import { BanIcon, CheckIcon, ClockIcon, FlagIcon, StarIcon } from './icons';
 import { OpeningTimes } from './OpeningTimes';
 import { PubGradeMark } from './PubGradeMark';
+import { copy } from '../copy';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
 // toggles, and the single-site Google Maps directions handoff (spec F5, F7).
@@ -31,12 +32,12 @@ import { PubGradeMark } from './PubGradeMark';
 function sourceLinkLabel(url: string): string {
   try {
     const host = new URL(url).hostname;
-    if (host.includes('ukclimbing')) return 'UKClimbing';
+    if (host.includes('ukclimbing')) return copy.site.viaUkc;
     if (host.includes('camra') || host.includes('heritagepubs') || host.includes('pubheritage'))
-      return 'CAMRA Heritage Pubs';
+      return copy.site.viaCamra;
     return host.replace(/^www\./, '');
   } catch {
-    return 'source';
+    return copy.site.viaUnknown;
   }
 }
 
@@ -64,14 +65,14 @@ function SiteEntries({ entries, collapsed }: { entries: SiteEntry[]; collapsed: 
         <section className="card-entry" key={`${entry.source}-${i}`}>
           <span className="card-entry-label">
             <span className="dot" style={{ background: SITE_TYPE_COLORS[entry.category] }} />
-            {PARENT_CATEGORY_LABELS[parentOf(entry.category)]} entry
+            {copy.site.entry(PARENT_CATEGORY_LABELS[parentOf(entry.category)])}
           </span>
           {entry.description && (
             <p className={collapsed ? 'card-desc collapsed' : 'card-desc'}>{entry.description}</p>
           )}
           {entry.sourceUrl && (
             <p className="card-source">
-              Description via{' '}
+              {copy.site.via}{' '}
               <a href={entry.sourceUrl} target="_blank" rel="noreferrer">
                 {sourceLinkLabel(entry.sourceUrl)} ↗
               </a>
@@ -105,7 +106,7 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
             <button
               className="shot-open"
               onClick={() => setOpened(i)}
-              aria-label={img.caption ? `Enlarge: ${img.caption}` : 'Enlarge picture'}
+              aria-label={img.caption ? copy.site.enlarge(img.caption) : copy.site.enlargePicture}
             >
               <img
                 src={`${import.meta.env.BASE_URL}${img.url}`}
@@ -213,7 +214,7 @@ export function SiteBody({
               title={hybridTitle(site)}
             />
             {SITE_TYPE_LABELS[site.category]}
-            {distance !== null ? ` · ${formatDistance(distance)} away` : ''}
+            {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
           </div>
           <h2 className="card-title">{site.name}</h2>
         </>
@@ -224,22 +225,22 @@ export function SiteBody({
       <PubGradeMark site={site} />
       {visited && (
         <div className="badge visited">
-          <CheckIcon /> Visited {visited.visitedAt.slice(0, 10)}
+          <CheckIcon /> {copy.site.visitedOn(visited.visitedAt.slice(0, 10))}
         </div>
       )}
       {wishlisted && !visited && (
         <div className="badge wish">
-          <StarIcon filled /> Wishlist
+          <StarIcon filled /> {copy.site.wishlist}
         </div>
       )}
       {hidden && (
         <div className="badge">
-          <BanIcon /> Hidden
+          <BanIcon /> {copy.site.hidden}
         </div>
       )}
       {parent && (
         <p className="card-listing">
-          Part of{' '}
+          {copy.site.partOf}{' '}
           <button className="link" onClick={() => openRelated(parent.id)}>
             {parent.listingTitle ?? parent.name}
           </button>
@@ -247,10 +248,10 @@ export function SiteBody({
       )}
       {site.walkTime && (
         <p className="card-meta">
-          <ClockIcon /> Walk in: {site.walkTime}
+          <ClockIcon /> {copy.site.walkIn(site.walkTime)}
         </p>
       )}
-      {site.access && <p className="card-meta">Access: {site.access}</p>}
+      {site.access && <p className="card-meta">{copy.site.access(site.access)}</p>}
       <OpeningTimes site={site} />
       {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
       {site.entries ? (
@@ -268,14 +269,14 @@ export function SiteBody({
           onClick={() => setDescCollapsed((c) => !c)}
           aria-expanded={!descCollapsed}
         >
-          {descCollapsed ? 'Show more ▾' : 'Show less ▴'}
+          {descCollapsed ? copy.site.showMore : copy.site.showLess}
         </button>
       )}
       {/* A merged site carries its attribution inside each entry, next to the
           text that came from it. */}
       {!site.entries && site.sourceUrl && (
         <p className="card-source">
-          Description via{' '}
+          {copy.site.via}{' '}
           <a href={site.sourceUrl} target="_blank" rel="noreferrer">
             {sourceLinkLabel(site.sourceUrl)} ↗
           </a>
@@ -284,7 +285,7 @@ export function SiteBody({
 
       {children.length > 0 && (
         <div className="card-listing">
-          <span className="card-listing-label">Nearby in this listing</span>
+          <span className="card-listing-label">{copy.site.nearbyInListing}</span>
           <ul className="listing-children">
             {children.map((c) => (
               <li key={c.id}>
@@ -304,13 +305,13 @@ export function SiteBody({
           target="_blank"
           rel="noreferrer"
         >
-          Directions ↗
+          {copy.site.directions}
         </a>
         {/* Browse mode hides the map, so the way back to it is an explicit
             action rather than a mode the reader has to remember to leave. */}
         {onShowOnMap && (
           <button className="btn" onClick={onShowOnMap}>
-            Show on map
+            {copy.site.showOnMap}
           </button>
         )}
         {site.postcode && (
@@ -320,35 +321,35 @@ export function SiteBody({
             target="_blank"
             rel="noreferrer"
           >
-            View on Google Maps ↗
+            {copy.site.viewOnGoogle}
           </a>
         )}
         {visited ? (
           <button className="btn" onClick={() => unmarkVisited(site.id)}>
-            Unmark visited
+            {copy.site.unmarkVisited}
           </button>
         ) : (
           <button className="btn" onClick={() => markVisited(site.id)}>
-            Mark visited
+            {copy.site.markVisited}
           </button>
         )}
         <button className="btn" onClick={() => toggleWishlist(site.id)}>
           {wishlisted ? <StarIcon filled /> : <StarIcon />}{' '}
-          {wishlisted ? 'On wishlist' : 'Wishlist'}
+          {wishlisted ? copy.site.onWishlist : copy.site.wishlist}
         </button>
         <button className="btn" onClick={() => toggleHidden(site.id)}>
-          <BanIcon /> {hidden ? 'Unhide' : 'Hide'}
+          <BanIcon /> {hidden ? copy.site.unhide : copy.site.hide}
         </button>
         {/* The common road-trip entry point (issue #14): "I'm driving to this
             castle — what's on the way?" Needs no position of its own; the
             journey's From end is whatever anchor the app already has. */}
         {isDestination ? (
           <button className="btn dest on" onClick={() => setDestination(null)}>
-            <FlagIcon /> Destination
+            <FlagIcon /> {copy.site.destination}
           </button>
         ) : (
           <button className="btn dest" onClick={() => setDestinationFromSite(site.id)}>
-            <FlagIcon /> Set as destination
+            <FlagIcon /> {copy.site.setDestination}
           </button>
         )}
         {/* Trip = today's ordered subset. Adding needs a position to order the
@@ -358,21 +359,21 @@ export function SiteBody({
         {isDestination ? (
           // Already the route's fixed final stop (issue #15) — adding it as a
           // via as well would just visit it twice.
-          <button className="btn trip" disabled title="Already the end of your trip">
-            + Add to trip
+          <button className="btn trip" disabled title={copy.site.alreadyEnd}>
+            {copy.site.addToTrip}
           </button>
         ) : inTrip ? (
           <button className="btn trip on" onClick={() => removeFromTrip(site.id)}>
-            <CheckIcon /> In trip
+            <CheckIcon /> {copy.site.inTrip}
           </button>
         ) : (
           <button
             className="btn trip"
             onClick={() => addToTrip(site.id)}
             disabled={!position}
-            title={position ? undefined : 'Drop a location on the map to start a trip'}
+            title={position ? undefined : copy.site.needsLocation}
           >
-            + Add to trip
+            {copy.site.addToTrip}
           </button>
         )}
       </div>
@@ -390,7 +391,7 @@ export function SiteDetail() {
 
   return (
     <div className="card" role="dialog" aria-label={site.name}>
-      <button className="card-close" onClick={() => setSelected(null)} aria-label="Close">
+      <button className="card-close" onClick={() => setSelected(null)} aria-label={copy.site.close}>
         ×
       </button>
       <SiteBody site={site} />

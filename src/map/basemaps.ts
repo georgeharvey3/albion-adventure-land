@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import { MapLabels } from './mapLabels';
 import { PLATE_MAX_ZOOM, plateHasTile } from './plate';
+import { copy } from '../copy';
 
 // The three base layers the map can wear. Street is plain OpenStreetMap, the
 // map every reader already knows how to read, with the lanes and the names
@@ -62,7 +63,6 @@ interface TileSpec {
 }
 
 interface BasemapSpec extends TileSpec {
-  label: string;
   attribution: string;
   /** Layers drawn over the base, in back-to-front order. */
   overlays?: (TileSpec | 'tint')[];
@@ -115,7 +115,6 @@ function esri(service: string): TileSpec {
 
 const SPECS: Record<BasemapId, BasemapSpec> = {
   street: {
-    label: 'Street',
     // OSM's own tiles have no @2x and stop at z19. Their usage policy asks for
     // the attribution below and for light use, which a visiting companion is.
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -124,7 +123,6 @@ const SPECS: Record<BasemapId, BasemapSpec> = {
     subdomains: 'abc',
   },
   atlas: {
-    label: 'Atlas',
     ...esri('World_Topo_Map'),
     // Nothing is fetched from the topo sheet until the crossing.
     minZoom: WATERCOLOR_LAST_ZOOM,
@@ -147,7 +145,6 @@ const SPECS: Record<BasemapId, BasemapSpec> = {
     names: true,
   },
   satellite: {
-    label: 'Satellite',
     ...esri('World_Imagery'),
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
     // Places before transportation: the road casings should draw over the label
@@ -160,7 +157,7 @@ const SPECS: Record<BasemapId, BasemapSpec> = {
 };
 
 export function basemapLabel(id: BasemapId): string {
-  return SPECS[id].label;
+  return copy.map.basemaps[id];
 }
 
 function tileLayer(spec: TileSpec, attribution: string | undefined, zIndex: number): L.TileLayer {

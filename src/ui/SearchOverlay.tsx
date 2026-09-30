@@ -10,6 +10,7 @@ import { formatDistance } from '../geo/haversine';
 import { FlagIcon, MapPinIcon } from './icons';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
+import { copy } from '../copy';
 
 // The search overlay (issue #28). Opened from either end of the journey bar,
 // and it fills THAT end — which is why there is no "start or destination?"
@@ -29,12 +30,7 @@ import { useKeyLayer } from './useKeyLayer';
 
 const DEBOUNCE_MS = 200;
 
-const SECTION_TITLES: Record<SearchResult['kind'], string> = {
-  coords: 'Coordinates',
-  postcode: 'Postcode',
-  site: 'Sites',
-  place: 'Places',
-};
+const SECTION_TITLES: Record<SearchResult['kind'], string> = copy.search.sections;
 
 /**
  * Coordinates and postcodes always lead — typing one is an unambiguous
@@ -183,24 +179,24 @@ export function SearchOverlay() {
   const looksLikePostcode = !!parsePostcode(query.trim());
   const emptyMessage =
     looksLikePostcode && !gazetteer?.outcodes.size
-      ? 'Postcode lookup needs a signal in this build — try a town or place name instead.'
+      ? copy.search.postcodeNeedsSignal
       : looksLikePostcode && !navigator.onLine
-        ? 'That postcode isn’t in the offline set. Try its district (the first half) or a nearby town.'
+        ? copy.search.postcodeOffline
         : navigator.onLine
-          ? 'Nothing found.'
-          : 'Nothing found — you’re offline, so only saved places are searchable.';
+          ? copy.search.nothing
+          : copy.search.nothingOffline;
 
   return (
     <>
       {/* Tapping past the panel is "never mind" — the same thing the ✕ does. */}
       <div className="search-scrim" onClick={closeSearch} aria-hidden="true" />
-      <div className="search-overlay" role="dialog" aria-modal="true" aria-label="Search for a place">
+      <div className="search-overlay" role="dialog" aria-modal="true" aria-label={copy.search.dialog}>
       <header className="search-head">
         <span className="search-for">
           {isOrigin ? <MapPinIcon /> : <FlagIcon />}
-          {isOrigin ? 'Start from' : 'Travel to'}
+          {isOrigin ? copy.search.startFrom : copy.search.travelTo}
         </span>
-        <button className="search-close" onClick={closeSearch} aria-label="Close search">
+        <button className="search-close" onClick={closeSearch} aria-label={copy.search.close}>
           ✕
         </button>
       </header>
@@ -211,15 +207,15 @@ export function SearchOverlay() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Town, site, postcode or grid ref"
+          placeholder={copy.search.placeholder}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-label={isOrigin ? 'Search for a place to start from' : 'Search for a destination'}
+          aria-label={isOrigin ? copy.search.originField : copy.search.destinationField}
         />
         {query && (
-          <button className="search-clear" onClick={() => setQuery('')} aria-label="Clear">
+          <button className="search-clear" onClick={() => setQuery('')} aria-label={copy.search.clear}>
             ✕
           </button>
         )}
@@ -243,7 +239,7 @@ export function SearchOverlay() {
               closeSearch();
             }}
           >
-            📍 Use my location
+            {copy.search.useMyLocation}
           </button>
         )}
         <button
@@ -252,7 +248,7 @@ export function SearchOverlay() {
             closeSearch();
           }}
         >
-          🗺 Pick on the map
+          {copy.search.pickOnMap}
         </button>
       </div>
 
@@ -278,8 +274,8 @@ export function SearchOverlay() {
                       {/* Only "cached" is worth a badge: it explains why a place
                           you once looked up online is still here with no signal. */}
                       {r.source === 'cached' && (
-                        <span className="search-result-badge" title="Saved from an earlier search">
-                          saved
+                        <span className="search-result-badge" title={copy.search.savedTitle}>
+                          {copy.search.saved}
                         </span>
                       )}
                     </span>
@@ -290,7 +286,7 @@ export function SearchOverlay() {
           </section>
         ))}
 
-        {typed && searching && <p className="search-status">Looking for more…</p>}
+        {typed && searching && <p className="search-status">{copy.search.searching}</p>}
       </div>
 
       {gazetteer?.attribution && <p className="search-attribution">{gazetteer.attribution}</p>}

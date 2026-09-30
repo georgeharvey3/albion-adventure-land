@@ -13,13 +13,9 @@ import { TitleCard } from './TitleCard';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
+import { copy } from '../copy';
 
-const TABS: { id: SheetTab; label: string }[] = [
-  { id: 'near', label: 'Nearby' },
-  { id: 'filters', label: 'Filters' },
-  { id: 'outing', label: 'Outing' },
-  { id: 'stats', label: 'Saved' },
-];
+const TABS: SheetTab[] = ['near', 'filters', 'outing', 'stats'];
 
 export function App() {
   const init = useStore((s) => s.init);
@@ -114,10 +110,11 @@ export function App() {
       </div>
 
       {/* The title card says it for itself while it is up. */}
-      {!dataLoaded && !titleOpen && <div className="overlay">Loading sites…</div>}
+      {!dataLoaded && !titleOpen && <div className="overlay">{copy.app.loading}</div>}
       {dataError && (
         <div className="overlay error">
-          Couldn't load site data: {dataError}. Run <code>npm run ingest</code>.
+          {copy.app.loadFailed.before(dataError)} <code>{copy.app.loadFailed.command}</code>
+          {copy.app.loadFailed.after}
         </div>
       )}
 
@@ -126,13 +123,13 @@ export function App() {
             anchor governs every tab, so it must not disappear with the body. */}
         <JourneyBar />
         <nav className="tabs">
-          {TABS.map(({ id, label }) => (
+          {TABS.map((id) => (
             <button
               key={id}
               className={!collapsed && tab === id ? 'tab active' : 'tab'}
               onClick={() => selectTab(id)}
             >
-              {label}
+              {copy.app.tabs[id]}
               {id === 'outing' && tripCount > 0 && (
                 <span className="tab-badge">{tripCount}</span>
               )}
@@ -144,8 +141,8 @@ export function App() {
               className="tab collapse-toggle"
               onClick={() => setCollapsed((c) => !c)}
               aria-expanded={!collapsed}
-              aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
-              title={collapsed ? 'Expand panel' : 'Collapse panel'}
+              aria-label={collapsed ? copy.app.expand : copy.app.collapse}
+              title={collapsed ? copy.app.expand : copy.app.collapse}
             >
               {collapsed ? '▲' : '▼'}
             </button>

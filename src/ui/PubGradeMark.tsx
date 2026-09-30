@@ -1,5 +1,6 @@
 import { MAX_PUB_GRADE, pubGrade, type Site } from '../data/types';
 import { StarIcon } from './icons';
+import { copy } from '../copy';
 
 // The pub's CAMRA heritage grade, on its listing. Pubs only: every other layer
 // renders nothing here.
@@ -17,11 +18,11 @@ export function PubGradeMark({ site }: { site: Site }) {
 
   return (
     <p className="card-grade">
-      <span className="grade-label">CAMRA heritage</span>
+      <span className="grade-label">{copy.pubGrade.label}</span>
       <span
         className="grade-stars"
         role="img"
-        aria-label={`${grade} of ${MAX_PUB_GRADE} stars`}
+        aria-label={copy.pubGrade.stars(grade, MAX_PUB_GRADE)}
       >
         {Array.from({ length: MAX_PUB_GRADE }, (_, i) => (
           <StarIcon key={i} filled={i < grade} className={i < grade ? 'on' : 'off'} />

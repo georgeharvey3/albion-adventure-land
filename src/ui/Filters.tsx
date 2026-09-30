@@ -13,6 +13,7 @@ import {
   type ParentCategory,
   type SiteCategory,
 } from '../data/types';
+import { copy } from '../copy';
 
 // Type filter (spec F3): toggle site types on/off; affects both map and list.
 // Two-level taxonomy. Each top-level layer (Folklore, Historic pubs) leads with a
@@ -86,14 +87,14 @@ export function Filters() {
           onClick={() => setTypesActive(allLeaves, true)}
           disabled={allTypesOn}
         >
-          Select all
+          {copy.filters.selectAll}
         </button>
         <button
           className="link-btn"
           onClick={() => setTypesActive(allLeaves, false)}
           disabled={noTypesOn}
         >
-          Deselect all
+          {copy.filters.deselectAll}
         </button>
       </div>
 
@@ -134,14 +135,14 @@ export function Filters() {
                   {PARENT_CATEGORY_LABELS[parent]}
                 </span>
                 <span className="layer-count">
-                  {allOn || !hasSubs ? groupCount : `${activeCount}/${leaves.length} types`}
+                  {allOn || !hasSubs ? groupCount : copy.filters.typesOn(activeCount, leaves.length)}
                 </span>
               </button>
               <button
                 className={`layer-switch ${allOn ? 'on' : noneOn ? 'off' : 'mixed'}`}
                 onClick={() => setTypesActive(leaves, !allOn)}
                 aria-pressed={allOn}
-                aria-label={`Show ${PARENT_CATEGORY_LABELS[parent]}`}
+                aria-label={copy.filters.show(PARENT_CATEGORY_LABELS[parent])}
               >
                 <span className="switch" aria-hidden="true" />
               </button>
@@ -155,14 +156,14 @@ export function Filters() {
                     onClick={() => setTypesActive(leaves, true)}
                     disabled={allOn}
                   >
-                    Select all
+                    {copy.filters.selectAll}
                   </button>
                   <button
                     className="link-btn"
                     onClick={() => setTypesActive(leaves, false)}
                     disabled={noneOn}
                   >
-                    Deselect all
+                    {copy.filters.deselectAll}
                   </button>
                 </div>
                 {leaves.map((type) => {
@@ -229,10 +230,11 @@ function TagFilter({
     <div className="layer-tags">
       <div className="subs-controls">
         <span className="tags-title">
-          Tags{selected > 0 ? ` · ${selected} selected` : ''}
+          {copy.filters.tags}
+          {selected > 0 ? copy.filters.tagsSelected(selected) : ''}
         </span>
         <button className="link-btn" onClick={() => clearTags(parent)} disabled={selected === 0}>
-          Clear
+          {copy.filters.clear}
         </button>
       </div>
       {shown.map(([tag, count]) => {
@@ -251,7 +253,7 @@ function TagFilter({
       })}
       {tags.length > TAGS_COLLAPSED && (
         <button className="link-btn tags-more" onClick={() => setExpanded(!expanded)}>
-          {expanded ? 'Show fewer tags' : `Show all ${tags.length} tags`}
+          {expanded ? copy.filters.fewerTags : copy.filters.allTags(tags.length)}
         </button>
       )}
     </div>

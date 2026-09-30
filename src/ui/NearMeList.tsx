@@ -21,6 +21,7 @@ import {
 } from "./SiteFinder";
 import { KEY_RANK, onEscape, stepCursor } from "../state/keys";
 import { useKeyLayer } from "./useKeyLayer";
+import { copy } from "../copy";
 
 // Near me now (spec F4): every visible site sorted by haversine distance from
 // the current position, respecting the active type filter. Tap a row to open it
@@ -289,15 +290,13 @@ export function NearMeList() {
       <div className="list-head" ref={headRef}>
         {!position && (
           <p className="hint">
-            {geoError ?? "Finding your location… "} Use the <MapPinIcon />{" "}
-            button on the map to drop a manual location.
+            {geoError ?? copy.near.locating} {copy.near.dropPin.before}{" "}
+            <MapPinIcon /> {copy.near.dropPin.after}
           </p>
         )}
         {position && !destination && (
           <p className="hint">
-            {views.length} sites{" "}
-            {position.manual ? "from your dropped pin" : "near you"}, nearest
-            first.
+            {copy.near.count(views.length, !!position.manual)}
           </p>
         )}
         {/* The one way in and out of browse mode. It lives with the list rather
@@ -311,7 +310,8 @@ export function NearMeList() {
           }}
           aria-pressed={browse}
         >
-          {browse ? <MapIcon /> : <ListIcon />} {browse ? "Map" : "Browse"}
+          {browse ? <MapIcon /> : <ListIcon />}{" "}
+          {browse ? copy.near.map : copy.near.browse}
         </button>
         <SiteFinderToggle open={finder.open} onToggle={finder.toggle} />
       </div>
@@ -333,8 +333,7 @@ export function NearMeList() {
       {routeMode && !finder.filtering && (
         <div className="route-head">
           <p className="hint">
-            {views.length} {views.length === 1 ? "site" : "sites"} on the way to{" "}
-            {destination.label}.
+            {copy.near.onTheWay(views.length, destination.label)}
           </p>
           {/* Travel order answers "what's next?"; least detour answers "what's
               cheapest?". Both are useful on the same corridor, so the sort is a
@@ -344,22 +343,19 @@ export function NearMeList() {
               className={routeSort === "progress" ? "mode-opt on" : "mode-opt"}
               onClick={() => setRouteSort("progress")}
             >
-              Travel order
+              {copy.near.travelOrder}
             </button>
             <button
               className={routeSort === "detour" ? "mode-opt on" : "mode-opt"}
               onClick={() => setRouteSort("detour")}
             >
-              Least detour
+              {copy.near.leastDetour}
             </button>
           </div>
         </div>
       )}
       {routeMode && !finder.filtering && views.length === 0 && (
-        <p className="hint">
-          Nothing within this detour budget. Widen it in the bar above, or turn
-          more layers on in Filters.
-        </p>
+        <p className="hint">{copy.near.noneInBudget}</p>
       )}
       {!finder.filtering && (
         <ul ref={listRef}>
@@ -486,11 +482,11 @@ export function NearMeList() {
                         disabled={!prev}
                         aria-label={
                           prev
-                            ? `Previous site: ${prev.site.name}`
-                            : "No previous site"
+                            ? copy.near.previousSite(prev.site.name)
+                            : copy.near.noPrevious
                         }
                       >
-                        <span className="row-nav-dir">‹ Previous</span>
+                        <span className="row-nav-dir">{copy.near.previous}</span>
                         {prev && (
                           <span className="row-nav-name">{prev.site.name}</span>
                         )}
@@ -500,10 +496,12 @@ export function NearMeList() {
                         onClick={() => goToNeighbour(1)}
                         disabled={!next}
                         aria-label={
-                          next ? `Next site: ${next.site.name}` : "No next site"
+                          next
+                            ? copy.near.nextSite(next.site.name)
+                            : copy.near.noNext
                         }
                       >
-                        <span className="row-nav-dir">Next ›</span>
+                        <span className="row-nav-dir">{copy.near.next}</span>
                         {next && (
                           <span className="row-nav-name">{next.site.name}</span>
                         )}
@@ -522,10 +520,9 @@ export function NearMeList() {
             className="link"
             onClick={() => setLimit((n) => n + PAGE_SIZE)}
           >
-            Show {Math.min(PAGE_SIZE, views.length - limit)} more
+            {copy.near.showMore(Math.min(PAGE_SIZE, views.length - limit))}
           </button>{" "}
-          ({views.length - limit} {routeMode ? "further along" : "further away"}
-          )
+          {copy.near.remaining(views.length - limit, routeMode)}
         </p>
       )}
     </div>

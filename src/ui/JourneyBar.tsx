@@ -2,6 +2,7 @@ import { useStore } from '../state/store';
 import { DETOUR_BUDGETS } from '../geo/corridor';
 import { formatDuration } from '../geo/route';
 import { formatDistance, haversine } from '../geo/haversine';
+import { copy } from '../copy';
 
 // The Origin → Destination bar (issue #14). ONE control, sitting above the
 // tabs, that turns the whole app from a point query into a corridor query:
@@ -47,7 +48,7 @@ import { formatDistance, haversine } from '../geo/haversine';
 // reads exactly like an armed destination here.
 
 function budgetLabel(metres: number): string {
-  return metres < 1000 ? `${metres} m` : `${Math.round(metres / 1000)} km`;
+  return metres < 1000 ? copy.units.m(metres) : copy.units.km(Math.round(metres / 1000));
 }
 
 export function JourneyBar() {
@@ -68,10 +69,10 @@ export function JourneyBar() {
   // you the map is now waiting for you.
   const originLabel =
     picking === 'origin'
-      ? 'Tap the map…'
+      ? copy.journey.picking
       : !position
-        ? 'Locating…'
-        : (position.label ?? (position.manual ? 'Dropped pin' : 'My location'));
+        ? copy.journey.locating
+        : (position.label ?? (position.manual ? copy.journey.droppedPin : copy.journey.myLocation));
   // Anything the user set by hand — a searched anchor or a dropped pin — gets
   // the reset button. It is the only way back to live GPS now that the map's
   // drop-pin control is gone. Live GPS itself has nothing to reset to.
@@ -87,14 +88,14 @@ export function JourneyBar() {
   const journeySummary = route
     ? `${formatDistance(route.route.distance)} · ${formatDuration(route.route.duration)}`
     : position && destination
-      ? `${formatDistance(haversine(position, destination))} direct`
+      ? copy.journey.direct(formatDistance(haversine(position, destination)))
       : null;
 
   const destinationValue = destination
     ? destination.label
     : picking === 'destination'
-      ? 'Tap the map…'
-      : 'Optional';
+      ? copy.journey.picking
+      : copy.journey.optional;
 
   return (
     <div className="journey-bar">
@@ -116,19 +117,19 @@ export function JourneyBar() {
             aria-pressed={picking === 'origin'}
             title={
               picking === 'origin'
-                ? 'Tap the map to set where you are, or tap here to cancel'
-                : 'Search for somewhere to start from'
+                ? copy.journey.originPickingTitle
+                : copy.journey.originTitle
             }
           >
-            <span className="journey-label">Origin</span>
+            <span className="journey-label">{copy.journey.origin}</span>
             <span className="journey-value">{originLabel}</span>
           </button>
           {overriddenOrigin && (
             <button
               className="journey-reset"
               onClick={useMyLocation}
-              aria-label="Back to my location"
-              title="Back to my location"
+              aria-label={copy.journey.backToMe}
+              title={copy.journey.backToMe}
             >
               ⟲
             </button>
@@ -159,13 +160,13 @@ export function JourneyBar() {
             aria-pressed={picking === 'destination'}
             title={
               destination
-                ? `${destination.label} — tap to change`
+                ? copy.journey.changeDestination(destination.label)
                 : picking === 'destination'
-                  ? 'Tap the map to set your destination, or tap here to cancel'
-                  : 'Search for a destination'
+                  ? copy.journey.destinationPickingTitle
+                  : copy.journey.destinationTitle
             }
           >
-            <span className="journey-label">Destination</span>
+            <span className="journey-label">{copy.journey.destination}</span>
             <span className={destination ? 'journey-value' : 'journey-value unset'}>
               {destinationValue}
             </span>
@@ -174,8 +175,8 @@ export function JourneyBar() {
             <button
               className="journey-reset"
               onClick={() => setDestination(null)}
-              aria-label="Clear destination"
-              title="Clear destination (back to near-me)"
+              aria-label={copy.journey.clearDestination}
+              title={copy.journey.clearDestinationTitle}
             >
               ✕
             </button>
@@ -186,11 +187,11 @@ export function JourneyBar() {
       {destination && (
         <div className="journey-controls">
           <label className="journey-budget">
-            detour ≤{' '}
+            {copy.journey.detour}{' '}
             <select
               value={detourBudget}
               onChange={(e) => setDetourBudget(Number(e.target.value))}
-              aria-label="Detour budget"
+              aria-label={copy.journey.detourBudget}
             >
               {DETOUR_BUDGETS.map((m) => (
                 <option key={m} value={m}>
@@ -204,12 +205,10 @@ export function JourneyBar() {
       )}
 
       {picking === 'destination' && !destination && (
-        <p className="journey-hint">
-          Tap where you're heading, or open a site and choose “Set as destination”.
-        </p>
+        <p className="journey-hint">{copy.journey.destinationHint}</p>
       )}
       {picking === 'origin' && (
-        <p className="journey-hint">Tap where you are, or where you'll be setting out from.</p>
+        <p className="journey-hint">{copy.journey.originHint}</p>
       )}
     </div>
   );

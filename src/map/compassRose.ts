@@ -1,3 +1,5 @@
+import { copy } from '../copy';
+
 // The compass rose in the map's bottom-left corner (issue #73). It is the app
 // logo (public/favicon.svg) redrawn as a printed mark: the same four long
 // needles, four short ones and the triskele at the heart, in one ink instead
@@ -18,7 +20,7 @@ const SPIRAL = 'M256 256 C256 206 318 186 336 226 C350 258 318 280 296 262 C284 
 
 const turn = (deg: number, body: string) => `<g transform="rotate(${deg})">${body}</g>`;
 
-export const COMPASS_ROSE = `<span class="compass-n">N</span><svg viewBox="-32 -32 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="miter">
+export const COMPASS_ROSE = `<span class="compass-n">${copy.map.north}</span><svg viewBox="-32 -32 64 64" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="miter">
 <circle r="30" stroke-width="0.75"/>
 <circle r="25" stroke-width="0.75" stroke-dasharray="0.5 2.5"/>
 ${[45, 135, 225, 315].map((d) => turn(d, `<path class="rose-paper" d="${SHORT}"/>`)).join('')}

@@ -1,5 +1,6 @@
 import { gridRefToLatLng } from '../geo/osgb';
 import type { SearchResult } from './types';
+import { copy } from '../copy';
 
 // Typed-in coordinates (issue #28). Entirely local — this is the one search
 // result that is identical online and off, and it is how you follow a grid
@@ -53,7 +54,7 @@ export function parseCoords(query: string): SearchResult | null {
     let lng = Number(lngRaw);
     if (latHem?.toUpperCase() === 'S') lat = -Math.abs(lat);
     if (lngHem?.toUpperCase() === 'W') lng = -Math.abs(lng);
-    if (inRange(lat, lng)) return result(lat, lng, 'Coordinates');
+    if (inRange(lat, lng)) return result(lat, lng, copy.search.coordinates);
   }
 
   const dms = DMS.exec(query);
@@ -63,14 +64,14 @@ export function parseCoords(query: string): SearchResult | null {
     let lng = Number(lngD) + Number(lngM) / 60 + Number(lngS) / 3600;
     if (latHem.toUpperCase() === 'S') lat = -lat;
     if (lngHem.toUpperCase() === 'W') lng = -lng;
-    if (inRange(lat, lng)) return result(lat, lng, 'Coordinates');
+    if (inRange(lat, lng)) return result(lat, lng, copy.search.coordinates);
   }
 
   const grid = gridRefToLatLng(query);
   if (grid) {
-    const out = result(grid.lat, grid.lng, `Grid ref ${query.toUpperCase().trim()}`);
+    const out = result(grid.lat, grid.lng, copy.search.gridRef(query.toUpperCase().trim()));
     out.label = query.toUpperCase().replace(/\s+/g, ' ').trim();
-    out.detail = `Grid reference · ${grid.lat.toFixed(4)}, ${grid.lng.toFixed(4)}`;
+    out.detail = copy.search.gridRefDetail(grid.lat.toFixed(4), grid.lng.toFixed(4));
     return out;
   }
 
