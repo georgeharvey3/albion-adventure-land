@@ -37,14 +37,10 @@ export function middleFrame(
 
 /** Whether the row shows: on a phone, at the low height, with no site open.
  *  An open site's peek takes the low height, and the list covers the map at
- *  the other heights. */
-export function rowShown(s: {
-  phone: boolean;
-  sheet: SheetHeight;
-  dragging: boolean;
-  siteOpen: boolean;
-}): boolean {
-  return s.phone && s.sheet === 'low' && !s.dragging && !s.siteOpen;
+ *  the other heights. The row stays through a drag, under the rising sheet,
+ *  so the covered inset changes only when the sheet rests. */
+export function rowShown(s: { phone: boolean; sheet: SheetHeight; siteOpen: boolean }): boolean {
+  return s.phone && s.sheet === 'low' && !s.siteOpen;
 }
 
 /** A pin tap while the row shows. The first tap lifts the pin and brings its

@@ -23,6 +23,10 @@ import { useSidePanel } from '../ui/useWideScreen';
 import { useStrip } from '../ui/Strip';
 import { PIN_MARGIN, pinInSight, pinTap } from '../state/phoneStrip';
 
+/** How long, in ms, a lift from the phone's picture row must rest before the
+ *  map pans to it. */
+const LIFT_REST = 150;
+
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
 // directly (no react-leaflet) to keep the dependency surface minimal.
@@ -215,7 +219,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     [strip],
   );
   pickPin.current = (id: string) => {
-    const { sheet, lifted: lift, setLifted: lifts } = useStore.getState();
+    const { sheet, lifted: lift } = useStore.getState();
     const phone = !desktop && !sidePanel;
     const tap = pinTap({
       sheet,
@@ -224,7 +228,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
       lifted: lift?.id ?? null,
       id,
     });
-    if (tap === 'lift') lifts({ id, by: 'strip' });
+    if (tap === 'lift') setLifted({ id, by: 'strip' });
     else setSelected(id);
   };
   const setPosition = useStore((s) => s.setPosition);
@@ -643,8 +647,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     if (!desktop) holdViewRef.current = false;
     refenceRef.current?.();
     reportViewRef.current?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coveredInsets]);
+  }, [coveredInsets, desktop]);
 
   // Render site pins whenever the filtered set or visited/wishlist state
   // changes. Deliberately NOT keyed on position or selection: GPS ticks must
@@ -768,28 +771,34 @@ export function MapView({ desktop }: { desktop: boolean }) {
 
   // A lift from the phone's picture row (issue #111) pans the map only when the
   // pin is out of sight: under the floating row, under the picture row, or off
-  // the map. Only a journey's row holds sites outside the view. The pan holds
-  // the view, so the row does not re-sort under the finger; a drag or a zoom
-  // by the user ends the hold.
+  // the map. A journey's row holds sites outside the view, and the view box
+  // takes in the part under the floating row. The pan waits until the lift
+  // rests, so a swipe past ten frames pans once, not ten times. It holds the
+  // view, so the row does not re-sort under the finger; a drag or a zoom by
+  // the user ends the hold.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || desktop || lifted?.by !== 'strip') return;
     const site = useStore.getState().sites.find((x) => x.id === lifted.id);
     if (!site) return;
-    const container = map.getContainer();
-    const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
-    const top = float
-      ? Math.max(0, float.getBoundingClientRect().bottom - container.getBoundingClientRect().top)
-      : 0;
-    const bottom = useStore.getState().coveredInsets.bottom;
-    const at = map.latLngToContainerPoint([site.lat, site.lng]);
-    if (pinInSight(at, map.getSize(), { top, bottom })) return;
-    holdViewRef.current = true;
-    const pad = 2 * PIN_MARGIN;
-    map.panInside([site.lat, site.lng], {
-      paddingTopLeft: [pad, top + pad],
-      paddingBottomRight: [pad, bottom + pad],
-    });
+    const pan = () => {
+      const container = map.getContainer();
+      const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
+      const top = float
+        ? Math.max(0, float.getBoundingClientRect().bottom - container.getBoundingClientRect().top)
+        : 0;
+      const bottom = useStore.getState().coveredInsets.bottom;
+      const at = map.latLngToContainerPoint([site.lat, site.lng]);
+      if (pinInSight(at, map.getSize(), { top, bottom })) return;
+      holdViewRef.current = true;
+      const pad = 2 * PIN_MARGIN;
+      map.panInside([site.lat, site.lng], {
+        paddingTopLeft: [pad, top + pad],
+        paddingBottomRight: [pad, bottom + pad],
+      });
+    };
+    const timer = window.setTimeout(pan, LIFT_REST);
+    return () => window.clearTimeout(timer);
     // Keyed on the lift alone, as the keyboard's pan above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lifted]);

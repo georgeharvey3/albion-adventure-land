@@ -432,8 +432,9 @@ owner chose this design from a prototype (variant C, the branch
 - The peek is one row: a thumbnail, the name, the type and distance,
   and ×. It shows no number except the distance. Directions is in the
   actions of the body, as on the card.
-- A site opens at the height that the sheet is at. A pin tap from the low
-  height opens the peek. A pin tap from the middle height keeps the middle
+- A site opens at the height that the sheet is at. At the low height the
+  first pin tap lifts the pin in the picture row (issue #111), and a second
+  tap opens the peek. A pin tap from the middle height keeps the middle
   height, where the hero picture shows under the peek. The full height shows
   the whole page. A tap on the name raises the sheet one height, as the
   handle does.
@@ -468,14 +469,18 @@ layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
   pin lifts it and brings its frame to the middle. A second tap on the lifted
   pin opens the site. The rules are pure and live in
   `src/state/phoneStrip.ts`.
-- A lift from the row pans the map only when the pin is out of sight. That
-  pan holds the view, so the row does not re-sort under the finger. A drag or
-  a zoom by the user ends the hold. In practice only a journey's row holds
-  sites outside the view.
+- A lift from the row pans the map only when the pin is out of sight: under
+  the floating row, under the picture row, or off the map on a journey. The
+  pan waits until the lift rests, so a fast swipe pans once. It holds the
+  view, so the row does not re-sort under the finger. A drag or a zoom by the
+  user ends the hold.
 - The row is the bottom covered inset while it shows, so the view box and the
   pans keep clear of it. The rose, the scale and the credits stand on top of it.
 - The row hides while a site is open, and at the middle and full heights. A
-  hidden row lifts nothing.
+  hidden row lifts nothing. It stays through a drag, under the rising sheet,
+  so the covered inset changes only when the sheet rests.
+- A new view lifts the first frame, so the nearest pin is marked before any
+  swipe.
 - The row is outside the Leaflet container, so a swipe on it never pans the
   map, and a map pan never moves the row.
 

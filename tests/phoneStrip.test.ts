@@ -43,11 +43,10 @@ test('a pin with no frame, or a tap with the row away, opens the site', () => {
 });
 
 test('the row shows on a phone at the low height, with no site open', () => {
-  const base = { phone: true, sheet: 'low' as const, dragging: false, siteOpen: false };
+  const base = { phone: true, sheet: 'low' as const, siteOpen: false };
   assert.equal(rowShown(base), true);
   assert.equal(rowShown({ ...base, phone: false }), false);
   assert.equal(rowShown({ ...base, sheet: 'mid' }), false);
-  assert.equal(rowShown({ ...base, dragging: true }), false);
   assert.equal(rowShown({ ...base, siteOpen: true }), false);
 });
 
