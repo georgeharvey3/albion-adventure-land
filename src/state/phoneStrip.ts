@@ -1,13 +1,17 @@
 // The phone's picture row (issue #111). At the low height of the sheet, one
 // row of frames floats over the bottom of the map, one wide frame in the
 // middle and its neighbours at the edges. The frame in the middle lifts its
-// pin, and the lift follows the swipe. While a site is open, the middle frame
-// is the open site. The owner chose this layout from a prototype (variant A,
-// the branch `prototype/111-phone-strip`).
+// pin, and the lift follows the swipe. The owner chose this layout from a
+// prototype (variant A, the branch `prototype/111-phone-strip`).
+//
+// At the low height the middle card is the selected site: there is no peek
+// there. A card tap opens the site at the middle height. The owner chose this
+// from a second prototype (variant N, the branch `prototype/111-no-peek`),
+// because a peek under the row showed one site twice.
 //
 // What the row holds, and in what order, is the desktop strip's rule
 // (src/state/strip.ts). The rules here are only the phone's: which frame is
-// in the middle, when a swipe opens a site, and when the map must pan. They
+// in the middle, when a swipe selects a site, and when the map must pan. They
 // are pure, so the tests load them without a DOM.
 
 import type { SheetHeight } from './sheet';
@@ -36,25 +40,24 @@ export function middleFrame(
   return best;
 }
 
-/** Whether the row shows: on a phone, at the low height. An open site's
- *  peek is the low height too, and the row shows over it. The list covers the
- *  map at the other heights. The row stays through a drag, under the rising
- *  sheet, so the covered inset changes only when the sheet rests. */
+/** Whether the row shows: on a phone, at the low height, with a site
+ *  selected or not. The list or the open site covers the map at the other
+ *  heights. The row stays through a drag, under the rising sheet, so the
+ *  covered inset changes only when the sheet rests. */
 export function rowShown(s: { phone: boolean; sheet: SheetHeight }): boolean {
   return s.phone && s.sheet === 'low';
 }
 
-/** The site that a swipe opens when it comes to rest. While a site is open,
- *  the middle frame is the open site, so a swipe steps to the next one, as
- *  Prev and Next do in the desktop spread. With no site open, a swipe only
- *  lifts. A scroll that the row made itself (to bring a frame to the middle)
- *  opens nothing. */
-export function swipeOpens(s: {
+/** The site that a swipe selects when it comes to rest: the middle card's.
+ *  At the low height the middle card is the selected site, so a swipe steps
+ *  the selection, as Prev and Next do in the desktop spread. A scroll that
+ *  the row made itself (to bring a card to the middle) selects nothing. */
+export function swipeSelects(s: {
   middle: string | null;
   selected: string | null;
   byUser: boolean;
 }): string | null {
-  if (!s.byUser || !s.selected || !s.middle || s.middle === s.selected) return null;
+  if (!s.byUser || !s.middle || s.middle === s.selected) return null;
   return s.middle;
 }
 

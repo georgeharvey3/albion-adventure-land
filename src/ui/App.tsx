@@ -57,8 +57,13 @@ export function App() {
   // height is the panel with the floating card, as before issue #110.
   const sidePanel = useSidePanel();
   // On a phone the open site takes the list's place in the sheet (issue #112).
+  // At the low height the picture row's middle card is the selected site
+  // (issue #111), and the sheet shows the site only once it is opened.
   const phone = !desktop && !sidePanel;
-  const openSite = phone && selectedSiteId ? sites.find((x) => x.id === selectedSiteId) : undefined;
+  const siteInSheet = useStore((s) => s.siteInSheet);
+  const closeSite = useStore((s) => s.closeSite);
+  const openSite =
+    phone && siteInSheet && selectedSiteId ? sites.find((x) => x.id === selectedSiteId) : undefined;
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
@@ -114,8 +119,9 @@ export function App() {
   const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
 
   // Closing the site on a phone (× or Esc) brings the list back at the height
-  // it was at when the site opened, and at the place it was scrolled to. The
-  // list unmounts while the site is open, so its scroll is kept here.
+  // it was at when the site opened (`closeSite` in the store), and at the
+  // place it was scrolled to. The list unmounts while the site is open, so
+  // its scroll is kept here.
   const listScroll = useRef(0);
   const restoreScroll = useRef(false);
   const hadSite = useRef(false);
@@ -125,9 +131,8 @@ export function App() {
       return;
     }
     if (openSite && !hadSite.current) restoreScroll.current = true;
-    if (!openSite && hadSite.current) setSheet(useStore.getState().listSheet);
     hadSite.current = !!openSite;
-  }, [phone, openSite, setSheet]);
+  }, [phone, openSite]);
   // Stable, so React calls it only when the list mounts and unmounts.
   const listBodyRef = useCallback((el: HTMLDivElement | null) => {
     setSheetBody(el);
@@ -179,7 +184,11 @@ export function App() {
   // KEY_RANK. The open site is the selection: on a phone it is in the sheet,
   // on the side panel it floats over the map or is the row open in place, and
   // on a desktop it is the spread.
-  useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
+  useKeyLayer(
+    !!selectedSiteId,
+    KEY_RANK.card,
+    onEscape(() => (phone ? closeSite() : setSelected(null))),
+  );
   // Last, the sheet: one height down per press, full to middle to low.
   useKeyLayer(
     !desktop && sheet !== 'low',
@@ -246,7 +255,8 @@ export function App() {
         >
           {/* The head is the low height, so it shows at every height. The
               journey anchor governs every tab, so it stays with the tabs. An
-              open site's peek takes the place of the tabs. */}
+              open site's peek takes the place of the tabs; the low height
+              has none, because the picture row's card is the site. */}
           <div className="sheet-head" ref={setSheetHead}>
             <button
               className="sheet-handle"

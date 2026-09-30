@@ -63,12 +63,35 @@ export function listInPlace(s: {
 }
 
 // On a phone a site opens in the sheet, in place of the list (issue #112).
-// The tabs hide, and the journey bar stays. At the low height the sheet is
-// the peek: one row with a thumbnail, the name, the type and distance,
-// and ×, and the pin stays in view above it. The middle height adds
-// the hero picture, and the full height is the whole page. A site opens at
-// the height the sheet is at, from a pin or from a row. The side panel keeps
-// the floating card and the rows that open in place.
+// The tabs hide, and the journey bar stays. The peek heads the site: one row
+// with a thumbnail, the name, the type and distance, and ×. The middle height
+// adds the hero picture, and the full height is the whole page. At the low
+// height there is no peek: the picture row's middle card is the selected
+// site (issue #111), and a tap on the card opens it at the middle height. A
+// selection off the low height opens the site at the height the sheet is at,
+// from a pin or from a row. The side panel keeps the floating card and the
+// rows that open in place.
+
+/** Whether a selection at this height opens the site in the sheet. At the
+ *  low height the picture row's middle card is the site (issue #111), so a
+ *  selection there opens nothing: a card tap opens the site. */
+export function opensInSheet(height: SheetHeight): boolean {
+  return height !== 'low';
+}
+
+/** × or `Esc` on a phone. A site opened from the picture row goes back to the
+ *  row, still selected, with its card in the middle. A site opened from the
+ *  list goes back to the list at its height. A card with no site open in the
+ *  sheet is cleared, and the height stays. */
+export function closeSite(s: {
+  siteInSheet: boolean;
+  sheet: SheetHeight;
+  listSheet: SheetHeight;
+}): { keep: boolean; sheet: SheetHeight } {
+  if (!s.siteInSheet) return { keep: false, sheet: s.sheet };
+  if (s.listSheet === 'low') return { keep: true, sheet: 'low' };
+  return { keep: false, sheet: s.listSheet };
+}
 
 /** The height the list comes back at when the open site closes: the height
  *  when the site opened. A step to another site keeps it. */
@@ -80,8 +103,9 @@ export function listHeight(s: {
   return s.siteOpen ? s.listSheet : s.sheet;
 }
 
-/** "Show on map" in an open site: the peek on a phone, and on the side panel
- *  the highest height that shows the card. */
+/** "Show on map" in an open site: the low height on a phone, where the site
+ *  stays selected as the picture row's card, and on the side panel the
+ *  highest height that shows the card. */
 export function showOnMap(sidePanel: boolean): SheetHeight {
   return sidePanel ? 'mid' : 'low';
 }

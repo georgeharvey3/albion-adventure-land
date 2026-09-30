@@ -1019,9 +1019,9 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // size until the user moves the map themselves.
   //
   // On a phone the site is in the sheet (issue #112). The pin goes to the
-  // centre of the map between the floating row and the sheet: the map area
-  // stops at the peek, and the middle height covers more of it. Follow the
-  // sheet as it moves between its heights, until the user moves the map.
+  // centre of the map between the floating row and the sheet, and at the low
+  // height between the floating row and the picture row. Follow the sheet as
+  // it moves between its heights, until the user moves the map.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedSiteId || desktop) return;
@@ -1042,6 +1042,11 @@ export function MapView({ desktop }: { desktop: boolean }) {
       if (!sidePanel) {
         const top = float ? Math.max(0, float.getBoundingClientRect().bottom - m.top) : 0;
         const bottom = useStore.getState().coveredInsets.bottom;
+        // At the low height the picture row's card is the site (issue #111).
+        // A pin tap or a swipe must not drag the map about: it pans only
+        // when the pin is out of sight.
+        const at = map.latLngToContainerPoint(latlng);
+        if (useStore.getState().sheet === 'low' && pinInSight(at, size, { top, bottom })) return;
         const centre = openCentre(size, { ...NO_INSETS, top, bottom });
         target = L.point(centre.x, centre.y);
       } else if (card) {

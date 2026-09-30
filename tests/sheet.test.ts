@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  closeSite,
   coveredBottom,
   dragIntent,
   listHeight,
   listInPlace,
+  opensInSheet,
   sameStops,
   sheetStops,
   showOnMap,
@@ -115,4 +117,41 @@ test('a tap on the handle raises the sheet, and from full lowers it', () => {
   assert.equal(tapHandle('low'), 'mid');
   assert.equal(tapHandle('mid'), 'full');
   assert.equal(tapHandle('full'), 'mid');
+});
+
+// Issue #111: at the low height the picture row's middle card is the site.
+test('a selection off the low height opens the site in the sheet', () => {
+  assert.equal(opensInSheet('mid'), true);
+  assert.equal(opensInSheet('full'), true);
+  assert.equal(opensInSheet('low'), false);
+});
+
+test('a site opened from the row closes back to the row, still selected', () => {
+  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'mid', listSheet: 'low' }), {
+    keep: true,
+    sheet: 'low',
+  });
+  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'full', listSheet: 'low' }), {
+    keep: true,
+    sheet: 'low',
+  });
+});
+
+test('a site opened from the list closes back to the list', () => {
+  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'full', listSheet: 'mid' }), {
+    keep: false,
+    sheet: 'mid',
+  });
+});
+
+test('closing a card at the low height clears it and keeps the height', () => {
+  assert.deepEqual(closeSite({ siteInSheet: false, sheet: 'low', listSheet: 'low' }), {
+    keep: false,
+    sheet: 'low',
+  });
+  // Selected at the low height, then the list raised by hand.
+  assert.deepEqual(closeSite({ siteInSheet: false, sheet: 'mid', listSheet: 'low' }), {
+    keep: false,
+    sheet: 'mid',
+  });
 });

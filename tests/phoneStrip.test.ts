@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { middleFrame, pinInSight, rowShown, swipeOpens } from '../src/state/phoneStrip';
+import { middleFrame, pinInSight, rowShown, swipeSelects } from '../src/state/phoneStrip';
 
 // Three 270 px frames with an 8 px gap, in a 375 px row whose padding puts the
 // first frame in the middle at scroll 0.
@@ -25,18 +25,18 @@ test('an empty row has no middle frame', () => {
   assert.equal(middleFrame([], 0, 375), null);
 });
 
-test('with a site open, a swipe that rests opens the middle frame', () => {
-  assert.equal(swipeOpens({ middle: 'b', selected: 'a', byUser: true }), 'b');
+test('a swipe that rests selects the middle card', () => {
+  assert.equal(swipeSelects({ middle: 'b', selected: 'a', byUser: true }), 'b');
+  assert.equal(swipeSelects({ middle: 'b', selected: null, byUser: true }), 'b');
 });
 
-test('a swipe opens nothing with no site open, or on the open site', () => {
-  assert.equal(swipeOpens({ middle: 'b', selected: null, byUser: true }), null);
-  assert.equal(swipeOpens({ middle: 'a', selected: 'a', byUser: true }), null);
-  assert.equal(swipeOpens({ middle: null, selected: 'a', byUser: true }), null);
+test('a swipe that rests on the selected card, or on nothing, selects nothing', () => {
+  assert.equal(swipeSelects({ middle: 'a', selected: 'a', byUser: true }), null);
+  assert.equal(swipeSelects({ middle: null, selected: 'a', byUser: true }), null);
 });
 
-test('a scroll that the row made itself opens nothing', () => {
-  assert.equal(swipeOpens({ middle: 'b', selected: 'a', byUser: false }), null);
+test('a scroll that the row made itself selects nothing', () => {
+  assert.equal(swipeSelects({ middle: 'b', selected: 'a', byUser: false }), null);
 });
 
 test('the row shows on a phone at the low height, with a site open or not', () => {

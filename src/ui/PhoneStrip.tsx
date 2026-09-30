@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { STRIP_WINDOW, windowToShow } from '../state/strip';
-import { middleFrame, swipeOpens } from '../state/phoneStrip';
+import { middleFrame, swipeSelects } from '../state/phoneStrip';
 import { siteSwatch } from '../data/types';
 import { FramePlate, frameFigure, useStrip } from './Strip';
 import { CheckIcon, StarIcon } from './icons';
@@ -13,12 +13,12 @@ import { copy } from '../copy';
 // is the strip's rule (src/state/strip.ts), so the row reads the view from the
 // last `moveend` and a pan costs it nothing.
 //
-// The frame in the middle lifts its pin, and the lift follows the swipe.
-// While a site is open, the row shows over its peek and the middle frame is
-// the open site: a swipe steps to the next site when it comes to rest, as
-// Prev and Next do in the desktop spread, and a pin tap brings its frame to
-// the middle. The map holds the view while a site is open (MapView.tsx), so
-// the row does not re-sort under the steps. A tap on a frame opens the site
+// The frame in the middle lifts its pin, and the lift follows the swipe. At
+// the low height there is no peek: the middle card is the selected site. A
+// swipe selects the middle card when it comes to rest, as Prev and Next do in
+// the desktop spread, and a pin tap or a search brings its card to the
+// middle. The map holds the view while a site is selected (MapView.tsx), so
+// the row does not re-sort under the steps. A tap on a card opens the site
 // at the middle height, with its hero picture (issue #112).
 //
 // The row is outside the Leaflet container, so a swipe on it never pans the
@@ -40,7 +40,7 @@ export function PhoneStrip({
   onHeight: (px: number) => void;
 }) {
   const setSelected = useStore((s) => s.setSelected);
-  const setSheet = useStore((s) => s.setSheet);
+  const openSite = useStore((s) => s.openSite);
   const lifted = useStore((s) => s.lifted);
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
@@ -75,7 +75,7 @@ export function PhoneStrip({
   }, [onHeight, showing]);
 
   /** Read the middle frame and lift its pin. At the end of a swipe by the
-   *  user, while a site is open, open the middle frame's site too. */
+   *  user, select the middle card's site too. */
   const takeMiddle = (atRest: boolean) => {
     const row = rowRef.current;
     if (!row) return;
@@ -91,17 +91,17 @@ export function PhoneStrip({
       setLifted({ id, by: 'strip' });
     }
     if (!atRest) return;
-    const opens = swipeOpens({
+    const picks = swipeSelects({
       middle: id,
       selected: useStore.getState().selectedSiteId,
       byUser: !steering.current,
     });
     steering.current = false;
-    if (opens) setSelected(opens);
+    if (picks) setSelected(picks);
   };
 
   /** Scroll the row itself to `left`. The frames it passes lift nothing, and
-   *  the stop opens nothing. */
+   *  the stop selects nothing. */
   const steer = (left: number, smooth: boolean) => {
     const row = rowRef.current;
     if (!row) return;
@@ -123,8 +123,9 @@ export function PhoneStrip({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewKey, inJourney]);
 
-  // The open site's frame is in the middle: a pin tap, a search or a step
-  // brings it there. With no site open, the nearest site lifts on a new view.
+  // The selected site's card is in the middle: a pin tap, a search or a step
+  // brings it there. With no site selected, the nearest site lifts on a new
+  // view.
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   useEffect(() => {
     if (!showing) {
@@ -185,12 +186,7 @@ export function PhoneStrip({
               <button
                 className={classes.filter(Boolean).join(' ')}
                 tabIndex={showing ? 0 : -1}
-                onClick={() => {
-                  // Selected first, so the list height to come back to is
-                  // the low one, where the row is.
-                  setSelected(site.id);
-                  setSheet('mid');
-                }}
+                onClick={() => openSite(site.id)}
               >
                 <FramePlate site={site} figure={frameFigure(view)} />
                 <span className="pframe-name">
