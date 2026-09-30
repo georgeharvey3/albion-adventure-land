@@ -239,6 +239,7 @@ export const copy = {
     viaUnknown: 'source',
     enlarge: (caption: string) => `Enlarge: ${caption}`,
     enlargePicture: 'Enlarge picture',
+    picture: (n: number) => `Picture ${n}`,
     away: (distance: string) => ` · ${distance} away`,
     visitedOn: (date: string) => `Visited ${date}`,
     wishlist: 'Wishlist',

@@ -14,6 +14,7 @@ import { COMPASS_ROSE } from './compassRose';
 import { GlowLayer, glowAmount } from './glowLayer';
 import { pinScale, SPECK_BELOW } from './zoomScale';
 import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
+import { openCentre } from './insets';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
@@ -184,6 +185,11 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // change. Both are set up with the map.
   const refenceRef = useRef<(() => void) | null>(null);
   const reportViewRef = useRef<(() => void) | null>(null);
+  // While the spread is open, the strip keeps the view it had when the site
+  // opened (issue #90), so Prev and Next walk one fixed order. The spread's own
+  // pan and its covered inset report nothing. A drag, a zoom or a search move
+  // by the user ends the hold, and the strip follows the map again.
+  const holdViewRef = useRef(false);
 
   const views = useFilteredSites();
   const position = useStore((s) => s.position);
@@ -502,9 +508,13 @@ export function MapView({ desktop }: { desktop: boolean }) {
     map.on('moveend', persist);
     window.addEventListener('pagehide', persist);
 
+    const releaseView = () => {
+      holdViewRef.current = false;
+    };
     // Tell the strip what the user can see (issue #89): the view less the
     // covered insets. On `moveend` only, so a pan stays free of work.
     const reportView = () => {
+      if (holdViewRef.current) return;
       const size = map.getSize();
       if (!size.x || !size.y) return;
       const { top, right, bottom, left } = useStore.getState().coveredInsets;
@@ -521,6 +531,9 @@ export function MapView({ desktop }: { desktop: boolean }) {
       });
     };
     reportViewRef.current = reportView;
+    map.on('dragstart zoomstart', releaseView);
+    // Leaflet's own arrow-key pan fires neither of those.
+    map.getContainer().addEventListener('keydown', releaseView);
     map.on('moveend', reportView);
     reportView();
 
@@ -563,6 +576,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
       window.removeEventListener('pagehide', persist);
       map.off('moveend', persist);
       map.off('moveend', reportView);
+      map.off('dragstart zoomstart', releaseView);
+      map.getContainer().removeEventListener('keydown', releaseView);
       // The hint lives in the container, which outlives the map.
       window.clearTimeout(hintTimer);
       hint.remove();
@@ -577,6 +592,16 @@ export function MapView({ desktop }: { desktop: boolean }) {
   useEffect(() => {
     if (controlsRef.current) placeControls(controlsRef.current, desktop);
   }, [desktop]);
+
+  // Hold the strip's view from the moment a site opens in the spread, before
+  // the spread's inset or its pan can report a new one. Declared before the
+  // inset effect below, so it runs first.
+  useEffect(() => {
+    const open = desktop && !!selectedSiteId;
+    const wasHeld = holdViewRef.current;
+    holdViewRef.current = open;
+    if (wasHeld && !open) reportViewRef.current?.();
+  }, [desktop, selectedSiteId]);
 
   // The chrome moved, so the fence and the part of the map that shows moved
   // with it. Setting the fence pans the map back inside it if needed.
@@ -919,6 +944,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !focus) return;
+    // A move the user asked for: the strip follows it.
+    holdViewRef.current = false;
     map.setView([focus.lat, focus.lng], focus.zoom ?? map.getZoom());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.nonce]);
@@ -930,7 +957,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // moves the map themselves.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedSiteId) return;
+    if (!map || !selectedSiteId || desktop) return;
     const v = views.find((x) => x.site.id === selectedSiteId);
     if (!v) return;
     const latlng = L.latLng(v.site.lat, v.site.lng);
@@ -974,7 +1001,34 @@ export function MapView({ desktop }: { desktop: boolean }) {
     };
     // views intentionally omitted from deps: only react to selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId]);
+  }, [selectedSiteId, desktop]);
+
+  // On a desktop the site opens in the spread (issue #90). The map pans it to
+  // the centre of the part of the view that shows, and keeps the zoom. It
+  // waits for the spread's inset: the fence reads the insets, and before the
+  // spread is measured it pulls a site near the edge of the plate back under
+  // the spread. A step in the spread keeps the inset and pans at once.
+  //
+  // Only a new site, or the spread's first measure, pans. A resize changes
+  // the inset too, and must not pull the map back after the user has moved it.
+  const spreadInset = desktop ? coveredInsets.right : 0;
+  const pannedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!selectedSiteId || !spreadInset) pannedRef.current = null;
+    if (!map || !selectedSiteId || !spreadInset) return;
+    if (pannedRef.current === selectedSiteId) return;
+    pannedRef.current = selectedSiteId;
+    const site = useStore.getState().sites.find((x) => x.id === selectedSiteId);
+    if (!site) return;
+    const size = map.getSize();
+    const centre = openCentre(size, useStore.getState().coveredInsets);
+    const target = L.point(centre.x, centre.y);
+    const offset = map.latLngToContainerPoint([site.lat, site.lng]).subtract(target);
+    // panTo, not panBy, for the same reason as above: setView holds the new
+    // centre inside the fence first.
+    map.panTo(map.containerPointToLatLng(size.divideBy(2).add(offset)));
+  }, [selectedSiteId, spreadInset]);
 
   return <div ref={containerRef} className="map" />;
 }

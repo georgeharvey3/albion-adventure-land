@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import {
   PARENT_CATEGORY_LABELS,
   SITE_TYPE_COLORS,
   SITE_TYPE_LABELS,
+  SITE_TYPE_SINGULAR,
   hybridTitle,
   parentOf,
   siteSwatch,
@@ -17,6 +18,7 @@ import { Lightbox } from './Lightbox';
 import { BanIcon, CheckIcon, ClockIcon, FlagIcon, StarIcon } from './icons';
 import { OpeningTimes } from './OpeningTimes';
 import { PubGradeMark } from './PubGradeMark';
+import { SITE_BODY_LAYOUT, type SiteBodyPart } from './siteBodyLayout';
 import { copy } from '../copy';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
@@ -129,6 +131,125 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
   );
 }
 
+/** The spread's lead (issue #90): every picture of the site, the width of the
+ *  page, one at a time. A swipe or a trackpad scroll moves along them, and so
+ *  do the ‹ › buttons and the thumbs, which also show the one in view. The
+ *  arrow keys stay with the spread and step between sites.
+ *
+ *  A picture never shows larger than its own size: the sources are 720 px at
+ *  most, and half are 626 px or less, so a stretch to the page blurs them. It
+ *  sits whole, centred, over a blurred and darkened copy of itself, which
+ *  fills the frame and reads as meant. The lead is as tall as the tallest
+ *  picture, between two limits, so small pictures get a small lead and a
+ *  portrait is not a strip in a wide box. With no picture, or none that loads, a wash in the site's
+ *  colour names the kind of site, as in the strip. A click opens the viewer
+ *  at the picture in view. */
+function LeadCarousel({ site }: { site: Site }) {
+  const [broken, setBroken] = useState<Set<string>>(new Set());
+  const [index, setIndex] = useState(0);
+  const [opened, setOpened] = useState<number | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const shown = (site.images ?? []).filter((img) => !broken.has(img.url));
+
+  if (!shown.length) {
+    return (
+      <div
+        className="spread-lead painted"
+        style={{ '--tint': SITE_TYPE_COLORS[site.category] } as React.CSSProperties}
+      >
+        <i>{SITE_TYPE_SINGULAR[site.category]}</i>
+      </div>
+    );
+  }
+
+  const go = (i: number) => {
+    const row = rowRef.current;
+    if (row) row.scrollTo({ left: i * row.clientWidth, behavior: 'smooth' });
+  };
+  // The snap point in view. A scroll, not a click, is the one truth: a
+  // swipe moves the row without any button.
+  const onScroll = () => {
+    const row = rowRef.current;
+    if (row?.clientWidth) setIndex(Math.round(row.scrollLeft / row.clientWidth));
+  };
+  const multi = shown.length > 1;
+  const at = Math.min(index, shown.length - 1);
+  // One height for the whole carousel, so a swipe does not move the page.
+  const tallest = Math.max(...shown.map((img) => img.height ?? 0));
+
+  return (
+    <div
+      className={multi ? 'spread-lead multi' : 'spread-lead'}
+      style={tallest ? ({ '--lead-h': `${tallest}px` } as React.CSSProperties) : undefined}
+    >
+      <div className="lead-row" ref={rowRef} onScroll={onScroll}>
+        {shown.map((img, i) => (
+          <figure className="lead-slide" key={img.url}>
+            <img
+              className="lead-backdrop"
+              src={`${import.meta.env.BASE_URL}${img.url}`}
+              alt=""
+              aria-hidden="true"
+              loading={i ? 'lazy' : undefined}
+              decoding="async"
+            />
+            <button
+              className="shot-open"
+              onClick={() => setOpened(i)}
+              aria-label={img.caption ? copy.site.enlarge(img.caption) : copy.site.enlargePicture}
+            >
+              <img
+                className="lead-picture"
+                src={`${import.meta.env.BASE_URL}${img.url}`}
+                alt={img.caption ?? ''}
+                loading={i ? 'lazy' : undefined}
+                decoding="async"
+                onError={() => setBroken((b) => new Set(b).add(img.url))}
+              />
+            </button>
+            {img.caption && <figcaption className="spread-caption">{img.caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+      {multi && (
+        <>
+          <button
+            className="lead-step prev"
+            onClick={() => go(at - 1)}
+            disabled={at === 0}
+            aria-label={copy.lightbox.previous}
+          >
+            ‹
+          </button>
+          <button
+            className="lead-step next"
+            onClick={() => go(at + 1)}
+            disabled={at === shown.length - 1}
+            aria-label={copy.lightbox.next}
+          >
+            ›
+          </button>
+          <div className="lead-thumbs">
+            {shown.map((img, i) => (
+              <button
+                key={img.url}
+                onClick={() => go(i)}
+                aria-current={i === at}
+                aria-label={copy.site.picture(i + 1)}
+              >
+                <img src={`${import.meta.env.BASE_URL}${img.url}`} alt="" loading="lazy" decoding="async" />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {opened !== null && (
+        <Lightbox images={shown} startIndex={opened} onClose={() => setOpened(null)} />
+      )}
+    </div>
+  );
+}
+
 interface SiteBodyProps {
   site: Site;
   /** Browse mode only: hands the reader back to the map at this site. Omitted by
@@ -143,6 +264,9 @@ interface SiteBodyProps {
    *  protect and opening the row was already the request to read, so it
    *  starts expanded. */
   collapseDescription?: boolean;
+  /** The desktop spread (issue #90) shows the pictures as a carousel across
+   *  the top, and lays the parts out in two columns. See siteBodyLayout.ts. */
+  variant?: 'card' | 'spread';
 }
 
 /** Everything there is to say about one site: pictures, write-up, listing links
@@ -153,6 +277,7 @@ export function SiteBody({
   onShowOnMap,
   showHeader = true,
   collapseDescription = true,
+  variant = 'card',
 }: SiteBodyProps) {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
@@ -191,6 +316,7 @@ export function SiteBody({
   }, [site.id, writeUp, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
+  const images = site.images ?? [];
 
   // Listing links (derived data). A sub-feature points back to its listing's main
   // write-up; a main point lists the features grouped under it.
@@ -203,101 +329,115 @@ export function SiteBody({
     setSelected(id);
   };
 
-  return (
-    <>
-      {showHeader && (
-        <>
-          <div className="card-type">
-            <span
-              className="dot"
-              style={{ background: siteSwatch(site) }}
-              title={hybridTitle(site)}
-            />
-            {SITE_TYPE_LABELS[site.category]}
-            {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+  const parts: Record<SiteBodyPart, ReactNode> = {
+    header: showHeader && (
+      <>
+        <div className="card-type">
+          <span
+            className="dot"
+            style={{ background: siteSwatch(site) }}
+            title={hybridTitle(site)}
+          />
+          {SITE_TYPE_LABELS[site.category]}
+          {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+        </div>
+        <h2 className="card-title">{site.name}</h2>
+      </>
+    ),
+    // Outside the header on purpose: the grade is a fact about the pub, not a
+    // repeat of the type/distance line, so a browse row — which draws its own
+    // header and turns this one off — still shows it.
+    grade: <PubGradeMark site={site} />,
+    badges: (
+      <>
+        {visited && (
+          <div className="badge visited">
+            <CheckIcon /> {copy.site.visitedOn(visited.visitedAt.slice(0, 10))}
           </div>
-          <h2 className="card-title">{site.name}</h2>
-        </>
-      )}
-      {/* Outside the header block on purpose: the grade is a fact about the pub,
-          not a repeat of the type/distance line, so a browse row — which draws
-          its own header and turns this one off — still shows it. */}
-      <PubGradeMark site={site} />
-      {visited && (
-        <div className="badge visited">
-          <CheckIcon /> {copy.site.visitedOn(visited.visitedAt.slice(0, 10))}
-        </div>
-      )}
-      {wishlisted && !visited && (
-        <div className="badge wish">
-          <StarIcon filled /> {copy.site.wishlist}
-        </div>
-      )}
-      {hidden && (
-        <div className="badge">
-          <BanIcon /> {copy.site.hidden}
-        </div>
-      )}
-      {parent && (
-        <p className="card-listing">
-          {copy.site.partOf}{' '}
-          <button className="link" onClick={() => openRelated(parent.id)}>
-            {parent.listingTitle ?? parent.name}
-          </button>
-        </p>
-      )}
-      {site.walkTime && (
-        <p className="card-meta">
-          <ClockIcon /> {copy.site.walkIn(site.walkTime)}
-        </p>
-      )}
-      {site.access && <p className="card-meta">{copy.site.access(site.access)}</p>}
-      <OpeningTimes site={site} />
-      {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
-      {site.entries ? (
-        <SiteEntries entries={site.entries} collapsed={descCollapsed} />
-      ) : (
-        site.description && (
-          <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
-            {site.description}
-          </p>
-        )
-      )}
-      {collapsible && (
-        <button
-          className="desc-toggle"
-          onClick={() => setDescCollapsed((c) => !c)}
-          aria-expanded={!descCollapsed}
-        >
-          {descCollapsed ? copy.site.showMore : copy.site.showLess}
+        )}
+        {wishlisted && !visited && (
+          <div className="badge wish">
+            <StarIcon filled /> {copy.site.wishlist}
+          </div>
+        )}
+        {hidden && (
+          <div className="badge">
+            <BanIcon /> {copy.site.hidden}
+          </div>
+        )}
+      </>
+    ),
+    partOf: parent && (
+      <p className="card-listing">
+        {copy.site.partOf}{' '}
+        <button className="link" onClick={() => openRelated(parent.id)}>
+          {parent.listingTitle ?? parent.name}
         </button>
-      )}
-      {/* A merged site carries its attribution inside each entry, next to the
-          text that came from it. */}
-      {!site.entries && site.sourceUrl && (
-        <p className="card-source">
-          {copy.site.via}{' '}
-          <a href={site.sourceUrl} target="_blank" rel="noreferrer">
-            {sourceLinkLabel(site.sourceUrl)} ↗
-          </a>
-        </p>
-      )}
-
-      {children.length > 0 && (
-        <div className="card-listing">
-          <span className="card-listing-label">{copy.site.nearbyInListing}</span>
-          <ul className="listing-children">
-            {children.map((c) => (
-              <li key={c.id}>
-                <button className="link" onClick={() => openRelated(c.id)}>
-                  {c.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
+      </p>
+    ),
+    walkTime: site.walkTime && (
+      <p className="card-meta">
+        <ClockIcon /> {copy.site.walkIn(site.walkTime)}
+      </p>
+    ),
+    access: site.access && <p className="card-meta">{copy.site.access(site.access)}</p>,
+    hours: <OpeningTimes site={site} />,
+    // In the spread the pictures are the lead, and a site with none still
+    // gets the painted one.
+    gallery:
+      variant === 'spread' ? (
+        <LeadCarousel site={site} />
+      ) : (
+        images.length > 0 && <SiteGallery images={images} />
+      ),
+    writeUp: (
+      <>
+        {site.entries ? (
+          <SiteEntries entries={site.entries} collapsed={descCollapsed} />
+        ) : (
+          site.description && (
+            <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
+              {site.description}
+            </p>
+          )
+        )}
+        {/* The spread has the room for the whole write-up, and never clamps. */}
+        {collapsible && variant === 'card' && (
+          <button
+            className="desc-toggle"
+            onClick={() => setDescCollapsed((c) => !c)}
+            aria-expanded={!descCollapsed}
+          >
+            {descCollapsed ? copy.site.showMore : copy.site.showLess}
+          </button>
+        )}
+      </>
+    ),
+    // A merged site carries its attribution inside each entry, next to the
+    // text that came from it.
+    source: !site.entries && site.sourceUrl && (
+      <p className="card-source">
+        {copy.site.via}{' '}
+        <a href={site.sourceUrl} target="_blank" rel="noreferrer">
+          {sourceLinkLabel(site.sourceUrl)} ↗
+        </a>
+      </p>
+    ),
+    listing: children.length > 0 && (
+      <div className="card-listing">
+        <span className="card-listing-label">{copy.site.nearbyInListing}</span>
+        <ul className="listing-children">
+          {children.map((c) => (
+            <li key={c.id}>
+              <button className="link" onClick={() => openRelated(c.id)}>
+                {c.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+    actions: (
       <div className="card-actions">
         <a
           className="btn primary"
@@ -376,6 +516,20 @@ export function SiteBody({
             {copy.site.addToTrip}
           </button>
         )}
+      </div>
+    ),
+  };
+  const place = (names: readonly SiteBodyPart[]) =>
+    names.map((name) => <Fragment key={name}>{parts[name]}</Fragment>);
+
+  if (variant === 'card') return <>{place(SITE_BODY_LAYOUT.card)}</>;
+  const { lead, main, side } = SITE_BODY_LAYOUT.spread;
+  return (
+    <>
+      {place(lead)}
+      <div className="spread-body">
+        <div className="spread-main">{place(main)}</div>
+        <div className="spread-side">{place(side)}</div>
       </div>
     </>
   );

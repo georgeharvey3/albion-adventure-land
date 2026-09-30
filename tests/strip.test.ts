@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripSites, windowToShow, STRIP_WINDOW, type SiteView, type Viewport } from '../src/state/strip';
+import {
+  stripNeighbours,
+  stripSites,
+  windowToShow,
+  STRIP_WINDOW,
+  type SiteView,
+  type Viewport,
+} from '../src/state/strip';
 import type { Site } from '../src/data/types';
 
 const site = (id: string, lat: number, lng: number): Site =>
@@ -68,4 +75,20 @@ test('the window grows in whole steps to reach a frame', () => {
   assert.equal(windowToShow(0), STRIP_WINDOW);
   assert.equal(windowToShow(STRIP_WINDOW - 1), STRIP_WINDOW);
   assert.equal(windowToShow(STRIP_WINDOW), 2 * STRIP_WINDOW);
+});
+
+test('the spread steps to the frames either side of the open site', () => {
+  const order = ['a', 'b', 'c'];
+  assert.deepEqual(stripNeighbours(order, 'b'), { prev: 'a', next: 'c' });
+});
+
+test('the spread stops at both ends of the strip', () => {
+  const order = ['a', 'b', 'c'];
+  assert.deepEqual(stripNeighbours(order, 'a'), { prev: null, next: 'b' });
+  assert.deepEqual(stripNeighbours(order, 'c'), { prev: 'b', next: null });
+});
+
+test('a site that is not in the strip steps into it at the first frame', () => {
+  assert.deepEqual(stripNeighbours(['a', 'b'], 'x'), { prev: null, next: 'a' });
+  assert.deepEqual(stripNeighbours([], 'x'), { prev: null, next: null });
 });

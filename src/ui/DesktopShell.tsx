@@ -22,6 +22,7 @@ import { SearchOverlay } from './SearchOverlay';
 import { SiteFinderField, SiteFinderResults, useFinderResults } from './SiteFinder';
 import { LogoMark } from './LogoMark';
 import { Strip } from './Strip';
+import { Spread } from './Spread';
 import { NO_INSETS } from '../map/insets';
 import { copy } from '../copy';
 
@@ -82,6 +83,9 @@ function LayerChips() {
   );
 }
 
+/** The narrowest window that shows the drawer and the spread together. */
+const SPREAD_AND_DRAWER = 1200;
+
 export function DesktopShell() {
   const searchTarget = useStore((s) => s.searchTarget);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
@@ -90,6 +94,7 @@ export function DesktopShell() {
   const finderWanted = useStore((s) => s.finderWanted);
   const takeFinderRequest = useStore((s) => s.takeFinderRequest);
   const setCoveredInsets = useStore((s) => s.setCoveredInsets);
+  const selectedSiteId = useStore((s) => s.selectedSiteId);
 
   const [drawer, setDrawer] = useState<DrawerTab | null>(() => loadViewState().drawer);
   useEffect(() => {
@@ -111,6 +116,27 @@ export function DesktopShell() {
     setQuery('');
   };
 
+  // From 1024 px to 1199 px the drawer and the spread do not fit together, so
+  // a spread closes the drawer (issue #87, Q5).
+  // A drawer opened at that width closes the spread, and a window that
+  // shrinks to it with both open closes the drawer.
+  const narrow = () => window.innerWidth < SPREAD_AND_DRAWER;
+  useEffect(() => {
+    if (selectedSiteId && narrow()) setDrawer(null);
+  }, [selectedSiteId]);
+  useEffect(() => {
+    if (!selectedSiteId || drawer === null) return;
+    const onResize = () => {
+      if (narrow()) setDrawer(null);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [selectedSiteId, drawer]);
+  const openDrawer = (tab: DrawerTab | null) => {
+    if (tab && selectedSiteId && narrow()) setSelected(null);
+    setDrawer(tab);
+  };
+
   // `/` asks for the finder (App.tsx). Here the finder is always mounted.
   useEffect(() => {
     if (!finderWanted) return;
@@ -123,11 +149,14 @@ export function DesktopShell() {
   useKeyLayer(finding && !searchTarget, KEY_RANK.search, onEscape(() => setQuery('')));
   useKeyLayer(drawer !== null, KEY_RANK.sheet, onEscape(() => setDrawer(null)));
 
-  // The covered insets. The strip covers the bottom. The card and the drawer
-  // cover the left as one column, but only while the drawer is open: the card
-  // alone is a box in the corner, and the map shows under it.
+  // The covered insets. The strip covers the bottom, and the spread the right.
+  // The card and the drawer cover the left as one column, but only while the
+  // drawer is open: the card alone is a box in the corner, and the map shows
+  // under it.
   const railRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLElement>(null);
+  const spreadRef = useRef<HTMLElement>(null);
+  const spreadOpen = !!selectedSiteId;
   useEffect(() => {
     const measure = () => {
       // The strip's top padding is a fade the map shows through, so the
@@ -137,9 +166,12 @@ export function DesktopShell() {
         ? strip.getBoundingClientRect().top + parseFloat(getComputedStyle(strip).paddingTop)
         : window.innerHeight;
       const rail = railRef.current?.getBoundingClientRect();
+      // offsetWidth, not the box: the spread slides in, and a transform moves
+      // the box but not the band it covers once it lands.
+      const spread = spreadRef.current;
       setCoveredInsets({
         top: 0,
-        right: 0,
+        right: spread ? spread.offsetWidth : 0,
         bottom: Math.round(window.innerHeight - stripTop),
         left: drawerOpen && rail ? Math.round(rail.right) : 0,
       });
@@ -148,12 +180,13 @@ export function DesktopShell() {
     const ro = new ResizeObserver(measure);
     if (stripRef.current) ro.observe(stripRef.current);
     if (railRef.current) ro.observe(railRef.current);
+    if (spreadRef.current) ro.observe(spreadRef.current);
     window.addEventListener('resize', measure);
     return () => {
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [drawerOpen, setCoveredInsets]);
+  }, [drawerOpen, spreadOpen, setCoveredInsets]);
 
   // Back to a phone: nothing is covered.
   useEffect(() => () => setCoveredInsets(NO_INSETS), [setCoveredInsets]);
@@ -184,7 +217,7 @@ export function DesktopShell() {
               <button
                 key={id}
                 className={drawer === id ? 'tab active' : 'tab'}
-                onClick={() => setDrawer(drawer === id ? null : id)}
+                onClick={() => openDrawer(drawer === id ? null : id)}
                 aria-pressed={drawer === id}
               >
                 {copy.app.tabs[id]}
@@ -210,6 +243,7 @@ export function DesktopShell() {
         )}
       </div>
       <Strip ref={stripRef} />
+      <Spread ref={spreadRef} />
     </>
   );
 }

@@ -95,3 +95,16 @@ export const STRIP_WINDOW = 60;
 export function windowToShow(index: number): number {
   return (Math.floor(index / STRIP_WINDOW) + 1) * STRIP_WINDOW;
 }
+
+/** The frames either side of the open site, for the spread's Prev and Next
+ *  (issue #90). They stop at both ends, as `j` and `k` do: the strip is
+ *  sorted by distance, so a wrap is a jump across the map. A site that is not
+ *  in the strip, one the finder opened, steps into it at the first frame. */
+export function stripNeighbours(
+  ids: readonly string[],
+  current: string,
+): { prev: string | null; next: string | null } {
+  const index = ids.indexOf(current);
+  if (index < 0) return { prev: null, next: ids[0] ?? null };
+  return { prev: ids[index - 1] ?? null, next: ids[index + 1] ?? null };
+}
