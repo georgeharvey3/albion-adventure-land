@@ -3,10 +3,8 @@ import assert from 'node:assert/strict';
 import {
   coveredBottom,
   dragIntent,
+  listHeight,
   listInPlace,
-  opensAt,
-  pinSheet,
-  rowSheet,
   sameStops,
   sheetStops,
   showOnMap,
@@ -106,25 +104,11 @@ test('the same three heights are the same stops', () => {
   assert.equal(sameStops(null, stops), false);
 });
 
-test('a pin tapped at the middle height lowers the sheet to show the card', () => {
-  assert.equal(pinSheet('mid', false), 'low');
-  assert.equal(pinSheet('low', false), 'low');
-  // The side panel shows the card beside the list already.
-  assert.equal(pinSheet('mid', true), 'mid');
-});
-
-test('a row opened at the middle height raises the sheet to read it', () => {
-  assert.equal(rowSheet('mid', false), 'full');
-  assert.equal(rowSheet('full', false), 'full');
-  // The side panel opens the card beside the list instead.
-  assert.equal(rowSheet('mid', true), 'mid');
-});
-
-test('no site stays open at the middle height of a phone', () => {
-  assert.equal(opensAt('mid', false), false);
-  assert.equal(opensAt('low', false), true);
-  assert.equal(opensAt('full', false), true);
-  assert.equal(opensAt('mid', true), true);
+test('the list height is the height when a site opened', () => {
+  // No site open: the list is at the sheet's height.
+  assert.equal(listHeight({ siteOpen: false, sheet: 'full', listSheet: 'mid' }), 'full');
+  // A site open: the height the list was at stays, whatever the site does.
+  assert.equal(listHeight({ siteOpen: true, sheet: 'low', listSheet: 'mid' }), 'mid');
 });
 
 test('a tap on the handle raises the sheet, and from full lowers it', () => {

@@ -655,6 +655,73 @@ body,
   padding: var(--space-xs) var(--space-sm) var(--space-md);
 }
 
+/* The open site on a phone (issue #112). The peek takes the place of the tabs
+   in the sheet head, so it is the low height while a site is open: one row
+   with a thumbnail, the name, the type and distance, and ×. The
+   body under it runs edge to edge, so the hero picture bleeds to the glass. */
+.site-peek {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) var(--space-xs) var(--space-sm) var(--space-md);
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.site-peek-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.site-peek-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: var(--leading-display);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+/* The distance is what the field asks, so only the type gives way. */
+.site-peek-main .card-type {
+  white-space: nowrap;
+}
+.site-peek-type {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-peek-away {
+  flex: 0 0 auto;
+}
+.site-peek-close {
+  flex: 0 0 auto;
+  width: calc(2 * var(--space-md));
+  height: calc(2 * var(--space-md));
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--text-xl);
+  line-height: 1;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.sheet.site-open .sheet-body {
+  padding: 0;
+}
+/* Two classes, so it beats .row-body, which comes later in the file. */
+.row-body.site-sheet-body {
+  padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+}
+
 .hint {
   margin: var(--space-2xs) var(--space-3xs) var(--space-xs);
   font-size: var(--text-xs);

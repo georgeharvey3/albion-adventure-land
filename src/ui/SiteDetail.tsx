@@ -25,8 +25,9 @@ import { copy } from '../copy';
 // A fuller per-site page with note + photo arrives in Phase 2 (F11).
 //
 // The write-up itself lives in `SiteBody`, which is deliberately chrome-free:
-// the floating card wraps it, and so does a near-me row open in place over
-// the map. One site is described in exactly one place.
+// the floating card on the side panel wraps it, and so do a near-me row open in
+// place, the phone's site sheet (SiteSheet.tsx) and the desktop spread. One
+// site is described in exactly one place.
 
 // Attribution label for the description's source link, keyed off the URL's host
 // so new scraped sources don't need a Site schema change.

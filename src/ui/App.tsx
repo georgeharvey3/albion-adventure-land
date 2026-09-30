@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useGeolocation } from '../state/useGeolocation';
 import { MapView } from '../map/MapView';
@@ -12,6 +12,7 @@ import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
 import { PhoneFinder } from './PhoneFinder';
+import { SitePeek, SiteSheetBody } from './SiteSheet';
 import { useSidePanel, useWideScreen } from './useWideScreen';
 import { useSheetDrag } from './useSheetDrag';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
@@ -19,7 +20,6 @@ import { KEY_RANK, onEscape } from '../state/keys';
 import {
   coveredBottom,
   listInPlace,
-  opensAt,
   sameStops,
   sheetStops,
   stepSheet,
@@ -37,6 +37,7 @@ export function App() {
   const dataLoaded = useStore((s) => s.dataLoaded);
   const dataError = useStore((s) => s.dataError);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
+  const sites = useStore((s) => s.sites);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
   const destination = useStore((s) => s.destination);
   const sheet = useStore((s) => s.sheet);
@@ -48,11 +49,14 @@ export function App() {
   const setCoveredInsets = useStore((s) => s.setCoveredInsets);
   // The shell (issue #89): the desktop shell from 1024 px, the sheet below.
   // Both share the store, the map and SiteBody: the phone opens a site in
-  // the card, the desktop in the spread.
+  // the sheet, the side panel in the card, the desktop in the spread.
   const desktop = useWideScreen();
   // From 760 px the sheet is a side panel on the right of the map. Its middle
   // height is the panel with the floating card, as before issue #110.
   const sidePanel = useSidePanel();
+  // On a phone the open site takes the list's place in the sheet (issue #112).
+  const phone = !desktop && !sidePanel;
+  const openSite = phone && selectedSiteId ? sites.find((x) => x.id === selectedSiteId) : undefined;
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
@@ -107,13 +111,29 @@ export function App() {
   const sheetPx = dragPx ?? stops?.[sheet] ?? null;
   const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
 
-  // The middle height is for browsing, never for reading (state/sheet.ts): a
-  // row open there is a strip of picture and no text. So a sheet that settles
-  // there closes the open site. A pin tap and a row tap move the sheet off the
-  // middle height before they select, so they never land here.
+  // Closing the site on a phone (× or Esc) brings the list back at the height
+  // it was at when the site opened, and at the place it was scrolled to. The
+  // list unmounts while the site is open, so its scroll is kept here.
+  const listScroll = useRef(0);
+  const restoreScroll = useRef(false);
+  const hadSite = useRef(false);
   useEffect(() => {
-    if (!desktop && selectedSiteId && !opensAt(sheet, sidePanel)) setSelected(null);
-  }, [desktop, sheet, sidePanel, selectedSiteId, setSelected]);
+    if (!phone) {
+      hadSite.current = false;
+      return;
+    }
+    if (openSite && !hadSite.current) restoreScroll.current = true;
+    if (!openSite && hadSite.current) setSheet(useStore.getState().listSheet);
+    hadSite.current = !!openSite;
+  }, [phone, openSite, setSheet]);
+  // Stable, so React calls it only when the list mounts and unmounts.
+  const listBodyRef = useCallback((el: HTMLDivElement | null) => {
+    setSheetBody(el);
+    if (!el) return;
+    if (restoreScroll.current) el.scrollTop = listScroll.current;
+    else listScroll.current = 0;
+    restoreScroll.current = false;
+  }, []);
 
   // The middle sheet covers the lower half of the map, so a fitted journey or
   // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
@@ -148,9 +168,9 @@ export function App() {
   useGeolocation();
 
   // Keys (issue #88). Esc closes one layer per press, top first — see
-  // KEY_RANK. The site card is the selection: on the map it floats, in the
-  // list over the map it is the row open in place, and on a desktop it is the
-  // spread.
+  // KEY_RANK. The open site is the selection: on a phone it is in the sheet,
+  // on the side panel it floats over the map or is the row open in place, and
+  // on a desktop it is the spread.
   useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
   // Last, the sheet: one height down per press, full to middle to low.
   useKeyLayer(
@@ -191,8 +211,9 @@ export function App() {
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder />}
-        {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
-        {selectedSiteId && !desktop && !inPlace && <SiteDetail />}
+        {/* A phone opens the site in the sheet, and a desktop in the spread
+            (DesktopShell.tsx). The side panel keeps the floating card. */}
+        {selectedSiteId && sidePanel && !desktop && !inPlace && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
 
@@ -211,11 +232,12 @@ export function App() {
         <>
         <div
           ref={sheetRef}
-          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}`}
+          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}${openSite ? ' site-open' : ''}`}
           style={{ ['--sheet-h' as string]: sheetPx !== null ? `${sheetPx}px` : undefined }}
         >
           {/* The head is the low height, so it shows at every height. The
-              journey anchor governs every tab, so it stays with the tabs. */}
+              journey anchor governs every tab, so it stays with the tabs. An
+              open site's peek takes the place of the tabs. */}
           <div className="sheet-head" ref={setSheetHead}>
             <button
               className="sheet-handle"
@@ -226,6 +248,9 @@ export function App() {
               <span className="sheet-grip" aria-hidden="true" />
             </button>
             <JourneyBar />
+            {openSite ? (
+              <SitePeek site={openSite} />
+            ) : (
             <nav className="tabs">
               {TABS.map((id) => (
                 <button
@@ -240,17 +265,28 @@ export function App() {
                 </button>
               ))}
             </nav>
+            )}
           </div>
           {/* Mounted while a drag lifts the sheet off the low height, so the
               list rises with the finger. */}
-          {(sheet !== 'low' || dragging) && (
-            <div className="sheet-body" ref={setSheetBody}>
-              {tab === 'near' && <NearMeList inPlace={inPlace} />}
-              {tab === 'filters' && <Filters />}
-              {tab === 'outing' && <Outing />}
-              {tab === 'stats' && <Stats />}
-            </div>
-          )}
+          {(sheet !== 'low' || dragging) &&
+            (openSite ? (
+              // A new site starts at its top.
+              <div className="sheet-body" ref={setSheetBody} key={openSite.id}>
+                <SiteSheetBody site={openSite} />
+              </div>
+            ) : (
+              <div
+                className="sheet-body"
+                ref={listBodyRef}
+                onScroll={(e) => (listScroll.current = e.currentTarget.scrollTop)}
+              >
+                {tab === 'near' && <NearMeList inPlace={inPlace} />}
+                {tab === 'filters' && <Filters />}
+                {tab === 'outing' && <Outing />}
+                {tab === 'stats' && <Stats />}
+              </div>
+            ))}
         </div>
 
         {/* A panel over the sheet's own footprint, not a full screen: you are

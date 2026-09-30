@@ -48,10 +48,11 @@ export function coveredBottom(stops: SheetStops, height: SheetHeight): number {
   return height === 'mid' ? stops.mid - stops.low : 0;
 }
 
-/** Whether the list rows open in place. They do while the list lies over the
- *  map, and the open row is then the card. On the side panel the map shows
- *  beside the list, so the rows open the floating card until the panel takes
- *  the window. A drag off the low height already shows the list. */
+/** Whether the list lies over the map, so its rows show a picture and a
+ *  teaser. On a phone an open site then takes the list's place in the sheet.
+ *  On the side panel the map shows beside the list, so the rows open the
+ *  floating card until the panel takes the window, and then open in place. A
+ *  drag off the low height already shows the list. */
 export function listInPlace(s: {
   height: SheetHeight;
   dragging: boolean;
@@ -61,30 +62,26 @@ export function listInPlace(s: {
   return s.height !== 'low' || s.dragging;
 }
 
-// The middle height is for browsing, never for reading: under the head, the
-// list header and the prev/next bar, an open row there shows a strip of its
-// first picture and no text. So how a site was opened picks the height it is
-// read at. A pin tap is a look at the map: the sheet drops, and the floating
-// card opens over the map with the pin still in view. A row tap is a read:
-// the sheet rises, and the row opens in place with the whole screen.
+// On a phone a site opens in the sheet, in place of the list (issue #112).
+// The tabs hide, and the journey bar stays. At the low height the sheet is
+// the peek: one row with a thumbnail, the name, the type and distance,
+// and ×, and the pin stays in view above it. The middle height adds
+// the hero picture, and the full height is the whole page. A site opens at
+// the height the sheet is at, from a pin or from a row. The side panel keeps
+// the floating card and the rows that open in place.
 
-/** Whether a site can stay open at this height. A drag or a tab that brings a
- *  phone sheet to the middle height closes the open site. */
-export function opensAt(height: SheetHeight, sidePanel: boolean): boolean {
-  return sidePanel || height !== 'mid';
+/** The height the list comes back at when the open site closes: the height
+ *  when the site opened. A step to another site keeps it. */
+export function listHeight(s: {
+  siteOpen: boolean;
+  sheet: SheetHeight;
+  listSheet: SheetHeight;
+}): SheetHeight {
+  return s.siteOpen ? s.listSheet : s.sheet;
 }
 
-/** The height after a tap on a pin. */
-export function pinSheet(height: SheetHeight, sidePanel: boolean): SheetHeight {
-  return !sidePanel && height === 'mid' ? 'low' : height;
-}
-
-/** The height after a row is opened in the list. */
-export function rowSheet(height: SheetHeight, sidePanel: boolean): SheetHeight {
-  return !sidePanel && height === 'mid' ? 'full' : height;
-}
-
-/** "Show on map" in an open row: the highest height that shows the card. */
+/** "Show on map" in an open site: the peek on a phone, and on the side panel
+ *  the highest height that shows the card. */
 export function showOnMap(sidePanel: boolean): SheetHeight {
   return sidePanel ? 'mid' : 'low';
 }

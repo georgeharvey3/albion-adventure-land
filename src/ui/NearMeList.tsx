@@ -1,19 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RowThumb } from "./RowThumb";
 import { useStore } from "../state/store";
 import { useVisibleSites } from "../state/selectors";
-import {
-  hybridTitle,
-  siteSwatch,
-  SITE_TYPE_COLORS,
-  SITE_TYPE_LABELS,
-  type Site,
-} from "../data/types";
+import { hybridTitle, siteSwatch, SITE_TYPE_LABELS } from "../data/types";
 import { formatDistance } from "../geo/haversine";
 import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
 import { CheckIcon, MapPinIcon, StarIcon } from "./icons";
 import { KEY_RANK, stepCursor } from "../state/keys";
-import { rowSheet, showOnMap } from "../state/sheet";
+import { showOnMap } from "../state/sheet";
 import { useKeyLayer } from "./useKeyLayer";
 import { useSidePanel } from "./useWideScreen";
 import { copy } from "../copy";
@@ -29,49 +24,19 @@ import { copy } from "../copy";
 // costs you and how far into the journey it falls.
 //
 // While the list lies over the map (`inPlace`: the phone sheet at its middle
-// or full height, issue #110), rows gain a thumbnail and a teaser, and tapping
-// one opens the full write-up *in place* rather than throwing the reader to a
-// card floating under the sheet. An opened site is stepped through with the
-// prev/next bar closing it, or the arrow keys, so reading ten in a row costs
-// ten taps rather than twenty. The side panel shows the map beside the list,
-// so there the rows are compact and open the card until the panel takes the
-// window.
+// or full height, issue #110), rows gain a thumbnail and a teaser. On a phone
+// a tapped row opens its site in the sheet, in place of the list (issue #112).
+// The side panel shows the map beside the list, so there the rows are compact
+// and open the card until the panel takes the window. At full, a row there
+// opens its write-up *in place*, and an opened site is stepped through with
+// the prev/next bar closing it, or the arrow keys, so reading ten in a row
+// costs ten taps rather than twenty.
 //
 // Only the nearest PAGE_SIZE rows are rendered (with "show more" paging) —
 // mounting all ~2,600 rows was a large chunk of the mobile jank, and the
 // near-me loop only ever needs the top of the list.
 
 const PAGE_SIZE = 150;
-
-// Row thumbnail: the listing's first guidebook plate, or a flat tile in the
-// category colour when there is no picture (only ~14% of sites have one, and a
-// ragged left edge down a reading list is worse than a plain swatch). A picture
-// that fails to load falls back to the same tile rather than a broken-image box.
-function RowThumb({ site }: { site: Site }) {
-  const [broken, setBroken] = useState(false);
-  const image = site.images?.[0];
-  const tint = SITE_TYPE_COLORS[site.category];
-
-  if (!image || broken) {
-    return (
-      <span
-        className="row-thumb blank"
-        style={{ background: tint }}
-        aria-hidden="true"
-      />
-    );
-  }
-  return (
-    <img
-      className="row-thumb"
-      src={`${import.meta.env.BASE_URL}${image.url}`}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      onError={() => setBroken(true)}
-    />
-  );
-}
 
 export function NearMeList({ inPlace }: { inPlace: boolean }) {
   const views = useVisibleSites();
@@ -83,7 +48,6 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   const setRouteSort = useStore((s) => s.setRouteSort);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
-  const sheet = useStore((s) => s.sheet);
   const setSheet = useStore((s) => s.setSheet);
   const sidePanel = useSidePanel();
   const lifted = useStore((s) => s.lifted);
@@ -103,12 +67,6 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   // open write-up — has moved the selection to another row.
   const lastSelected = useRef(selectedSiteId);
 
-  /** Open a site from the list. A row opened at the middle height raises the
-   *  sheet to full, so the write-up has the room to be read (state/sheet.ts). */
-  const openRow = (id: string) => {
-    setSheet(rowSheet(sheet, sidePanel));
-    setSelected(id);
-  };
 
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
@@ -218,7 +176,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
         pendingScroll.current = true;
         smoothScroll.current = true;
       }
-      openRow(lifted.id);
+      setSelected(lifted.id);
       return true;
     }
     return false;
@@ -378,7 +336,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
                   }
                   pendingScroll.current = true;
                   smoothScroll.current = true;
-                  openRow(site.id);
+                  setSelected(site.id);
                 }}
                 aria-expanded={expanded}
               >
