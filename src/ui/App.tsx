@@ -16,7 +16,16 @@ import { useSidePanel, useWideScreen } from './useWideScreen';
 import { useSheetDrag } from './useSheetDrag';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
-import { sheetStops, stepSheet, tapTab, type SheetStops } from '../state/sheet';
+import {
+  coveredBottom,
+  listInPlace,
+  sameStops,
+  sheetStops,
+  stepSheet,
+  tapTab,
+  type SheetStops,
+} from '../state/sheet';
+import { NO_INSETS } from '../map/insets';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
 
@@ -35,6 +44,7 @@ export function App() {
   const requestFinder = useStore((s) => s.requestFinder);
   const openSearch = useStore((s) => s.openSearch);
   const insets = useStore((s) => s.coveredInsets);
+  const setCoveredInsets = useStore((s) => s.setCoveredInsets);
   // The shell (issue #89): the desktop shell from 1024 px, the sheet below.
   // Both share the store, the map and SiteBody: the phone opens a site in
   // the card, the desktop in the spread.
@@ -62,45 +72,49 @@ export function App() {
   // the journey bar grows when a journey is set.
   const appRef = useRef<HTMLDivElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  const headRef = useRef<HTMLDivElement | null>(null);
+  // The head and the list take the drag (useSheetDrag.ts), so they are held
+  // as state: the list mounts and unmounts with the height.
+  const [sheetHead, setSheetHead] = useState<HTMLDivElement | null>(null);
+  const [sheetBody, setSheetBody] = useState<HTMLDivElement | null>(null);
   const [stops, setStops] = useState<SheetStops | null>(null);
   useLayoutEffect(() => {
     const app = appRef.current;
-    const head = headRef.current;
     const el = sheetRef.current;
-    if (desktop || !app || !head || !el) return;
+    if (!app || !sheetHead || !el) return;
     const measure = () => {
       const border = parseFloat(getComputedStyle(el).borderTopWidth) || 0;
-      const low = Math.ceil(head.getBoundingClientRect().height + border);
+      const low = Math.ceil(sheetHead.getBoundingClientRect().height + border);
       const next = sheetStops(app.clientHeight, low);
-      setStops((prev) =>
-        prev && prev.low === next.low && prev.mid === next.mid && prev.full === next.full
-          ? prev
-          : next,
-      );
+      setStops((prev) => (sameStops(prev, next) ? prev : next));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(app);
-    observer.observe(head);
+    observer.observe(sheetHead);
     return () => observer.disconnect();
-  }, [desktop]);
+  }, [sheetHead]);
 
-  // The list's scroll container, for the drag that it shares with the sheet.
-  const [sheetBody, setSheetBody] = useState<HTMLDivElement | null>(null);
   const { dragPx, handleProps } = useSheetDrag({
     enabled: !sidePanel,
     sheet,
     setSheet,
     stops,
+    head: sheetHead,
     body: sheetBody,
   });
   const dragging = dragPx !== null;
   const sheetPx = dragPx ?? stops?.[sheet] ?? null;
-  // The list rows open in place while the list lies over the map, and the
-  // open row is then the card. The side panel shows the map beside the list,
-  // so its rows open the floating card until the panel takes the window.
-  const inPlace = sidePanel ? sheet === 'full' : sheet !== 'low' || dragging;
+  const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
+
+  // The middle sheet covers the lower half of the map, so a fitted journey or
+  // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
+  // Set when the sheet rests, never during a drag. The desktop shell sets its
+  // own insets, and the side panel keeps none, as before.
+  const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) : 0;
+  useEffect(() => {
+    if (desktop) return;
+    setCoveredInsets({ ...NO_INSETS, bottom: covered });
+  }, [desktop, covered, setCoveredInsets]);
 
   useEffect(() => {
     void init();
@@ -193,7 +207,7 @@ export function App() {
         >
           {/* The head is the low height, so it shows at every height. The
               journey anchor governs every tab, so it stays with the tabs. */}
-          <div className="sheet-head" ref={headRef}>
+          <div className="sheet-head" ref={setSheetHead}>
             <button
               className="sheet-handle"
               {...handleProps}

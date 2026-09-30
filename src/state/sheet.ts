@@ -36,6 +36,36 @@ export function sheetStops(appHeight: number, lowHeight: number): SheetStops {
   };
 }
 
+export function sameStops(a: SheetStops | null, b: SheetStops | null): boolean {
+  return !!a && !!b && a.low === b.low && a.mid === b.mid && a.full === b.full;
+}
+
+/** How much of the map, in px up from its bottom edge, the resting sheet
+ *  covers. The map area stops at the low height, so only the middle height
+ *  covers it. The full sheet hides the whole map, so nothing is fitted to it
+ *  then. */
+export function coveredBottom(stops: SheetStops, height: SheetHeight): number {
+  return height === 'mid' ? stops.mid - stops.low : 0;
+}
+
+/** Whether the list rows open in place. They do while the list lies over the
+ *  map, and the open row is then the card. On the side panel the map shows
+ *  beside the list, so the rows open the floating card until the panel takes
+ *  the window. A drag off the low height already shows the list. */
+export function listInPlace(s: {
+  height: SheetHeight;
+  dragging: boolean;
+  sidePanel: boolean;
+}): boolean {
+  if (s.sidePanel) return s.height === 'full';
+  return s.height !== 'low' || s.dragging;
+}
+
+/** "Show on map" in an open row: the highest height that shows the card. */
+export function showOnMap(sidePanel: boolean): SheetHeight {
+  return sidePanel ? 'mid' : 'low';
+}
+
 /** Where a drag that let go at `px` settles. `velocity` is in px per ms, and
  *  positive is up. */
 export function snapSheet(stops: SheetStops, px: number, velocity: number): SheetHeight {

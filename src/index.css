@@ -726,7 +726,7 @@ body,
 }
 /* A row in place has the room, so the label is allowed to wrap there
    rather than lose its county. */
-.row.browse .row-sub {
+.row.rich .row-sub {
   white-space: normal;
   overflow: visible;
 }
@@ -2240,8 +2240,8 @@ body,
 }
 /* Results reuse the map-mode row: same swatch, same visited and wishlist marks,
    same trailing distance, so a result looks like the row it is about to
-   become. They keep that shape in browse mode too — a lookup is transient, and
-   the full browse row is what you get once you pick one. */
+   become. They keep that shape everywhere — a lookup is transient, and
+   the full row in place is what you get once you pick one. */
 .finder-results {
   list-style: none;
   margin: 0;
@@ -2332,9 +2332,9 @@ body,
   }
 }
 
-/* A browse row is a disclosure: the header is a real button (keyboard-operable,
+/* A row in place is a disclosure: the header is a real button (keyboard-operable,
    unlike the map-mode row) and the write-up opens underneath it. */
-.row.browse {
+.row.rich {
   display: block;
   padding: 0;
   cursor: default;
@@ -2356,13 +2356,13 @@ body,
    fills most of the screen, and an accent tint at that size stops reading as a
    highlight and starts reading as a green wash over the write-up. Selection is
    a mark on one row; expansion is a change of ground. */
-.row.browse.expanded {
+.row.rich.expanded {
   background: var(--color-paper-3);
 }
 /* A reading list has the width for a long name; the compact row, squeezed into
    the side panel beside a distance, does not and keeps its ellipsis. The list
    in place is also where the display face gets room, so the name steps up. */
-.row.browse .row-name {
+.row.rich .row-name {
   font-size: var(--text-lg);
   white-space: normal;
   overflow: visible;
@@ -2431,7 +2431,7 @@ body,
    The negative inline margin bleeds the bar across .row-body's gutters, so text
    scrolls *under* it rather than beside it; the padding puts the buttons back
    where they were. The background must stay opaque for the same reason, and it
-   matches .row.browse.expanded so the bar reads as part of the entry, not as a
+   matches .row.rich.expanded so the bar reads as part of the entry, not as a
    floating toolbar. The bottom padding clears the home indicator on a
    full-height phone, where the sheet runs to the physical bottom of the glass. */
 .row-nav {
@@ -2941,7 +2941,7 @@ body,
 /* Hover styles for a mouse only. A touch screen keeps a hover state after a
    tap, and a lasting wash on the row you just tapped reads as a fault. */
 @media (hover: hover) and (pointer: fine) {
-  .row:not(.browse):hover,
+  .row:not(.rich):hover,
   .row-head:hover {
     background: var(--color-paper-3);
   }
@@ -3492,7 +3492,7 @@ body,
   height: 100%;
   object-fit: cover;
 }
-/* The hero of the phone card and the browse row (issue #108): the lead,
+/* The hero of the phone card and the row in place (issue #108): the lead,
    shorter, bled to the edges of the card. The card keeps a strip of map above
    it, so the hero stops at 240 px, or less on a short screen. The thumbs
    become dots, because a phone swipes, and the ‹ › buttons show only where a

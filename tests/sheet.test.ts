@@ -1,8 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  coveredBottom,
   dragIntent,
+  listInPlace,
+  sameStops,
   sheetStops,
+  showOnMap,
   snapSheet,
   stepSheet,
   tapHandle,
@@ -70,6 +74,33 @@ test('another tab keeps the height, and the open tab lowers the sheet', () => {
   assert.deepEqual(tapTab({ tab: 'near', height: 'full' }, 'filters'), { tab: 'filters', height: 'full' });
   assert.deepEqual(tapTab({ tab: 'near', height: 'mid' }, 'near'), { tab: 'near', height: 'low' });
   assert.deepEqual(tapTab({ tab: 'near', height: 'full' }, 'near'), { tab: 'near', height: 'low' });
+});
+
+test('the rows open in place while the list lies over the map', () => {
+  assert.equal(listInPlace({ height: 'low', dragging: false, sidePanel: false }), false);
+  assert.equal(listInPlace({ height: 'low', dragging: true, sidePanel: false }), true);
+  assert.equal(listInPlace({ height: 'mid', dragging: false, sidePanel: false }), true);
+  // The side panel shows the map beside the list until it takes the window.
+  assert.equal(listInPlace({ height: 'mid', dragging: false, sidePanel: true }), false);
+  assert.equal(listInPlace({ height: 'full', dragging: false, sidePanel: true }), true);
+});
+
+test('"Show on map" lowers the sheet to the height that shows the card', () => {
+  assert.equal(showOnMap(false), 'low');
+  assert.equal(showOnMap(true), 'mid');
+});
+
+test('the middle sheet covers the map above the low one', () => {
+  assert.equal(coveredBottom(stops, 'mid'), 334 - 96);
+  assert.equal(coveredBottom(stops, 'low'), 0);
+  // The full sheet hides the whole map, so nothing is fitted to it.
+  assert.equal(coveredBottom(stops, 'full'), 0);
+});
+
+test('the same three heights are the same stops', () => {
+  assert.equal(sameStops(stops, sheetStops(667, 96)), true);
+  assert.equal(sameStops(stops, sheetStops(668, 96)), false);
+  assert.equal(sameStops(null, stops), false);
 });
 
 test('a tap on the handle raises the sheet, and from full lowers it', () => {

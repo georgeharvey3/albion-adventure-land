@@ -11,11 +11,14 @@ import {
 // The drag that moves the phone sheet (issue #110). No gesture library: the
 // rules are in state/sheet.ts, and this hook only feeds them the finger.
 //
-// Two places take a drag. The handle takes any pointer, and never scrolls.
-// The list takes a touch only, and shares it with the scroll: after DRAG_SLOP
-// px, `dragIntent` gives the touch to the sheet or leaves it to the list for
-// the rest of the gesture. A sideways touch stays with the list, so the
-// picture carousel in an open row still swipes.
+// Two places take a touch drag. The sheet head — the handle, the journey bar
+// and the tabs — never scrolls, so any vertical drag on it moves the sheet,
+// after DRAG_SLOP px so a tap on a tab stays a tap. The list shares the touch
+// with its scroll: `dragIntent` gives the touch to the sheet or leaves it to
+// the list for the rest of the gesture. The list decides on the first move,
+// because iOS starts its own scroll on that move and ignores a later
+// `preventDefault`. A sideways touch stays with the list, so the picture
+// carousel in an open row still swipes. A mouse or a pen drags the handle.
 
 interface Drag {
   startY: number;
@@ -29,13 +32,21 @@ interface Drag {
 /** A pause this long, in ms, before the finger lifts cancels the flick. */
 const STILL = 100;
 
+/** How long, in ms, after a sheet drag ends a click is taken as part of it. */
+const CLICK_AFTER_DRAG = 400;
+
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** The sheet height under a finger at `y`. */
+const heightAt = (d: Drag, y: number, stops: SheetStops) =>
+  clamp(d.startPx - (y - d.startY), stops.low, stops.full);
 
 export function useSheetDrag({
   enabled,
   sheet,
   setSheet,
   stops,
+  head,
   body,
 }: {
   /** Off on the side panel, which has no vertical travel. */
@@ -44,6 +55,8 @@ export function useSheetDrag({
   setSheet: (sheet: SheetHeight) => void;
   /** Null until the app and the sheet head are measured. */
   stops: SheetStops | null;
+  /** The sheet head. */
+  head: HTMLElement | null;
   /** The list's scroll container, while it is mounted. */
   body: HTMLElement | null;
 }) {
@@ -53,8 +66,8 @@ export function useSheetDrag({
   // Set when the handle moved past the slop, so the click that follows the
   // pointerup is not also taken as a tap.
   const handleMoved = useRef(false);
-  // The touch listeners are added once per list, so they read these through
-  // a ref instead of a stale closure.
+  // The touch listeners are added once per element, so they read these
+  // through a ref instead of a stale closure.
   const live = useRef({ sheet, stops, setSheet });
   live.current = { sheet, stops, setSheet };
 
@@ -76,7 +89,7 @@ export function useSheetDrag({
     if (dt > 0) d.velocity = 0.7 * ((d.lastY - y) / dt) + 0.3 * d.velocity;
     d.lastY = y;
     d.lastT = now;
-    setDragPx(clamp(d.startPx - (y - d.startY), stops.low, stops.full));
+    setDragPx(heightAt(d, y, stops));
   };
 
   const end = () => {
@@ -86,8 +99,7 @@ export function useSheetDrag({
     setDragPx(null);
     if (!d || !stops) return;
     const velocity = performance.now() - d.lastT > STILL ? 0 : d.velocity;
-    const px = clamp(d.startPx - (d.lastY - d.startY), stops.low, stops.full);
-    setSheet(snapSheet(stops, px, velocity));
+    setSheet(snapSheet(stops, heightAt(d, d.lastY, stops), velocity));
   };
 
   const cancel = () => {
@@ -98,22 +110,27 @@ export function useSheetDrag({
   const handleProps = {
     onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
       handleMoved.current = false;
-      if (!enabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      // A touch on the handle is a touch on the head, handled below.
+      if (!enabled || e.pointerType === 'touch') return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (!begin(e.clientY)) return;
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
       const d = drag.current;
-      if (!d) return;
+      if (!d || e.pointerType === 'touch') return;
       if (!handleMoved.current && Math.abs(e.clientY - d.startY) < DRAG_SLOP) return;
       handleMoved.current = true;
       move(e.clientY);
     },
-    onPointerUp: () => {
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
+      if (e.pointerType === 'touch') return;
       if (handleMoved.current) end();
       else cancel();
     },
-    onPointerCancel: cancel,
+    onPointerCancel: (e: React.PointerEvent<HTMLElement>) => {
+      if (e.pointerType !== 'touch') cancel();
+    },
     // A tap, or Enter and Space on the focused handle.
     onClick: () => {
       if (handleMoved.current) {
@@ -124,30 +141,48 @@ export function useSheetDrag({
     },
   };
 
-  useEffect(() => {
-    if (!enabled || !body) return;
+  // One effect per element. The list mounts during a drag off the low height,
+  // and a shared effect would then tear down the head's listeners, and the
+  // drag they hold, under the finger.
+  useEffect(() => (enabled && head ? listen(head, 'head') : undefined), [enabled, head]);
+  useEffect(() => (enabled && body ? listen(body, 'list') : undefined), [enabled, body]);
+
+  // Reads only refs and the stable helpers above, so a listener added once
+  // stays current.
+  function listen(el: HTMLElement, kind: 'head' | 'list') {
     let start: { x: number; y: number } | null = null;
     let mode: 'sheet' | 'scroll' | null = null;
-    // The click that ends a sheet drag must not also open the row under it.
+    // Past the slop: the finger dragged, so the click that ends the gesture
+    // must not also press the tab or open the row under it.
+    let moved = false;
     let swallowUntil = 0;
 
     const onStart = (e: TouchEvent) => {
       mode = null;
+      moved = false;
       start = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
     };
     const onMove = (e: TouchEvent) => {
-      if (!start || e.touches.length !== 1) return;
+      if (!start) return;
+      // A second finger is a pinch, not a drag.
+      if (e.touches.length !== 1) {
+        if (mode === 'sheet') cancel();
+        start = null;
+        mode = null;
+        return;
+      }
       const t = e.touches[0];
       const dx = t.clientX - start.x;
       const dy = t.clientY - start.y;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) >= DRAG_SLOP) moved = true;
       if (mode === null) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < DRAG_SLOP) return;
-        if (Math.abs(dx) > Math.abs(dy)) {
-          mode = 'scroll';
-          return;
-        }
-        mode = dragIntent({ dy, scrollTop: body.scrollTop, height: live.current.sheet });
-        if (mode === 'sheet' && !begin(t.clientY)) mode = 'scroll';
+        if (dx === 0 && dy === 0) return;
+        if (kind === 'head' && !moved) return;
+        if (Math.abs(dx) > Math.abs(dy)) mode = 'scroll';
+        else if (kind === 'head') mode = 'sheet';
+        else mode = dragIntent({ dy, scrollTop: el.scrollTop, height: live.current.sheet });
+        // The browser has already taken the touch for its own scroll.
+        if (mode === 'sheet' && (!e.cancelable || !begin(start.y))) mode = 'scroll';
       }
       if (mode === 'sheet') {
         e.preventDefault();
@@ -157,7 +192,7 @@ export function useSheetDrag({
     const onEnd = () => {
       if (mode === 'sheet') {
         end();
-        swallowUntil = performance.now() + 400;
+        if (moved) swallowUntil = performance.now() + CLICK_AFTER_DRAG;
       }
       start = null;
       mode = null;
@@ -173,22 +208,20 @@ export function useSheetDrag({
       e.stopPropagation();
     };
 
-    body.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchstart', onStart, { passive: true });
     // Not passive: a sheet drag must stop the list from scrolling.
-    body.addEventListener('touchmove', onMove, { passive: false });
-    body.addEventListener('touchend', onEnd);
-    body.addEventListener('touchcancel', onCancel);
-    body.addEventListener('click', onClick, true);
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onCancel);
+    el.addEventListener('click', onClick, true);
     return () => {
-      body.removeEventListener('touchstart', onStart);
-      body.removeEventListener('touchmove', onMove);
-      body.removeEventListener('touchend', onEnd);
-      body.removeEventListener('touchcancel', onCancel);
-      body.removeEventListener('click', onClick, true);
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onCancel);
+      el.removeEventListener('click', onClick, true);
     };
-    // begin, move, end and cancel read only refs and stable setters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, body]);
+  }
 
   return { dragPx, handleProps };
 }

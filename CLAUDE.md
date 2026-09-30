@@ -393,13 +393,20 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
 - The rules are pure and live in `src/state/sheet.ts`: the heights, the snap,
   the drag rule and the steps. `src/ui/useSheetDrag.ts` only feeds them the
   finger. Do not add a gesture library.
-- The handle takes any drag. The list takes a touch drag and shares it with
-  the scroll (`dragIntent`). A drag up raises the sheet until it is full. A
-  drag down lowers it only when the list is at its top. A sideways touch
-  stays with the list, so the picture carousel still swipes.
+- The sheet head takes any vertical touch drag: the handle, the journey bar
+  and the tabs. A mouse drags the handle only. The list shares a touch drag
+  with its scroll (`dragIntent`). A drag up raises the sheet until it is
+  full. A drag down lowers it only when the list is at its top. A sideways
+  touch stays with the list, so the picture carousel still swipes.
+- The list decides on the first touch move. iOS starts its own scroll on that
+  move and then ignores `preventDefault`, so a later decision lets the list
+  scroll and the sheet move together.
 - The map area stops at the low height at every height, and the sheet lies
   over the map. So the map never resizes during a drag, and it stays mounted
   under the full list.
+- At the middle height the sheet reports the part of the map that it covers
+  as the bottom covered inset (`coveredBottom`). A fitted journey or a pin
+  brought into view then stays clear of the sheet.
 - While the list is over the map, a row opens in place and the floating card
   does not show. "Show on map" lowers the sheet, and the card shows.
 - A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
@@ -408,7 +415,8 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
 - From 760 px the sheet is the side panel, as before. It takes no drag. Its
   middle height is the panel with the floating card, and the full height
   takes the window.
-- The list still sorts from the user's position (#110 Q4, option A).
+- The list still sorts from the user's position. #110 Q4 (option A or B)
+  waits for the owner, so option A stays until the owner decides.
 
 ## UI copy
 

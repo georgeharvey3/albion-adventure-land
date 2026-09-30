@@ -13,6 +13,7 @@ import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
 import { CheckIcon, MapPinIcon, StarIcon } from "./icons";
 import { KEY_RANK, stepCursor } from "../state/keys";
+import { showOnMap } from "../state/sheet";
 import { useKeyLayer } from "./useKeyLayer";
 import { useSidePanel } from "./useWideScreen";
 import { copy } from "../copy";
@@ -355,7 +356,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
               key={site.id}
               data-site-id={site.id}
               ref={expanded ? expandedRef : undefined}
-              className={`row browse ${expanded ? "expanded" : ""} ${
+              className={`row rich ${expanded ? "expanded" : ""} ${
                 visited ? "is-visited" : ""
               } ${liftedRow ? "lifted" : ""}`}
               {...hoverProps(site.id)}
@@ -397,7 +398,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
                     site={site}
                     showHeader={false}
                     collapseDescription={false}
-                    onShowOnMap={() => setSheet(sidePanel ? "mid" : "low")}
+                    onShowOnMap={() => setSheet(showOnMap(sidePanel))}
                   />
                   {/* Naming the neighbours turns the step into a decision
                     rather than a leap in the dark. The bar is sticky (see
