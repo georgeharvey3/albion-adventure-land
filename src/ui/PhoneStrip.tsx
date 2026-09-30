@@ -15,7 +15,8 @@ import { copy } from '../copy';
 //
 // The frame in the middle lifts its pin, and the lift follows the swipe. A
 // pin tap lifts the pin, and this row brings its frame to the middle
-// (MapView.tsx). A tap on a frame opens the site in the peek (issue #112).
+// (MapView.tsx). A tap on a frame opens the site at the middle height, with
+// its hero picture (issue #112). × brings the row back.
 //
 // The row is outside the Leaflet container, so a swipe on it never pans the
 // map, and a map pan never moves the row. It stays mounted while it hides, so
@@ -36,6 +37,7 @@ export function PhoneStrip({
   onHeight: (px: number) => void;
 }) {
   const setSelected = useStore((s) => s.setSelected);
+  const setSheet = useStore((s) => s.setSheet);
   const lifted = useStore((s) => s.lifted);
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
@@ -164,7 +166,12 @@ export function PhoneStrip({
               <button
                 className={classes.filter(Boolean).join(' ')}
                 tabIndex={showing ? 0 : -1}
-                onClick={() => setSelected(site.id)}
+                onClick={() => {
+                  // Selected first, so the list height to come back to is
+                  // the low one, where the row is.
+                  setSelected(site.id);
+                  setSheet('mid');
+                }}
               >
                 <FramePlate site={site} figure={frameFigure(view)} />
                 <span className="pframe-name">

@@ -465,7 +465,9 @@ layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
 - One wide frame sits in the middle, and its neighbours show at the edges.
   The frame in the middle lifts its pin (`by: 'strip'`). The lift follows the
   swipe, not only the frame where the swipe stops.
-- A tap on a frame opens the site in the peek. At the low height, a tap on a
+- A tap on a frame opens the site at the middle height, where its hero
+  picture shows. × brings the list back at the low height, with the row. At
+  the low height, a tap on a
   pin lifts it and brings its frame to the middle. A second tap on the lifted
   pin opens the site. The rules are pure and live in
   `src/state/phoneStrip.ts`.
