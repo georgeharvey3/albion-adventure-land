@@ -337,6 +337,10 @@ keeps the floating card.
 - The pictures are the lead of the spread: a carousel across the top of the
   page, one picture at a time. A swipe, the ‹ › buttons and the thumbs move
   it. The arrow keys do not, because in the spread they step between sites.
+- A lead picture never shows larger than its own size. The sources are 720 px
+  wide at most, and a stretch to the page blurs them. The picture sits whole
+  over a blurred, darkened copy of itself, and the lead is as tall as the
+  tallest picture, from 280 px to 62% of the window.
 - One CSS grid cannot make the two columns. A grid shares its row heights
   between the columns, so a long write-up moved the buttons apart.
 - The spread is the covered inset on the right. The map pans the site to the

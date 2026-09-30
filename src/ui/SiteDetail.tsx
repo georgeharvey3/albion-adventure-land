@@ -136,8 +136,12 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
  *  do the ‹ › buttons and the thumbs, which also show the one in view. The
  *  arrow keys stay with the spread and step between sites.
  *
- *  A picture too small to fill the page sits whole on a dark ground rather
- *  than blown up. With no picture, or none that loads, a wash in the site's
+ *  A picture never shows larger than its own size: the sources are 720 px at
+ *  most, and half are 626 px or less, so a stretch to the page blurs them. It
+ *  sits whole, centred, over a blurred and darkened copy of itself, which
+ *  fills the frame and reads as meant. The lead is as tall as the tallest
+ *  picture, between two limits, so small pictures get a small lead and a
+ *  portrait is not a strip in a wide box. With no picture, or none that loads, a wash in the site's
  *  colour names the kind of site, as in the strip. A click opens the viewer
  *  at the picture in view. */
 function LeadCarousel({ site }: { site: Site }) {
@@ -170,19 +174,32 @@ function LeadCarousel({ site }: { site: Site }) {
   };
   const multi = shown.length > 1;
   const at = Math.min(index, shown.length - 1);
+  // One height for the whole carousel, so a swipe does not move the page.
+  const tallest = Math.max(...shown.map((img) => img.height ?? 0));
 
   return (
-    <div className={multi ? 'spread-lead multi' : 'spread-lead'}>
+    <div
+      className={multi ? 'spread-lead multi' : 'spread-lead'}
+      style={tallest ? ({ '--lead-h': `${tallest}px` } as React.CSSProperties) : undefined}
+    >
       <div className="lead-row" ref={rowRef} onScroll={onScroll}>
         {shown.map((img, i) => (
           <figure className="lead-slide" key={img.url}>
+            <img
+              className="lead-backdrop"
+              src={`${import.meta.env.BASE_URL}${img.url}`}
+              alt=""
+              aria-hidden="true"
+              loading={i ? 'lazy' : undefined}
+              decoding="async"
+            />
             <button
               className="shot-open"
               onClick={() => setOpened(i)}
               aria-label={img.caption ? copy.site.enlarge(img.caption) : copy.site.enlargePicture}
             >
               <img
-                className={img.width && img.width < 600 ? 'small' : undefined}
+                className="lead-picture"
                 src={`${import.meta.env.BASE_URL}${img.url}`}
                 alt={img.caption ?? ''}
                 loading={i ? 'lazy' : undefined}
