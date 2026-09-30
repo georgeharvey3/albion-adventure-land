@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useGeolocation } from '../state/useGeolocation';
 import { MapView } from '../map/MapView';
@@ -12,9 +12,11 @@ import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
 import { PhoneFinder } from './PhoneFinder';
-import { useWideScreen } from './useWideScreen';
+import { useSidePanel, useWideScreen } from './useWideScreen';
+import { useSheetDrag } from './useSheetDrag';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
+import { sheetStops, stepSheet, tapTab, type SheetStops } from '../state/sheet';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
 
@@ -27,8 +29,8 @@ export function App() {
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
   const destination = useStore((s) => s.destination);
-  const browse = useStore((s) => s.browse);
-  const setBrowse = useStore((s) => s.setBrowse);
+  const sheet = useStore((s) => s.sheet);
+  const setSheet = useStore((s) => s.setSheet);
   const setSelected = useStore((s) => s.setSelected);
   const requestFinder = useStore((s) => s.requestFinder);
   const openSearch = useStore((s) => s.openSearch);
@@ -37,31 +39,68 @@ export function App() {
   // Both share the store, the map and SiteBody: the phone opens a site in
   // the card, the desktop in the spread.
   const desktop = useWideScreen();
+  // From 760 px the sheet is a side panel on the right of the map. Its middle
+  // height is the panel with the floating card, as before issue #110.
+  const sidePanel = useSidePanel();
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
   const [tab, setTab] = useState<SheetTab>(() => loadViewState().tab ?? 'near');
-  const [collapsed, setCollapsed] = useState(false);
   // Only until the first dismissal: after that, the reader knows the app.
   const [titleOpen, setTitleOpen] = useState(() => !loadViewState().titleSeen);
 
-  // Tapping a tab while collapsed expands the sheet to that tab; tapping the
-  // active tab toggles collapse. Keeps the map fully visible on small screens.
-  //
-  // Browse mode is a way of reading the near-me list, so it ends when the
-  // reader leaves that tab — and while it is on there is no map to free, so
-  // collapsing is a no-op rather than a way to end up with a blank screen.
+  // A tab opens the sheet at the middle height, and the open tab lowers it to
+  // free the map (state/sheet.ts).
   const selectTab = (next: SheetTab) => {
-    if (collapsed) {
-      setCollapsed(false);
-      setTab(next);
-    } else if (next === tab) {
-      if (!browse) setCollapsed(true);
-    } else {
-      if (next !== 'near') setBrowse(false);
-      setTab(next);
-    }
+    const to = tapTab({ tab, height: sheet }, next);
+    setTab(to.tab);
+    setSheet(to.height);
   };
+
+  // The three heights in px (issue #110). The low height is the sheet head —
+  // the handle, the journey bar and the tabs — so it is measured, not set:
+  // the journey bar grows when a journey is set.
+  const appRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const headRef = useRef<HTMLDivElement | null>(null);
+  const [stops, setStops] = useState<SheetStops | null>(null);
+  useLayoutEffect(() => {
+    const app = appRef.current;
+    const head = headRef.current;
+    const el = sheetRef.current;
+    if (desktop || !app || !head || !el) return;
+    const measure = () => {
+      const border = parseFloat(getComputedStyle(el).borderTopWidth) || 0;
+      const low = Math.ceil(head.getBoundingClientRect().height + border);
+      const next = sheetStops(app.clientHeight, low);
+      setStops((prev) =>
+        prev && prev.low === next.low && prev.mid === next.mid && prev.full === next.full
+          ? prev
+          : next,
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(app);
+    observer.observe(head);
+    return () => observer.disconnect();
+  }, [desktop]);
+
+  // The list's scroll container, for the drag that it shares with the sheet.
+  const [sheetBody, setSheetBody] = useState<HTMLDivElement | null>(null);
+  const { dragPx, handleProps } = useSheetDrag({
+    enabled: !sidePanel,
+    sheet,
+    setSheet,
+    stops,
+    body: sheetBody,
+  });
+  const dragging = dragPx !== null;
+  const sheetPx = dragPx ?? stops?.[sheet] ?? null;
+  // The list rows open in place while the list lies over the map, and the
+  // open row is then the card. The side panel shows the map beside the list,
+  // so its rows open the floating card until the panel takes the window.
+  const inPlace = sidePanel ? sheet === 'full' : sheet !== 'low' || dragging;
 
   useEffect(() => {
     void init();
@@ -78,27 +117,23 @@ export function App() {
   useEffect(() => {
     if (!destination || desktop) return;
     setTab('near');
-    setCollapsed(false);
+    if (sheet === 'low') setSheet('mid');
     // Only a new destination moves the sheet, not a change of shell.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination]);
 
-  // The desktop shell has no browse mode: the map and the strip show together.
-  useEffect(() => {
-    if (desktop && browse) setBrowse(false);
-  }, [desktop, browse, setBrowse]);
-
   useGeolocation();
 
   // Keys (issue #88). Esc closes one layer per press, top first — see
-  // KEY_RANK. The site card is the selection: on the map it floats, in
-  // browse mode it is the row open in place, and on a desktop it is the spread.
+  // KEY_RANK. The site card is the selection: on the map it floats, in the
+  // list over the map it is the row open in place, and on a desktop it is the
+  // spread.
   useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
-  // Last, the sheet: browse mode ends first, then the sheet folds down.
+  // Last, the sheet: one height down per press, full to middle to low.
   useKeyLayer(
-    !desktop && (browse || !collapsed),
+    !desktop && sheet !== 'low',
     KEY_RANK.sheet,
-    onEscape(() => (browse ? setBrowse(false) : setCollapsed(true))),
+    onEscape(() => setSheet(stepSheet(sheet, -1))),
   );
   // `/` searches. On a desktop it puts the cursor in the site finder in the
   // card. On a phone it opens the search overlay for the map (issue #109), as
@@ -112,27 +147,29 @@ export function App() {
 
   return (
     <div
+      ref={appRef}
       className={desktop ? 'app desk' : 'app'}
       style={{
         ['--covered-left' as string]: `${insets.left}px`,
         ['--covered-right' as string]: `${insets.right}px`,
         ['--covered-bottom' as string]: `${insets.bottom}px`,
+        ['--sheet-low' as string]: stops ? `${stops.low}px` : undefined,
       }}
     >
       {/* The card is positioned inside .map-area so it hugs the bottom of the
-          map — i.e. it sits just above the sheet whether the sheet is expanded
-          or collapsed, and never depends on viewport-height math.
+          map — i.e. it sits just above the low sheet, and never depends on
+          viewport-height math.
 
-          In browse mode the whole area is hidden rather than unmounted: tearing
-          the Leaflet map down would throw away the view the reader is coming
-          back to and rebuild every marker on return. Its ResizeObserver picks
-          the size back up. */}
-      <div className={browse && !desktop ? 'map-area hidden' : 'map-area'}>
+          On a phone the map area stops at the low sheet at every height, and
+          the raised sheet lies over the map. So the map never resizes during
+          a drag, and it stays mounted under the full list: tearing Leaflet
+          down would throw away the view the reader is coming back to. */}
+      <div className="map-area">
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder />}
         {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
-        {selectedSiteId && !desktop && <SiteDetail />}
+        {selectedSiteId && !desktop && !inPlace && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
 
@@ -149,39 +186,43 @@ export function App() {
         <DesktopShell />
       ) : (
         <>
-        <div className={`sheet ${collapsed ? 'collapsed' : ''} ${browse ? 'browse' : ''}`}>
-          {/* Persistent, above the tabs and outside the collapse: the journey
-              anchor governs every tab, so it must not disappear with the body. */}
-          <JourneyBar />
-          <nav className="tabs">
-            {TABS.map((id) => (
-              <button
-                key={id}
-                className={!collapsed && tab === id ? 'tab active' : 'tab'}
-                onClick={() => selectTab(id)}
-              >
-                {copy.app.tabs[id]}
-                {id === 'outing' && tripCount > 0 && (
-                  <span className="tab-badge">{tripCount}</span>
-                )}
-              </button>
-            ))}
-            {/* Nothing to collapse towards while the map is hidden. */}
-            {!browse && (
-              <button
-                className="tab collapse-toggle"
-                onClick={() => setCollapsed((c) => !c)}
-                aria-expanded={!collapsed}
-                aria-label={collapsed ? copy.app.expand : copy.app.collapse}
-                title={collapsed ? copy.app.expand : copy.app.collapse}
-              >
-                {collapsed ? '▲' : '▼'}
-              </button>
-            )}
-          </nav>
-          {!collapsed && (
-            <div className="sheet-body">
-              {tab === 'near' && <NearMeList />}
+        <div
+          ref={sheetRef}
+          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}`}
+          style={{ ['--sheet-h' as string]: sheetPx !== null ? `${sheetPx}px` : undefined }}
+        >
+          {/* The head is the low height, so it shows at every height. The
+              journey anchor governs every tab, so it stays with the tabs. */}
+          <div className="sheet-head" ref={headRef}>
+            <button
+              className="sheet-handle"
+              {...handleProps}
+              aria-label={sheet === 'full' ? copy.app.collapse : copy.app.expand}
+              title={sheet === 'full' ? copy.app.collapse : copy.app.expand}
+            >
+              <span className="sheet-grip" aria-hidden="true" />
+            </button>
+            <JourneyBar />
+            <nav className="tabs">
+              {TABS.map((id) => (
+                <button
+                  key={id}
+                  className={sheet !== 'low' && tab === id ? 'tab active' : 'tab'}
+                  onClick={() => selectTab(id)}
+                >
+                  {copy.app.tabs[id]}
+                  {id === 'outing' && tripCount > 0 && (
+                    <span className="tab-badge">{tripCount}</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+          {/* Mounted while a drag lifts the sheet off the low height, so the
+              list rises with the finger. */}
+          {(sheet !== 'low' || dragging) && (
+            <div className="sheet-body" ref={setSheetBody}>
+              {tab === 'near' && <NearMeList inPlace={inPlace} />}
               {tab === 'filters' && <Filters />}
               {tab === 'outing' && <Outing />}
               {tab === 'stats' && <Stats />}

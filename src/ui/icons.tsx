@@ -37,7 +37,6 @@ const PATHS = {
      "Walk" in the label already carries the mode of travel. */
   clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
   map: '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
-  list: '<path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   /* Stacked sheets: the base layer switcher on the map. */
   layers:
@@ -93,7 +92,6 @@ export const FlagIcon = (p: IconProps) => <Icon name="flag" {...p} />;
 export const BanIcon = (p: IconProps) => <Icon name="ban" {...p} />;
 export const ClockIcon = (p: IconProps) => <Icon name="clock" {...p} />;
 export const MapIcon = (p: IconProps) => <Icon name="map" {...p} />;
-export const ListIcon = (p: IconProps) => <Icon name="list" {...p} />;
 export const CheckIcon = (p: IconProps) => <Icon name="check" {...p} />;
 export const StarIcon = (p: IconProps) => <Icon name="star" {...p} />;
 export const LayersIcon = (p: IconProps) => <Icon name="layers" {...p} />;

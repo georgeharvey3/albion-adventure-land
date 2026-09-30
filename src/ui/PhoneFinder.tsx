@@ -16,7 +16,7 @@ import { copy } from '../copy';
 // postcodes, grid references and sites in one box, and a pick moves the map
 // or opens the site. It fills no end of the journey.
 //
-// It sits in .map-area, so browse mode hides it with the map, and the title
+// It sits in .map-area, so the full sheet covers it with the map, and the title
 // card covers it on a first visit.
 
 export function PhoneFinder() {

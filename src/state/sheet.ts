@@ -1,0 +1,91 @@
+// The phone sheet (issue #110). One sheet with three heights replaces the old
+// Browse and Map toggle:
+//
+// - low:  the map, with the journey bar and the tabs at the bottom.
+// - mid:  the list over the lower half of the map.
+// - full: the list over the whole screen. The map stays mounted under it.
+//
+// A drag on the handle moves the sheet between the heights. The rules here are
+// pure, so the gesture code in useSheetDrag.ts only measures and applies them.
+// This module imports nothing, so the tests can load it without a DOM.
+
+export type SheetHeight = 'low' | 'mid' | 'full';
+
+const ORDER: SheetHeight[] = ['low', 'mid', 'full'];
+
+/** The share of the app that the middle height covers. */
+const MID_SHARE = 0.5;
+
+/** A release faster than this, in px per ms, is a flick. A flick goes on to
+ *  the next height in its direction instead of the nearest one. */
+export const FLICK = 0.5;
+
+/** How far a finger moves, in px, before a drag on the list picks between
+ *  the sheet and the scroll. */
+export const DRAG_SLOP = 6;
+
+export type SheetStops = Record<SheetHeight, number>;
+
+/** The three heights in px, for an app `appHeight` tall whose low sheet (the
+ *  handle, the journey bar and the tabs) is `lowHeight` tall. */
+export function sheetStops(appHeight: number, lowHeight: number): SheetStops {
+  return {
+    low: lowHeight,
+    mid: Math.max(lowHeight, Math.round(appHeight * MID_SHARE)),
+    full: appHeight,
+  };
+}
+
+/** Where a drag that let go at `px` settles. `velocity` is in px per ms, and
+ *  positive is up. */
+export function snapSheet(stops: SheetStops, px: number, velocity: number): SheetHeight {
+  if (Math.abs(velocity) >= FLICK) {
+    const up = velocity > 0;
+    const next = up
+      ? ORDER.find((h) => stops[h] > px)
+      : [...ORDER].reverse().find((h) => stops[h] < px);
+    return next ?? (up ? 'full' : 'low');
+  }
+  let best: SheetHeight = 'low';
+  for (const h of ORDER) {
+    if (Math.abs(stops[h] - px) < Math.abs(stops[best] - px)) best = h;
+  }
+  return best;
+}
+
+/** Whether a vertical drag on the list moves the sheet or scrolls the list.
+ *  `dy` is positive for a finger that moves down. A drag up raises the sheet
+ *  until it is full. A drag down lowers it only when the list is at its top,
+ *  so the list scrolls back first. */
+export function dragIntent(drag: {
+  dy: number;
+  scrollTop: number;
+  height: SheetHeight;
+}): 'sheet' | 'scroll' {
+  if (drag.dy < 0) return drag.height === 'full' ? 'scroll' : 'sheet';
+  return drag.scrollTop <= 0 ? 'sheet' : 'scroll';
+}
+
+/** One height up (1) or down (-1), stopping at both ends. `Esc` steps down. */
+export function stepSheet(height: SheetHeight, dir: 1 | -1): SheetHeight {
+  const i = ORDER.indexOf(height) + dir;
+  return ORDER[Math.max(0, Math.min(ORDER.length - 1, i))];
+}
+
+/** A tap on the handle raises the sheet one height. From full it goes back to
+ *  the middle, so a tap never hides the list it came from. */
+export function tapHandle(height: SheetHeight): SheetHeight {
+  return height === 'full' ? 'mid' : stepSheet(height, 1);
+}
+
+/** A tap on a tab. From low it opens the sheet at the middle height. On an
+ *  open sheet another tab keeps the height, and the open tab lowers the sheet
+ *  to free the map. */
+export function tapTab<Tab extends string>(
+  state: { tab: Tab; height: SheetHeight },
+  next: Tab,
+): { tab: Tab; height: SheetHeight } {
+  if (state.height === 'low') return { tab: next, height: 'mid' };
+  if (next === state.tab) return { tab: next, height: 'low' };
+  return { tab: next, height: state.height };
+}

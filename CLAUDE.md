@@ -383,6 +383,33 @@ and the same chips. No tab must open to search or to turn a layer on or off.
 - The title card covers the row on a first visit (`--z-float` is under
   `--z-title`).
 
+## Phone sheet (issue #110)
+
+On a phone, one sheet has three heights. The low height shows the map with
+the journey bar and the tabs. The middle height shows the list over the lower
+half of the map. The full height shows the list over the whole screen. The
+Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
+
+- The rules are pure and live in `src/state/sheet.ts`: the heights, the snap,
+  the drag rule and the steps. `src/ui/useSheetDrag.ts` only feeds them the
+  finger. Do not add a gesture library.
+- The handle takes any drag. The list takes a touch drag and shares it with
+  the scroll (`dragIntent`). A drag up raises the sheet until it is full. A
+  drag down lowers it only when the list is at its top. A sideways touch
+  stays with the list, so the picture carousel still swipes.
+- The map area stops at the low height at every height, and the sheet lies
+  over the map. So the map never resizes during a drag, and it stays mounted
+  under the full list.
+- While the list is over the map, a row opens in place and the floating card
+  does not show. "Show on map" lowers the sheet, and the card shows.
+- A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
+  lowers it one height per press.
+- A session opens at the middle height, so the nearest sites show at once.
+- From 760 px the sheet is the side panel, as before. It takes no drag. Its
+  middle height is the panel with the floating card, and the full height
+  takes the window.
+- The list still sorts from the user's position (#110 Q4, option A).
+
 ## UI copy
 
 The screen carries labels, not explanations. A string earns its place only

@@ -25,8 +25,8 @@ import { copy } from '../copy';
 // A fuller per-site page with note + photo arrives in Phase 2 (F11).
 //
 // The write-up itself lives in `SiteBody`, which is deliberately chrome-free:
-// the floating card wraps it, and so does an expanded row in the near-me list's
-// browse mode. One site is described in exactly one place.
+// the floating card wraps it, and so does a near-me row open in place over
+// the map. One site is described in exactly one place.
 
 // Attribution label for the description's source link, keyed off the URL's host
 // so new scraped sources don't need a Site schema change.
@@ -212,8 +212,8 @@ function LeadCarousel({ site, hero = false }: { site: Site; hero?: boolean }) {
 
 interface SiteBodyProps {
   site: Site;
-  /** Browse mode only: hands the reader back to the map at this site. Omitted by
-   *  the floating card, which is already on the map. */
+  /** A row open in place only: lowers the sheet, so the reader sees the map at
+   *  this site. Omitted by the floating card, which is already on the map. */
   onShowOnMap?: () => void;
   /** Type, distance and title. The floating card needs them; an expanded list
    *  row already carries all three in its own header, so it turns them off

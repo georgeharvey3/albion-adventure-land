@@ -40,6 +40,7 @@ import { loadViewState, saveViewState } from "./viewState";
 import type { JourneyEnd, SearchResult, SearchTarget } from "../search/types";
 import { NO_INSETS, sameInsets, type CoveredInsets } from "../map/insets";
 import type { Viewport } from "./strip";
+import type { SheetHeight } from "./sheet";
 import { copy } from "../copy";
 
 export interface Position {
@@ -196,14 +197,15 @@ interface AppState {
   // `nonce` exists so picking the same result twice still moves the map.
   focus: { lat: number; lng: number; zoom?: number; nonce: number } | null;
 
-  // UI: the site shown in the detail card (map popup / list tap). In browse
-  // mode this same id is the row expanded in place, so leaving browse mode
-  // hands the map the site you were just reading about.
+  // UI: the site shown in the detail card (map popup / list tap). While the
+  // phone sheet lists sites over the map, this same id is the row expanded in
+  // place, so lowering the sheet hands the map the site you were reading.
   selectedSiteId: string | null;
-  // UI: browse mode hides the map and gives the near-me list the whole screen,
-  // for reading through sites rather than working a map. Ephemeral, like the
-  // selection — a session always opens on the map.
-  browse: boolean;
+  // UI (issue #110): the height of the phone sheet — the map, the list over
+  // half of it, or the list over all of it. See state/sheet.ts. Ephemeral,
+  // like the selection: a session opens on the list over half the map, so
+  // the nearest sites are there at once.
+  sheet: SheetHeight;
   // UI (issue #88): the site the mouse or the keyboard is on, and what put it
   // there. A lifted site marks its pin and its list row together, and a pin or
   // a key lift shows the peek over the map. A row lift shows no peek: the row
@@ -230,7 +232,7 @@ interface AppState {
   dropLifted: (siteId: string) => void;
   requestFinder: () => void;
   takeFinderRequest: () => void;
-  setBrowse: (browse: boolean) => void;
+  setSheet: (sheet: SheetHeight) => void;
   setCoveredInsets: (insets: CoveredInsets) => void;
   setViewport: (viewport: Viewport) => void;
   toggleType: (category: SiteCategory) => void;
@@ -497,7 +499,7 @@ export const useStore = create<AppState>((set, get) => ({
   // the map's pan-to-selection effect a no-op (the site list is still empty),
   // so the restored viewport is not overridden by a recentre on the pin.
   selectedSiteId: loadViewState().selectedSiteId,
-  browse: false,
+  sheet: "mid",
   lifted: null,
   finderWanted: false,
   coveredInsets: NO_INSETS,
@@ -987,7 +989,7 @@ export const useStore = create<AppState>((set, get) => ({
     saveViewState({ selectedSiteId });
     set({ selectedSiteId });
   },
-  setBrowse: (browse) => set({ browse }),
+  setSheet: (sheet) => set({ sheet }),
   setLifted: (lifted) => set({ lifted }),
   dropLifted: (siteId) => {
     if (get().lifted?.id === siteId) set({ lifted: null });
@@ -1112,7 +1114,7 @@ export const useStore = create<AppState>((set, get) => ({
       }
       set({
         searchTarget: null,
-        browse: false,
+        sheet: "low",
         focus: {
           lat: result.lat,
           lng: result.lng,
