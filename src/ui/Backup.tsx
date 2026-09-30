@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { backupFilename } from '../state/backup';
+import { copy } from '../copy';
 
 // Backup / restore, at the foot of the Saved tab.
 //
@@ -44,7 +45,7 @@ export function Backup() {
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: name });
-        setStatus({ kind: 'ok', message: 'Backup sent.' });
+        setStatus({ kind: 'ok', message: copy.backup.sent });
         return;
       } catch (err) {
         // A cancelled share is a decision, not a failure — say nothing and
@@ -64,25 +65,25 @@ export function Backup() {
       a.remove();
       // Revoked late: Safari reads the blob after the click returns.
       setTimeout(() => URL.revokeObjectURL(url), 30_000);
-      setStatus({ kind: 'ok', message: `Saved as ${name}.` });
+      setStatus({ kind: 'ok', message: copy.backup.savedAs(name) });
       return;
     } catch {
       // Fall through to the text.
     }
 
     setShowText(text);
-    setStatus({ kind: 'error', message: 'Could not save a file. Copy the text below.' });
+    setStatus({ kind: 'error', message: copy.backup.saveFailed });
   }
 
-  async function copy() {
+  async function copyText() {
     const text = exportUserState();
     try {
       await navigator.clipboard.writeText(text);
       setShowText(null);
-      setStatus({ kind: 'ok', message: 'Backup copied.' });
+      setStatus({ kind: 'ok', message: copy.backup.copied });
     } catch {
       setShowText(text);
-      setStatus({ kind: 'error', message: 'Could not copy. Copy the text below.' });
+      setStatus({ kind: 'error', message: copy.backup.copyFailed });
     }
   }
 
@@ -90,38 +91,36 @@ export function Backup() {
     setShowText(null);
     try {
       const added = await restoreUserState(text);
-      const parts = [
-        `${added.visited} ${added.visited === 1 ? 'visit' : 'visits'}`,
-        `${added.wishlist} wishlist`,
-        `${added.hidden} hidden`,
-      ];
-      setStatus({ kind: 'ok', message: `Restored ${parts.join(', ')}.` });
+      setStatus({
+        kind: 'ok',
+        message: copy.backup.restored(added.visited, added.wishlist, added.hidden),
+      });
       setPasting(false);
       setPasted('');
     } catch (err) {
-      setStatus({ kind: 'error', message: err instanceof Error ? err.message : 'That backup could not be read.' });
+      setStatus({ kind: 'error', message: err instanceof Error ? err.message : copy.backup.unreadable });
     }
   }
 
   return (
     <section className="backup">
-      <h3 className="stats-heading">Backup</h3>
+      <h3 className="stats-heading">{copy.backup.heading}</h3>
 
       <div className="card-actions">
         <button className="btn primary" onClick={save} disabled={!userLoaded || count === 0}>
-          Save a backup
+          {copy.backup.save}
         </button>
-        <button className="btn" onClick={copy} disabled={!userLoaded || count === 0}>
-          Copy as text
+        <button className="btn" onClick={copyText} disabled={!userLoaded || count === 0}>
+          {copy.backup.copy}
         </button>
       </div>
 
       <div className="card-actions">
         <button className="btn" onClick={() => fileInput.current?.click()} disabled={!userLoaded}>
-          Restore from a file
+          {copy.backup.restoreFile}
         </button>
         <button className="btn" onClick={() => setPasting((p) => !p)} disabled={!userLoaded}>
-          {pasting ? 'Cancel paste' : 'Paste a backup'}
+          {pasting ? copy.backup.cancelPaste : copy.backup.paste}
         </button>
       </div>
 
@@ -144,12 +143,12 @@ export function Backup() {
             className="backup-text"
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
-            placeholder="Paste the backup text here"
+            placeholder={copy.backup.pastePlaceholder}
             rows={4}
           />
           <div className="card-actions">
             <button className="btn primary" onClick={() => restore(pasted)} disabled={!pasted.trim()}>
-              Restore from text
+              {copy.backup.restoreText}
             </button>
           </div>
         </>

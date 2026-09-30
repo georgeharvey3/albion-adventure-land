@@ -1,5 +1,6 @@
 import type { LoadedGazetteer } from './places';
 import type { SearchResult } from './types';
+import { copy } from '../copy';
 
 // UK postcode search (issue #28), in two tiers so it never fully disappears:
 //
@@ -60,7 +61,7 @@ export function resolveOffline(
     id: `postcode:${parsed.outward}`,
     kind: 'postcode',
     label: parsed.formatted,
-    detail: parsed.inward ? `${parsed.outward} district (approximate)` : 'Postcode district',
+    detail: parsed.inward ? copy.search.postcodeDistrict(parsed.outward) : copy.search.anyPostcodeDistrict,
     lat: hit.lat,
     lng: hit.lng,
     source: 'offline',
@@ -104,7 +105,7 @@ export async function resolveOnline(
       id: `postcode:${parsed.outward}`,
       kind: 'postcode',
       label: parsed.formatted,
-      detail: admin_district ?? 'Postcode',
+      detail: admin_district ?? copy.search.postcode,
       lat: latitude,
       lng: longitude,
       source: 'online',

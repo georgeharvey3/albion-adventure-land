@@ -4,6 +4,7 @@ import { saveViewState } from '../state/viewState';
 import { LogoMark } from './LogoMark';
 import { KEY_RANK } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
+import { copy } from '../copy';
 
 // The first impression (issue #76): a title cartouche over the map, so a new
 // visitor can say what the app is within three seconds. It shows until the
@@ -52,10 +53,10 @@ export function TitleCard({ onClosed }: { onClosed: () => void }) {
     >
       <div className="title-card-plate">
         <LogoMark className="title-card-seal" spinning={!dataLoaded} />
-        <h1 className="title-card-name">Albion Adventure Land</h1>
-        <p className="title-card-sub">A field companion for Britain</p>
+        <h1 className="title-card-name">{copy.title.name}</h1>
+        <p className="title-card-sub">{copy.title.sub}</p>
         <div className="title-card-hint" aria-live="polite">
-          {dataLoaded ? 'Tap the map to begin' : 'Loading sites…'}
+          {dataLoaded ? copy.title.begin : copy.title.loading}
         </div>
       </div>
     </div>

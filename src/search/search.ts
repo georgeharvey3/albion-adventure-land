@@ -8,6 +8,7 @@ import { parsePostcode, resolveOffline, resolveOnline } from './postcode';
 import { searchPhoton } from './photon';
 import { searchSites } from './sites';
 import type { SearchResult } from './types';
+import { copy } from '../copy';
 
 // Search orchestration (issue #28).
 //
@@ -72,8 +73,13 @@ function prominenceBonus(population: number): number {
 function placeDetail(place: Place): string {
   const region = REGION_LABELS[place.region];
   if (place.kind === 'landmark') return region;
-  const kind = place.kind === 'city' ? 'City' : place.kind === 'town' ? 'Town' : 'Village';
-  return `${kind} · ${region}`;
+  const kind =
+    place.kind === 'city'
+      ? copy.search.city
+      : place.kind === 'town'
+        ? copy.search.town
+        : copy.search.village;
+  return copy.search.placeDetail(kind, region);
 }
 
 /** Match the shipped dictionary. */

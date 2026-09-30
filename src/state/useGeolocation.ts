@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useStore } from './store';
+import { copy } from '../copy';
 
 // Live location via watchPosition (spec §8). Handles permission-denied and
 // low-accuracy gracefully — on failure the user can drop a manual "I am here"
@@ -11,7 +12,7 @@ export function useGeolocation(): void {
 
   useEffect(() => {
     if (!('geolocation' in navigator)) {
-      setGeoError('Geolocation not supported on this device.');
+      setGeoError(copy.location.unsupported);
       return;
     }
 
@@ -27,8 +28,8 @@ export function useGeolocation(): void {
       (err) => {
         const msg =
           err.code === err.PERMISSION_DENIED
-            ? 'Location permission denied — drop a pin to set "I am here".'
-            : 'Location unavailable — drop a pin to set "I am here".';
+            ? copy.location.denied
+            : copy.location.unavailable;
         setGeoError(msg);
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 },

@@ -333,10 +333,20 @@ default for any new panel, button or state is no helper text.
   what happened in one short sentence.
 - A warning appears at the point of risk, in the step where the risk occurs.
 - UI strings are outside the `simple-english` skill. Cut them, then stop.
-- `docs/ui-copy.txt` lists every string the app can show. After a change to
-  any string, run `npm run copy` and commit the file with the change. Read
-  its diff before you open a pull request: every added line must pass the
-  test above. `npm run copy:check` fails when the file is out of date.
+- Every string the app shows a user is in `src/copy.ts`, grouped by screen.
+  A component reads `copy.backup.save`, not "Save a backup".
+- To change a word, edit `src/copy.ts`. Read its diff before you open a pull
+  request. Every added line must pass the test above.
+- A string with a run-time value is a function in the copy module. If a
+  sentence holds an icon or another element, split it into `before` and
+  `after`.
+- `npm test` fails when a prose string is outside the copy module.
+  `npm run copy:check` lists each one with its file and line. The check is a
+  heuristic, and a single word in plain code can pass it. Put that word in
+  the copy module too.
+- Site data is not copy. The category names in `src/data/types.ts`, the
+  names in `src/map/mapLabels.ts` and the attributions stay where they are.
+  `EXEMPT` in `scripts/ui-copy.ts` lists the files that the check skips.
 
 Too much — the Backup panel once said:
 "Restoring only ever adds — it never removes a visit, so loading the wrong

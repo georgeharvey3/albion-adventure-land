@@ -38,6 +38,7 @@ import { matchesFilter, tagsByParent } from "./filter";
 import { mergeBackup, parseBackup, serializeBackup, type RestoreCounts } from "./backup";
 import { loadViewState, saveViewState } from "./viewState";
 import type { SearchResult, SearchTarget } from "../search/types";
+import { copy } from "../copy";
 
 export interface Position {
   lat: number;
@@ -492,7 +493,7 @@ export const useStore = create<AppState>((set, get) => ({
     // Load site data and user state in parallel; they're independent.
     const sitesPromise = fetch(`${import.meta.env.BASE_URL}data/sites.json`)
       .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        if (!r.ok) throw new Error(copy.app.httpStatus(r.status));
         return r.json() as Promise<Site[]>;
       })
       .then((all) => {
@@ -1136,9 +1137,7 @@ export const useStore = create<AppState>((set, get) => ({
           manual: false,
         }),
       () =>
-        get().setGeoError(
-          "Location unavailable — drop a pin or search for a place.",
-        ),
+        get().setGeoError(copy.location.lost),
       { enableHighAccuracy: true, timeout: 20000 },
     );
   },

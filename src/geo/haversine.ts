@@ -1,3 +1,5 @@
+import { copy } from '../copy';
+
 // Great-circle distance (spec §7.1). MVP ordering metric — "as the crow flies".
 // Replaced by cached road travel time for routing decisions in Phase 2.
 
@@ -27,7 +29,7 @@ export function haversine(a: LatLng, b: LatLng): number {
 
 /** Human-friendly distance: "850 m" under 1 km, else "12.3 km". */
 export function formatDistance(metres: number): string {
-  if (metres < 1000) return `${Math.round(metres)} m`;
-  if (metres < 10000) return `${(metres / 1000).toFixed(1)} km`;
-  return `${Math.round(metres / 1000)} km`;
+  if (metres < 1000) return copy.units.m(Math.round(metres));
+  if (metres < 10000) return copy.units.km((metres / 1000).toFixed(1));
+  return copy.units.km(Math.round(metres / 1000));
 }

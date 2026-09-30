@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { type SiteImage } from '../data/types';
 import { KEY_RANK } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
+import { copy } from '../copy';
 
 // Full-screen viewer for a listing's guidebook pictures. Hand-rolled rather than
 // pulled from a library, for the same reason the geometry is (see CLAUDE.md):
@@ -261,8 +262,8 @@ export function Lightbox({
   // its siblings only, so the viewer could never rise above Leaflet's controls
   // (z-index 1000) while it stayed a descendant of the card.
   return createPortal(
-    <div className="lightbox" role="dialog" aria-modal="true" aria-label="Picture viewer">
-      <button className="lightbox-close" onClick={onClose} aria-label="Close viewer">
+    <div className="lightbox" role="dialog" aria-modal="true" aria-label={copy.lightbox.dialog}>
+      <button className="lightbox-close" onClick={onClose} aria-label={copy.lightbox.close}>
         ×
       </button>
       {images.length > 1 && (
@@ -300,7 +301,7 @@ export function Lightbox({
             className="lightbox-nav prev"
             onClick={() => go(-1)}
             disabled={index === 0}
-            aria-label="Previous picture"
+            aria-label={copy.lightbox.previous}
           >
             ‹
           </button>
@@ -308,7 +309,7 @@ export function Lightbox({
             className="lightbox-nav next"
             onClick={() => go(1)}
             disabled={index === images.length - 1}
-            aria-label="Next picture"
+            aria-label={copy.lightbox.next}
           >
             ›
           </button>

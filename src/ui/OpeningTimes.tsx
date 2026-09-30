@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { WEEKDAYS, WEEKDAY_LABELS, type OpeningHours, type Site, type Weekday } from '../data/types';
 import { ClockIcon } from './icons';
+import { copy } from '../copy';
 
 // The week's opening times and the dates behind them, on one block of the site
 // card. Only the pubs carry these today (scripts/refresh-camra-status.ts).
@@ -22,7 +23,7 @@ function todayName(): Weekday {
  *  reads like a typo on a card. Everything else is already in the 24-hour form
  *  a British pub sign uses. */
 function time(hhmm: string): string {
-  return hhmm === '24:00' || hhmm === '00:00' ? 'midnight' : hhmm;
+  return hhmm === '24:00' || hhmm === '00:00' ? copy.hours.midnight : hhmm;
 }
 
 function formatDate(iso: string | undefined): string | null {
@@ -42,7 +43,7 @@ function byDay(hours: readonly OpeningHours[]): { day: Weekday; text: string }[]
       day,
       text: periods.length
         ? periods.map((p) => `${time(p.opens)} – ${time(p.closes)}`).join(', ')
-        : 'Closed',
+        : copy.hours.closed,
     };
   });
 }
@@ -57,9 +58,9 @@ export function OpeningTimes({ site }: { site: Site }) {
   useEffect(() => setOpen(false), [site.id]);
 
   const dates = [
-    ['Surveyed', formatDate(site.lastSurveyed)],
-    ['Updated', formatDate(site.lastUpdated)],
-    ['Checked', formatDate(site.checkedAt)],
+    [copy.hours.surveyed, formatDate(site.lastSurveyed)],
+    [copy.hours.updated, formatDate(site.lastUpdated)],
+    [copy.hours.checked, formatDate(site.checkedAt)],
   ].filter((d): d is [string, string] => d[1] !== null);
 
   const hasHours = !!site.hours?.length;

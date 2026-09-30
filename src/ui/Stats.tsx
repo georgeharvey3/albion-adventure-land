@@ -4,6 +4,7 @@ import { hybridTitle, siteSwatch, SITE_TYPE_LABELS } from '../data/types';
 import type { Site } from '../data/types';
 import { BanIcon, CheckIcon, StarIcon } from './icons';
 import { Backup } from './Backup';
+import { copy } from '../copy';
 
 // The "Saved" tab: the two lists that make this a collection rather than a
 // viewer — places you want to visit (wishlist) and a log of the ones you have,
@@ -60,10 +61,10 @@ export function Stats() {
 
   return (
     <div className="stats">
-      <h3 className="stats-heading">Wishlist ({wishlistSites.length})</h3>
+      <h3 className="stats-heading">{copy.saved.wishlist(wishlistSites.length)}</h3>
       {wishlistSites.length === 0 ? (
         <p className="hint">
-          No saved places yet. Tap <StarIcon /> on a site to add it to your wishlist.
+          {copy.saved.noWishes.before} <StarIcon /> {copy.saved.noWishes.after}
         </p>
       ) : (
         <ul>
@@ -92,11 +93,9 @@ export function Stats() {
         </ul>
       )}
 
-      <h3 className="stats-heading">Visited ({visitedRows.length})</h3>
+      <h3 className="stats-heading">{copy.saved.visited(visitedRows.length)}</h3>
       {visitedRows.length === 0 ? (
-        <p className="hint">
-          No visits logged yet. Mark a site visited to start your log.
-        </p>
+        <p className="hint">{copy.saved.noVisits}</p>
       ) : (
         <ul>
           {visitedRows.map(({ site, log }) => (
@@ -127,7 +126,7 @@ export function Stats() {
 
       {hiddenSites.length > 0 && (
         <>
-          <h3 className="stats-heading">Hidden ({hiddenSites.length})</h3>
+          <h3 className="stats-heading">{copy.saved.hidden(hiddenSites.length)}</h3>
           <ul>
             {hiddenSites.map((site) => (
               <li

@@ -9,6 +9,7 @@ import {
 } from "../data/types";
 import { formatDistance, haversine } from "../geo/haversine";
 import { CheckIcon, SearchIcon, StarIcon } from "./icons";
+import { copy } from "../copy";
 
 // The site finder. Answers ONE question — "which of my sites is that?" — by
 // name, and hands the answer to the surface the user is already on.
@@ -117,8 +118,8 @@ export function SiteFinderToggle({
       className={open ? "finder-toggle on" : "finder-toggle"}
       onClick={onToggle}
       aria-expanded={open}
-      aria-label={open ? "Close site search" : "Find a site"}
-      title={open ? "Close site search" : "Find a site"}
+      aria-label={open ? copy.finder.close : copy.finder.open}
+      title={open ? copy.finder.close : copy.finder.open}
     >
       <SearchIcon />
     </button>
@@ -150,8 +151,8 @@ export function SiteFinderField({
         ref={ref}
         type="search"
         value={query}
-        placeholder="Find a site by name"
-        aria-label="Find a site by name"
+        placeholder={copy.finder.field}
+        aria-label={copy.finder.field}
         onChange={(e) => onQuery(e.target.value)}
         onKeyDown={(e) => {
           // Esc belongs to the key layer in NearMeList, so it closes the
@@ -167,7 +168,7 @@ export function SiteFinderField({
       <button
         className="finder-close"
         onClick={onClose}
-        aria-label="Close site search"
+        aria-label={copy.finder.close}
       >
         ✕
       </button>
@@ -189,7 +190,7 @@ export function SiteFinderResults({
   onPick: (site: Site) => void;
 }) {
   if (!results.length) {
-    return <p className="hint finder-empty">No site by that name.</p>;
+    return <p className="hint finder-empty">{copy.finder.none}</p>;
   }
   return (
     <ul className="finder-results">
@@ -217,7 +218,7 @@ export function SiteFinderResults({
               {/* A trailhead or a car park is a real site you might be looking
                   for, but it is not a destination in its own right — naming its
                   listing is what stops it reading as one. */}
-              {parentName ? ` · under ${parentName}` : ""}
+              {parentName ? copy.finder.under(parentName) : ""}
             </span>
           </span>
           <span className="row-dist">

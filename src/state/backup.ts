@@ -1,4 +1,5 @@
 import type { PersistedUserState, VisitLog } from './db';
+import { copy } from '../copy';
 
 // User-state backup (spec §6 F-export, Phase 3).
 //
@@ -67,17 +68,17 @@ export function parseBackup(text: string): BackupFile {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new Error("That doesn't look like a backup file — it isn't valid JSON.");
+    throw new Error(copy.backup.notJson);
   }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error("That doesn't look like a backup file.");
+    throw new Error(copy.backup.notBackup);
   }
   const obj = raw as Record<string, unknown>;
   if (obj.format !== BACKUP_FORMAT) {
-    throw new Error('That file is not an Albion Adventure Land backup.');
+    throw new Error(copy.backup.wrongApp);
   }
   if (typeof obj.version !== 'number' || obj.version > BACKUP_VERSION) {
-    throw new Error('That backup was made by a newer version of the app. Update the app first.');
+    throw new Error(copy.backup.tooNew);
   }
 
   const ids = (value: unknown): string[] =>

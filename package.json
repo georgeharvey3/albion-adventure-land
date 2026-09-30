@@ -16,8 +16,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "copy": "tsx scripts/ui-copy.ts",
-    "copy:check": "tsx scripts/ui-copy.ts --check"
+    "copy:check": "tsx scripts/ui-copy.ts"
   },
   "dependencies": {
     "idb": "^8.0.0",

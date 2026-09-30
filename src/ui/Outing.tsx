@@ -15,6 +15,7 @@ import { formatDistance, haversine } from '../geo/haversine';
 import { formatDetour } from '../geo/corridor';
 import { routeLength } from '../geo/tsp';
 import { maxRouteStops, multiStopRoute } from '../links/googleMaps';
+import { copy } from '../copy';
 
 // Outing tab. One shared, ephemeral route is populated two ways:
 //   • hand-picking — "Add to trip" on a site card builds an ordered subset of
@@ -99,7 +100,7 @@ export function Outing() {
   // A fresh Find overwrites the shared route. Confirm first if the current one
   // was hand-picked, so the finder can't silently nuke a trip (spec decision).
   const handleFind = () => {
-    if (outing?.edited && !window.confirm('Replace your hand-picked trip with a found outing?')) {
+    if (outing?.edited && !window.confirm(copy.outing.replaceConfirm)) {
       return;
     }
     findOuting();
@@ -112,24 +113,30 @@ export function Outing() {
           <div className="outing-result-head">
             {drive ? (
               <p className="hint">
-                Your drive is {formatDistance(drive.base)}. With{' '}
-                {stops.length === 1 ? 'this stop' : `these ${stops.length} stops`}:{' '}
-                {formatDistance(drive.withStops)} (+
-                {formatDistance(Math.max(0, drive.withStops - drive.base))}).
+                {copy.outing.drive(
+                  formatDistance(drive.base),
+                  stops.length,
+                  formatDistance(drive.withStops),
+                  formatDistance(Math.max(0, drive.withStops - drive.base)),
+                )}
               </p>
             ) : (
               <p className="hint">
                 {position
-                  ? `${stops.length} stops, starting ${formatDistance(outing.distanceFromAnchor)} from ${position.manual ? 'your dropped pin' : 'you'}`
-                  : `${stops.length} stops`}
+                  ? copy.outing.stopsFrom(
+                      stops.length,
+                      formatDistance(outing.distanceFromAnchor),
+                      !!position.manual,
+                    )
+                  : copy.outing.stops(stops.length)}
                 {outing.radiusM != null &&
                   stops.length > 1 &&
-                  `, spread over ${formatDistance(outing.radiusM)}`}
-                {position ? '.' : ' — drop a location to route them.'}
+                  copy.outing.spread(formatDistance(outing.radiusM))}
+                {position ? copy.outing.end : copy.outing.unrouted}
               </p>
             )}
             <button className="btn small" onClick={clearOuting}>
-              Clear
+              {copy.outing.clear}
             </button>
           </div>
           <ol className="outing-stops">
@@ -158,7 +165,7 @@ export function Outing() {
                       e.stopPropagation();
                       removeFromTrip(site.id);
                     }}
-                    aria-label={`Remove ${site.name} from trip`}
+                    aria-label={copy.outing.remove(site.name)}
                   >
                     ×
                   </button>
@@ -175,7 +182,7 @@ export function Outing() {
                 </span>
                 <span className="row-main">
                   <span className="row-name">{destination.label}</span>
-                  <span className="row-sub">Destination</span>
+                  <span className="row-sub">{copy.outing.destination}</span>
                 </span>
                 {stops.length > 0 && (
                   <span className="row-dist">
@@ -187,29 +194,26 @@ export function Outing() {
           </ol>
           {mapsUrl ? (
             <a className="btn primary outing-export" href={mapsUrl} target="_blank" rel="noreferrer">
-              Open route in Google Maps ↗
+              {copy.outing.openInMaps}
             </a>
           ) : stops.length > stopCap ? (
-            <p className="hint">
-              Too many stops for one Google Maps link — open directions from each
-              site's card instead.
-            </p>
+            <p className="hint">{copy.outing.tooManyStops}</p>
           ) : null}
         </div>
       ) : (
         <p className="hint">
-          Build a trip by tapping <strong>+ Add to trip</strong> on any site — or
-          let the app find one below.
+          {copy.outing.empty.before} <strong>{copy.outing.empty.action}</strong>{' '}
+          {copy.outing.empty.after}
         </p>
       )}
 
       <details className="outing-finder">
-        <summary>Find one for me</summary>
+        <summary>{copy.outing.finder}</summary>
 
         <p className="hint">
           {destination
-            ? `Pick the kinds of day you want — one of each on your way to ${destination.label}, as a ready-made route.`
-            : 'Pick the kinds of day you want — the nearest cluster with one of each, as a ready-made route.'}
+            ? copy.outing.pickOnTheWay(destination.label)
+            : copy.outing.pickNearest}
         </p>
 
         {layers.map(({ parent, leaves }) => {
@@ -246,20 +250,20 @@ export function Outing() {
             <section className="layer" key={parent}>
               <div className={`layer-head ${off ? 'off' : ''}`}>
                 <span className="layer-name">{PARENT_CATEGORY_LABELS[parent]}</span>
-                <div className="mode-toggle" role="group" aria-label={`${PARENT_CATEGORY_LABELS[parent]} match mode`}>
+                <div className="mode-toggle" role="group" aria-label={copy.outing.matchMode(PARENT_CATEGORY_LABELS[parent])}>
                   <button
                     className={`mode-opt ${!anyMode ? 'on' : ''}`}
                     onClick={() => setOutingParentAny(parent, false)}
                     aria-pressed={!anyMode}
                   >
-                    One of each
+                    {copy.outing.oneOfEach}
                   </button>
                   <button
                     className={`mode-opt ${anyMode ? 'on' : ''}`}
                     onClick={() => setOutingParentAny(parent, true)}
                     aria-pressed={anyMode}
                   >
-                    Any of these
+                    {copy.outing.anyOfThese}
                   </button>
                 </div>
               </div>
@@ -271,14 +275,14 @@ export function Outing() {
                     onClick={() => setOutingTypesActive(leaves, true)}
                     disabled={allOn}
                   >
-                    Select all
+                    {copy.outing.selectAll}
                   </button>
                   <button
                     className="link-btn"
                     onClick={() => setOutingTypesActive(leaves, false)}
                     disabled={noneOn}
                   >
-                    Deselect all
+                    {copy.outing.deselectAll}
                   </button>
                 </div>
                 {leaves.map((type) => {
@@ -300,10 +304,10 @@ export function Outing() {
               {anyMode && (
                 <p className="layer-hint">
                   {pickedCount === 0
-                    ? 'One stop — any folklore sub-type.'
+                    ? copy.outing.anyFolklore
                     : pickedCount === 1
-                      ? 'One stop of the selected type.'
-                      : `One stop — any of the ${pickedCount} selected.`}
+                      ? copy.outing.anyOne
+                      : copy.outing.anySelected(pickedCount)}
                 </p>
               )}
             </section>
@@ -316,34 +320,33 @@ export function Outing() {
             checked={includeVisited}
             onChange={(e) => setIncludeVisited(e.target.checked)}
           />
-          Include sites I've already visited
+          {copy.outing.includeVisited}
         </label>
 
         <div className="outing-actions">
           <button className="btn primary" onClick={handleFind} disabled={!canFind}>
-            Find outing
+            {copy.outing.find}
           </button>
           {/* "Find another" iterates the cluster search — only meaningful for a
               found outing, not a hand-picked trip. */}
           {outing && !outing.edited && (
             <button className="btn" onClick={() => findOuting(true)}>
-              Find another
+              {copy.outing.findAnother}
             </button>
           )}
         </div>
 
         {!position && (
           <p className="hint">
-            No location yet — allow GPS or use the <MapPinIcon /> button on the map to drop an
-            "I am here" pin.
+            {copy.outing.noLocation.before} <MapPinIcon /> {copy.outing.noLocation.after}
           </p>
         )}
         {position && !canFind && (
-          <p className="hint">Select at least one type above.</p>
+          <p className="hint">{copy.outing.pickAType}</p>
         )}
 
         {failure?.kind === 'no-more' && (
-          <p className="outing-failure">No other qualifying cluster — this is the lot.</p>
+          <p className="outing-failure">{copy.outing.noMore}</p>
         )}
         {failure?.kind === 'missing-types' && (
           <div className="outing-failure">
@@ -353,8 +356,8 @@ export function Outing() {
                 type rather than guessed at. */}
             <p>
               {failure.budget !== null
-                ? 'Some of the selected types have nothing on your way:'
-                : 'Some of the selected types have nothing to visit:'}
+                ? copy.outing.missingOnWay
+                : copy.outing.missing}
             </p>
             <ul>
               {failure.nearest
@@ -368,16 +371,16 @@ export function Outing() {
                     {outingSlotLabel(slot)}:{' '}
                     {!site
                       ? includeVisited
-                        ? 'none in the collection'
-                        : 'none left unvisited'
-                      : `nearest is ${formatDetour(distance!)}`}
+                        ? copy.outing.noneAtAll
+                        : copy.outing.noneUnvisited
+                      : copy.outing.nearestIs(formatDetour(distance!))}
                   </li>
                 ))}
             </ul>
             <p className="hint">
               {failure.budget !== null
-                ? 'Try a wider detour budget in the bar above, dropping the type, or including visited sites.'
-                : 'Try dropping the type, or include visited sites.'}
+                ? copy.outing.tryWider
+                : copy.outing.tryDropping}
             </p>
           </div>
         )}

@@ -16,6 +16,7 @@ import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
+import { copy } from '../copy';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -314,8 +315,8 @@ export function MapView() {
         const btn = L.DomUtil.create('button', 'drop-pin-btn basemap-btn', root);
         btn.type = 'button';
         btn.innerHTML = iconMarkup('layers', 20);
-        btn.title = 'Map layers';
-        btn.setAttribute('aria-label', 'Map layers');
+        btn.title = copy.map.layers;
+        btn.setAttribute('aria-label', copy.map.layers);
         btn.setAttribute('aria-haspopup', 'menu');
         const menu = L.DomUtil.create('div', 'basemap-menu', root);
         menu.setAttribute('role', 'menu');
@@ -388,9 +389,9 @@ export function MapView() {
       onAdd() {
         const btn = L.DomUtil.create('button', 'drop-pin-btn locate-btn');
         btn.type = 'button';
-        btn.title = 'Zoom to my location';
+        btn.title = copy.map.zoomToMe;
         // Icon-only control, so it carries its own label (see ui/icons.tsx).
-        btn.setAttribute('aria-label', 'Zoom to my location');
+        btn.setAttribute('aria-label', copy.map.zoomToMe);
         btn.innerHTML = iconMarkup('locateFixed', 20);
         btn.hidden = !useStore.getState().position;
         locateBtnRef.current = btn;
@@ -421,7 +422,7 @@ export function MapView() {
       hint.hidden = true;
     };
     const showHint = () => {
-      hint.textContent = 'Zoom in to tap a pin';
+      hint.textContent = copy.map.zoomToTap;
       hint.hidden = false;
       window.clearTimeout(hintTimer);
       hintTimer = window.setTimeout(hideHint, 2500);
@@ -825,7 +826,7 @@ export function MapView() {
       // Belt and braces: also wins inside the pane if anything else lands there.
       zIndexOffset: 1000,
     })
-      .bindTooltip(position.manual ? 'Manual location' : 'You are here', {
+      .bindTooltip(position.manual ? copy.map.manualLocation : copy.map.youAreHere, {
         direction: 'top',
         offset: position.manual ? [0, -34] : [0, -20],
       })
