@@ -429,12 +429,12 @@ owner chose this design from a prototype (variant C, the branch
   (`SitePeek` in `src/ui/SiteSheet.tsx`) takes the place of the tabs in the
   sheet head. So the peek is the low height, and a drag on it moves the sheet.
 - The peek is one row: a thumbnail, the name, the type and distance,
-  Directions and ×. It shows no number except the distance. At 375 px it is
-  about 160 px tall.
+  Directions and ×. It shows no number except the distance.
 - A pin tap opens the site at the peek (`pinSheet`). The middle height adds
   the hero picture under the peek. The full height shows the whole page. A
   tap on the name raises the sheet one height, as the handle does.
 - A row tap, or any other selection, opens the site at the current height.
+  A site saved from the last session opens at the middle height.
 - The body is the card layout without its header (`SiteSheetBody`). So
   `siteBodyLayout.ts` has no phone layout.
 - × or `Esc` closes the site. The list comes back at the height it was at

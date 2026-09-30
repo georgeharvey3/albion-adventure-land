@@ -168,9 +168,9 @@ export function App() {
   useGeolocation();
 
   // Keys (issue #88). Esc closes one layer per press, top first — see
-  // KEY_RANK. The site card is the selection: on the map it floats, in the
-  // list over the map it is the row open in place, and on a desktop it is the
-  // spread.
+  // KEY_RANK. The open site is the selection: on a phone it is in the sheet,
+  // on the side panel it floats over the map or is the row open in place, and
+  // on a desktop it is the spread.
   useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
   // Last, the sheet: one height down per press, full to middle to low.
   useKeyLayer(

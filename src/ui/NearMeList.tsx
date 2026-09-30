@@ -67,9 +67,6 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   // open write-up — has moved the selection to another row.
   const lastSelected = useRef(selectedSiteId);
 
-  /** Open a site from the list, at the height the list is at. On a phone the
-   *  site then takes the list's place in the sheet (issue #112). */
-  const openRow = (id: string) => setSelected(id);
 
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
@@ -179,7 +176,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
         pendingScroll.current = true;
         smoothScroll.current = true;
       }
-      openRow(lifted.id);
+      setSelected(lifted.id);
       return true;
     }
     return false;
@@ -339,7 +336,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
                   }
                   pendingScroll.current = true;
                   smoothScroll.current = true;
-                  openRow(site.id);
+                  setSelected(site.id);
                 }}
                 aria-expanded={expanded}
               >

@@ -985,7 +985,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
     if (!v) return;
     const latlng = L.latLng(v.site.lat, v.site.lng);
     const container = map.getContainer();
-    const card = container.parentElement?.querySelector<HTMLElement>('.card');
+    // The side panel's card. A phone has none: its site is in the sheet.
+    const card = sidePanel ? container.parentElement?.querySelector<HTMLElement>('.card') : null;
     // The floating finder (issue #109) spans the top of the map, so the free
     // strip above the card starts under it.
     const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
@@ -993,14 +994,13 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const pan = () => {
       const size = map.getSize();
       let target = L.point(size.x / 2, size.y / 2);
-      if (!card) {
-        const m = container.getBoundingClientRect();
+      const m = container.getBoundingClientRect();
+      if (!sidePanel) {
         const top = float ? Math.max(0, float.getBoundingClientRect().bottom - m.top) : 0;
         const bottom = useStore.getState().coveredInsets.bottom;
         const centre = openCentre(size, { ...NO_INSETS, top, bottom });
         target = L.point(centre.x, centre.y);
-      } else {
-        const m = container.getBoundingClientRect();
+      } else if (card) {
         const c = card.getBoundingClientRect();
         const top = c.top - m.top;
         const left = c.left - m.left;
@@ -1023,12 +1023,12 @@ export function MapView({ desktop }: { desktop: boolean }) {
     };
 
     pan();
-    let stop: () => void;
+    let stop = () => {};
     if (card) {
       const ro = new ResizeObserver(() => pan());
       ro.observe(card);
       stop = () => ro.disconnect();
-    } else {
+    } else if (!sidePanel) {
       // The peek resizes the map, and the middle height covers more of it.
       const unsubscribe = useStore.subscribe((s, prev) => {
         if (s.coveredInsets.bottom !== prev.coveredInsets.bottom) pan();
@@ -1046,7 +1046,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     };
     // views intentionally omitted from deps: only react to selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, desktop]);
+  }, [selectedSiteId, desktop, sidePanel]);
 
   // On a desktop the site opens in the spread (issue #90). The map pans it to
   // the centre of the part of the view that shows, and keeps the zoom. It
