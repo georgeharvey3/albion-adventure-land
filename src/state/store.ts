@@ -56,6 +56,12 @@ export interface Position {
   label?: string;
 }
 
+/** A lifted site (issue #88), and what lifted it. */
+export interface Lift {
+  id: string;
+  by: 'pin' | 'row' | 'key';
+}
+
 // Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps
 // behaving exactly as it always has; adding a destination turns the anchor from
 // a point into a corridor and every distance-aware surface reinterprets itself.
@@ -194,10 +200,25 @@ interface AppState {
   // for reading through sites rather than working a map. Ephemeral, like the
   // selection — a session always opens on the map.
   browse: boolean;
+  // UI (issue #88): the site the mouse or the keyboard is on, and what put it
+  // there. A lifted site marks its pin and its list row together, and a pin or
+  // a key lift shows the peek over the map. A row lift shows no peek: the row
+  // already names the site. Ephemeral, like the selection.
+  lifted: Lift | null;
+  // A request to put the cursor in the site finder (the `/` key). The finder's
+  // state is the near-me list's own, so the list takes the request when it is
+  // mounted — which may be only after the key has switched the tab to it.
+  finderWanted: boolean;
 
   // Actions.
   init: () => Promise<void>;
   setSelected: (siteId: string | null) => void;
+  setLifted: (lift: Lift | null) => void;
+  /** Clear the lift only if it is still on this site. A late mouseout from one
+   *  pin must not clear the lift that a move to the next pin just set. */
+  dropLifted: (siteId: string) => void;
+  requestFinder: () => void;
+  takeFinderRequest: () => void;
   setBrowse: (browse: boolean) => void;
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
@@ -464,6 +485,8 @@ export const useStore = create<AppState>((set, get) => ({
   // so the restored viewport is not overridden by a recentre on the pin.
   selectedSiteId: loadViewState().selectedSiteId,
   browse: false,
+  lifted: null,
+  finderWanted: false,
 
   init: async () => {
     // Load site data and user state in parallel; they're independent.
@@ -950,6 +973,12 @@ export const useStore = create<AppState>((set, get) => ({
     set({ selectedSiteId });
   },
   setBrowse: (browse) => set({ browse }),
+  setLifted: (lifted) => set({ lifted }),
+  dropLifted: (siteId) => {
+    if (get().lifted?.id === siteId) set({ lifted: null });
+  },
+  requestFinder: () => set({ finderWanted: true }),
+  takeFinderRequest: () => set({ finderWanted: false }),
 
   // Setting or clearing the destination always disarms the map's picker: the
   // tap that set it is spent, and clearing while armed would leave the map in

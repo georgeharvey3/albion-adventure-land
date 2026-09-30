@@ -289,6 +289,37 @@ site, plus 80 km. The map does not pan past it.
   also cover a surround, sized for a 4K screen. `plateHasTile` asks Leaflet for
   shipped tiles only, so a missing tile is never a 404.
 
+## Keys and hover (issue #88)
+
+The app has one key handler. `src/state/keys.ts` holds the rules, and
+`src/ui/useKeyLayer.ts` connects them to the window. Do not add a `keydown`
+listener to a component. Register a key layer instead.
+
+- Each layer has a rank in `KEY_RANK`. A key goes to the top rank first, and
+  the first layer that handles it stops it. So `Esc` closes one layer per
+  press: the basemap menu, the lightbox, the site card, search, then the sheet.
+- In a text field, only `Esc` reaches the layers. On a button or a link,
+  `Enter` and `Space` stay with the control. A key with Ctrl, Alt or Meta
+  stays with the browser.
+- The lightbox is a modal layer, so no key reaches the list under it. The
+  title card is a passive layer: it sees every key and stops none.
+- `j` and `k` move the cursor through the Nearby list, and `Enter` opens the
+  cursor row. `/` opens the site finder. The arrow keys pan the map, as
+  Leaflet does.
+
+The store keeps one `lifted` site, and what lifted it: a pin, a row
+or a key. A lifted site marks its pin and its row together. A pin lift or a
+key lift also shows the peek over the pin (`src/map/pinPeek.ts`). A row lift
+shows no peek, because the row already names the site.
+
+- A lift acts only on a site that `matchesFilter` shows. The pins and the
+  rows come from the filtered list, so a hidden site has nothing to lift.
+- A speck takes no hover and no lift, and the peek hides below
+  `SPECK_BELOW`. The keys still move the list at any zoom.
+- Hover needs a mouse. On a touch screen, no hover effect occurs.
+- The peek shows no numbers. A site with no picture gets a painted
+  placeholder in its layer colour.
+
 ## UI copy
 
 The screen carries labels, not explanations. A string earns its place only

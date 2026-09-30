@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
 import { saveViewState } from '../state/viewState';
 import { LogoMark } from './LogoMark';
+import { KEY_RANK } from '../state/keys';
+import { useKeyLayer } from './useKeyLayer';
 
 // The first impression (issue #76): a title cartouche over the map, so a new
 // visitor can say what the app is within three seconds. It shows until the
@@ -17,6 +19,14 @@ export function TitleCard({ onClosed }: { onClosed: () => void }) {
   const dataLoaded = useStore((s) => s.dataLoaded);
   const [leaving, setLeaving] = useState(false);
 
+  // A passive key layer: any key dismisses the card, and the same key still
+  // reaches whatever it was meant for.
+  useKeyLayer(!leaving, KEY_RANK.list, () => {
+    saveViewState({ titleSeen: true });
+    setLeaving(true);
+    return false;
+  }, { passive: true });
+
   useEffect(() => {
     if (leaving) return;
     // Capture phase on the window: Leaflet stops propagation on some of its
@@ -27,11 +37,9 @@ export function TitleCard({ onClosed }: { onClosed: () => void }) {
     };
     window.addEventListener('pointerdown', dismiss, true);
     window.addEventListener('wheel', dismiss, { capture: true, passive: true });
-    window.addEventListener('keydown', dismiss, true);
     return () => {
       window.removeEventListener('pointerdown', dismiss, true);
       window.removeEventListener('wheel', dismiss, true);
-      window.removeEventListener('keydown', dismiss, true);
     };
   }, [leaving]);
 

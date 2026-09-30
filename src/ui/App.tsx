@@ -11,6 +11,8 @@ import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
+import { KEY_RANK, onEscape } from '../state/keys';
+import { useKeyLayer } from './useKeyLayer';
 
 const TABS: { id: SheetTab; label: string }[] = [
   { id: 'near', label: 'Nearby' },
@@ -28,6 +30,8 @@ export function App() {
   const destination = useStore((s) => s.destination);
   const browse = useStore((s) => s.browse);
   const setBrowse = useStore((s) => s.setBrowse);
+  const setSelected = useStore((s) => s.setSelected);
+  const requestFinder = useStore((s) => s.requestFinder);
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
@@ -73,6 +77,25 @@ export function App() {
   }, [destination]);
 
   useGeolocation();
+
+  // Keys (issue #88). Esc closes one layer per press, top first — see
+  // KEY_RANK. The site card is the selection: on the map it floats, and in
+  // browse mode it is the row open in place.
+  useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
+  // Last, the sheet: browse mode ends first, then the sheet folds down.
+  useKeyLayer(
+    browse || !collapsed,
+    KEY_RANK.sheet,
+    onEscape(() => (browse ? setBrowse(false) : setCollapsed(true))),
+  );
+  // `/` puts the cursor in the site finder, which lives in the Nearby tab.
+  useKeyLayer(true, KEY_RANK.list, ({ key }) => {
+    if (key !== '/') return false;
+    setTab('near');
+    setCollapsed(false);
+    requestFinder();
+    return true;
+  });
 
   return (
     <div className="app">

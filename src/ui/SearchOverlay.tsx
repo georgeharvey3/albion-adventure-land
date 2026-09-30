@@ -8,6 +8,8 @@ import { canonical, matchScore } from '../search/normalize';
 import type { SearchResult } from '../search/types';
 import { formatDistance } from '../geo/haversine';
 import { FlagIcon, MapPinIcon } from './icons';
+import { KEY_RANK, onEscape } from '../state/keys';
+import { useKeyLayer } from './useKeyLayer';
 
 // The search overlay (issue #28). Opened from either end of the journey bar,
 // and it fills THAT end — which is why there is no "start or destination?"
@@ -165,14 +167,7 @@ export function SearchOverlay() {
     };
   }, [target]);
 
-  useEffect(() => {
-    if (!target) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeSearch();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [target, closeSearch]);
+  useKeyLayer(!!target, KEY_RANK.search, onEscape(closeSearch));
 
   if (!target) return null;
 

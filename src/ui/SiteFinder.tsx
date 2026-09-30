@@ -130,16 +130,19 @@ export function SiteFinderField({
   onQuery,
   onClose,
   onPickFirst,
+  focusRequest,
 }: {
   query: string;
   onQuery: (next: string) => void;
   onClose: () => void;
   onPickFirst: () => void;
+  /** A change puts the cursor back in the field (the `/` key, issue #88). */
+  focusRequest: number;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     ref.current?.focus();
-  }, []);
+  }, [focusRequest]);
 
   return (
     <div className="finder-field">
@@ -151,12 +154,10 @@ export function SiteFinderField({
         aria-label="Find a site by name"
         onChange={(e) => onQuery(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.preventDefault();
-            onClose();
-          }
-          // Enter takes the top row — the common case is that you typed enough
-          // of the name to have already won.
+          // Esc belongs to the key layer in NearMeList, so it closes the
+          // finder only when nothing sits above it. Enter takes the top row —
+          // the common case is that you typed enough of the name to have
+          // already won.
           if (e.key === "Enter") {
             e.preventDefault();
             onPickFirst();
@@ -235,6 +236,10 @@ export function useSiteFinder() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
+  // Bumped each time the field is asked for, so an open field takes the
+  // cursor back.
+  const [focusRequest, setFocusRequest] = useState(0);
+
   const close = () => {
     setOpen(false);
     setQuery("");
@@ -242,6 +247,12 @@ export function useSiteFinder() {
 
   return {
     open,
+    focusRequest,
+    /** Open the field, or put the cursor back in it if it is open. */
+    show: () => {
+      setOpen(true);
+      setFocusRequest((n) => n + 1);
+    },
     query,
     /** True while results are standing in for the list. */
     filtering: open && !!query.trim(),
