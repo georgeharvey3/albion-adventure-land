@@ -31,6 +31,7 @@ import { rowShown } from '../state/phoneStrip';
 import { NO_INSETS } from '../map/insets';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
+import { NoPeekSwitcher, noPeek, proto } from './NoPeek.prototype';
 
 const TABS: SheetTab[] = ['near', 'filters', 'outing', 'stats'];
 
@@ -119,15 +120,46 @@ export function App() {
   const listScroll = useRef(0);
   const restoreScroll = useRef(false);
   const hadSite = useRef(false);
+  const lastSite = useRef<string | null>(null);
   useEffect(() => {
     if (!phone) {
       hadSite.current = false;
       return;
     }
     if (openSite && !hadSite.current) restoreScroll.current = true;
-    if (!openSite && hadSite.current) setSheet(useStore.getState().listSheet);
+    if (!openSite && hadSite.current && !proto.skipRestore) {
+      const { listSheet } = useStore.getState();
+      // PROTOTYPE N: a site opened from the row closes back to the row, still
+      // selected, with its card in the middle.
+      if (noPeek && listSheet === 'low' && sheet !== 'low' && lastSite.current) {
+        setSheet('low');
+        setSelected(lastSite.current);
+      } else setSheet(listSheet);
+    }
+    proto.skipRestore = false;
     hadSite.current = !!openSite;
+    if (openSite) lastSite.current = openSite.id;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, openSite, setSheet]);
+  // PROTOTYPE N: at the low height the card is the peek. Raising the sheet by
+  // the handle, a drag or a tab shows the list; only a card tap opens the site.
+  const prevSheet = useRef(sheet);
+  useEffect(() => {
+    const was = prevSheet.current;
+    prevSheet.current = sheet;
+    if (!noPeek || !phone) return;
+    if (sheet === 'low' && !dragging) {
+      proto.cardOpen = false;
+      return;
+    }
+    if (was === 'low' && selectedSiteId && !proto.cardOpen) {
+      proto.skipRestore = true;
+      setSelected(null);
+    }
+  }, [sheet, dragging, phone, selectedSiteId, setSelected]);
+  const peekShows = !!openSite && !(noPeek && sheet === 'low');
+  const siteBodyShows = !!openSite && !(noPeek && sheet === 'low' && !proto.cardOpen);
+
   // Stable, so React calls it only when the list mounts and unmounts.
   const listBodyRef = useCallback((el: HTMLDivElement | null) => {
     setSheetBody(el);
@@ -257,7 +289,7 @@ export function App() {
               <span className="sheet-grip" aria-hidden="true" />
             </button>
             <JourneyBar />
-            {openSite ? (
+            {peekShows && openSite ? (
               <SitePeek site={openSite} />
             ) : (
             <nav className="tabs">
@@ -279,7 +311,7 @@ export function App() {
           {/* Mounted while a drag lifts the sheet off the low height, so the
               list rises with the finger. */}
           {(sheet !== 'low' || dragging) &&
-            (openSite ? (
+            (siteBodyShows && openSite ? (
               // A new site starts at its top.
               <div className="sheet-body" ref={setSheetBody} key={openSite.id}>
                 <SiteSheetBody site={openSite} />
@@ -301,6 +333,7 @@ export function App() {
         {/* A panel over the sheet's own footprint, not a full screen: you are
             naming one end of a journey you can still see. */}
         <SearchOverlay />
+        {phone && <NoPeekSwitcher />}
         </>
       )}
     </div>

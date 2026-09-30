@@ -21,6 +21,7 @@ import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
 import { useSidePanel } from '../ui/useWideScreen';
 import { PIN_MARGIN, pinInSight } from '../state/phoneStrip';
+import { noPeek } from '../ui/NoPeek.prototype';
 
 /** How long, in ms, a lift from the phone's picture row must rest before the
  *  map pans to it. */
@@ -1042,6 +1043,11 @@ export function MapView({ desktop }: { desktop: boolean }) {
       if (!sidePanel) {
         const top = float ? Math.max(0, float.getBoundingClientRect().bottom - m.top) : 0;
         const bottom = useStore.getState().coveredInsets.bottom;
+        // PROTOTYPE N: at the low height the card is the peek, and the map
+        // pans only when the pin is out of sight.
+        if (noPeek && useStore.getState().sheet === 'low') {
+          if (pinInSight(map.latLngToContainerPoint(latlng), size, { top, bottom })) return;
+        }
         const centre = openCentre(size, { ...NO_INSETS, top, bottom });
         target = L.point(centre.x, centre.y);
       } else if (card) {

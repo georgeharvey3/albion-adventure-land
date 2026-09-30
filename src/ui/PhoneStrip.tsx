@@ -6,6 +6,7 @@ import { siteSwatch } from '../data/types';
 import { FramePlate, frameFigure, useStrip } from './Strip';
 import { CheckIcon, StarIcon } from './icons';
 import { copy } from '../copy';
+import { noPeek, proto } from './NoPeek.prototype';
 
 // The phone's picture row (issue #111): the desktop strip's frames, one wide
 // frame at a time, floating over the bottom of the map at the low height of
@@ -96,8 +97,11 @@ export function PhoneStrip({
       selected: useStore.getState().selectedSiteId,
       byUser: !steering.current,
     });
+    const byUser = !steering.current;
     steering.current = false;
     if (opens) setSelected(opens);
+    // PROTOTYPE N: a swipe selects even with no site open.
+    else if (noPeek && byUser && id !== useStore.getState().selectedSiteId) setSelected(id);
   };
 
   /** Scroll the row itself to `left`. The frames it passes lift nothing, and
@@ -188,6 +192,7 @@ export function PhoneStrip({
                 onClick={() => {
                   // Selected first, so the list height to come back to is
                   // the low one, where the row is.
+                  proto.cardOpen = true;
                   setSelected(site.id);
                   setSheet('mid');
                 }}

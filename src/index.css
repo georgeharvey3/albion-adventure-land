@@ -3826,3 +3826,30 @@ body,
 .map-area.strip-up .leaflet-bottom.leaflet-left {
   bottom: calc(var(--covered-bottom) + var(--credits-h, 0px));
 }
+
+/* --- PROTOTYPE — throwaway (src/ui/NoPeek.prototype.tsx) ------------------ */
+.proto-switcher {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-lightbox);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: #111;
+  color: #fff;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  white-space: nowrap;
+}
+.proto-switcher button {
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 18px;
+  padding: 0 var(--space-2xs);
+  cursor: pointer;
+}
