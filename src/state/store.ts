@@ -38,6 +38,8 @@ import { matchesFilter, tagsByParent } from "./filter";
 import { mergeBackup, parseBackup, serializeBackup, type RestoreCounts } from "./backup";
 import { loadViewState, saveViewState } from "./viewState";
 import type { SearchResult, SearchTarget } from "../search/types";
+import { NO_INSETS, sameInsets, type CoveredInsets } from "../map/insets";
+import type { Viewport } from "./strip";
 import { copy } from "../copy";
 
 export interface Position {
@@ -210,6 +212,13 @@ interface AppState {
   // state is the near-me list's own, so the list takes the request when it is
   // mounted — which may be only after the key has switched the tab to it.
   finderWanted: boolean;
+  // UI (issue #89): the bands of the map that the desktop chrome covers. The
+  // desktop shell measures them; on a phone they are all 0. See map/insets.ts.
+  coveredInsets: CoveredInsets;
+  // UI (issue #89): the part of the map the user can see, as the map reported
+  // it on the last `moveend`. The strip reads it. It is never saved, and the
+  // trip and the journey never use it.
+  viewport: Viewport | null;
 
   // Actions.
   init: () => Promise<void>;
@@ -221,6 +230,8 @@ interface AppState {
   requestFinder: () => void;
   takeFinderRequest: () => void;
   setBrowse: (browse: boolean) => void;
+  setCoveredInsets: (insets: CoveredInsets) => void;
+  setViewport: (viewport: Viewport) => void;
   toggleType: (category: SiteCategory) => void;
   setTypesActive: (categories: SiteCategory[], on: boolean) => void;
   setAllTypes: (on: boolean) => void;
@@ -488,6 +499,8 @@ export const useStore = create<AppState>((set, get) => ({
   browse: false,
   lifted: null,
   finderWanted: false,
+  coveredInsets: NO_INSETS,
+  viewport: null,
 
   init: async () => {
     // Load site data and user state in parallel; they're independent.
@@ -980,6 +993,10 @@ export const useStore = create<AppState>((set, get) => ({
   },
   requestFinder: () => set({ finderWanted: true }),
   takeFinderRequest: () => set({ finderWanted: false }),
+  setCoveredInsets: (insets) => {
+    if (!sameInsets(get().coveredInsets, insets)) set({ coveredInsets: insets });
+  },
+  setViewport: (viewport) => set({ viewport }),
 
   // Setting or clearing the destination always disarms the map's picker: the
   // tap that set it is spent, and clearing while armed would leave the map in

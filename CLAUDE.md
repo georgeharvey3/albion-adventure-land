@@ -283,6 +283,9 @@ site, plus 80 km. The map does not pan past it.
   `maxBounds` breaks on an axis where the view is bigger than the bounds: a
   drag runs onto blank map and springs back. So the limit widens that axis to
   exactly the view at each zoom, and the axis cannot move.
+- The fence reads `coveredInsets` (`src/map/insets.ts`), so the edge of the
+  plate can go under the desktop strip or drawer, but the part of the map that
+  the user can see never shows past the plate.
 - The zoom floor is the zoom where the whole plate fits the screen
   (`src/map/MapView.tsx`).
 - Zoomed out on a wide screen, the view is bigger than the plate. So the tiles

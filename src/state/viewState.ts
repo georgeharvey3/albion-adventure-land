@@ -23,9 +23,18 @@ export type SheetTab = 'near' | 'filters' | 'outing' | 'stats';
 
 const TABS: SheetTab[] = ['near', 'filters', 'outing', 'stats'];
 
+/** The tabs the desktop drawer holds (issue #89). The strip is the desktop
+ *  Nearby, so Nearby is not one of them. */
+export type DrawerTab = Exclude<SheetTab, 'near'>;
+
+export const DRAWER_TABS: DrawerTab[] = ['filters', 'outing', 'stats'];
+
 export interface ViewState {
   map: MapView | null;
   tab: SheetTab | null;
+  /** The tab open in the desktop drawer. Null means the drawer is shut. Kept
+   *  apart from `tab`, so a window that crosses 1024 px keeps both. */
+  drawer: DrawerTab | null;
   selectedSiteId: string | null;
   /** Street or satellite tiles. Null means the street default. */
   basemap: BasemapId | null;
@@ -33,7 +42,7 @@ export interface ViewState {
   titleSeen: boolean;
 }
 
-const EMPTY: ViewState = { map: null, tab: null, selectedSiteId: null, basemap: null, titleSeen: false };
+const EMPTY: ViewState = { map: null, tab: null, drawer: null, selectedSiteId: null, basemap: null, titleSeen: false };
 
 function validMap(v: unknown): v is MapView {
   if (!v || typeof v !== 'object') return false;
@@ -68,6 +77,7 @@ export function loadViewState(): ViewState {
       cache = {
         map: validMap(parsed.map) ? parsed.map : null,
         tab: TABS.includes(parsed.tab as SheetTab) ? (parsed.tab as SheetTab) : null,
+        drawer: DRAWER_TABS.includes(parsed.drawer as DrawerTab) ? (parsed.drawer as DrawerTab) : null,
         // The site id is only checked for shape here; whether it still exists
         // is settled once the site data has loaded (see the store's init).
         selectedSiteId: typeof parsed.selectedSiteId === 'string' ? parsed.selectedSiteId : null,

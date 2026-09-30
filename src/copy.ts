@@ -103,8 +103,8 @@ export const copy = {
     originField: 'Search for a place to start from',
     destinationField: 'Search for a destination',
     clear: 'Clear',
-    useMyLocation: '📍 Use my location',
-    pickOnMap: '🗺 Pick on the map',
+    useMyLocation: 'Use my location',
+    pickOnMap: 'Pick on the map',
     savedTitle: 'Saved from an earlier search',
     saved: 'saved',
     searching: 'Looking for more…',
@@ -139,6 +139,13 @@ export const copy = {
     next: 'Next ›',
     showMore: (n: number) => `Show ${n} more`,
     remaining: (n: number, route: boolean) => `(${n} ${route ? 'further along' : 'further away'})`,
+  },
+
+  strip: {
+    region: 'Sites in view',
+    fromCentre: 'Nearest the map centre',
+    zoomIn: 'Zoom in to see the sites here',
+    none: 'No sites here',
   },
 
   finder: {

@@ -2847,17 +2847,21 @@ body,
 /* No picture: the layer colour laid on like a wash — pale at the edges, the
    pigment pooled off-centre, and the same paper grain as the map finish. */
 .pin-peek-plate.blank::before,
-.pin-peek-plate.blank::after {
+.pin-peek-plate.blank::after,
+.strip-plate.blank::before,
+.strip-plate.blank::after {
   content: "";
   position: absolute;
   inset: 0;
 }
-.pin-peek-plate.blank::before {
+.pin-peek-plate.blank::before,
+.strip-plate.blank::before {
   background:
     radial-gradient(ellipse 70% 60% at 35% 40%, transparent 0 40%, var(--color-paper-2) 100%),
     linear-gradient(160deg, color-mix(in oklch, var(--color-paper-2) 45%, transparent), transparent 60%);
 }
-.pin-peek-plate.blank::after {
+.pin-peek-plate.blank::after,
+.strip-plate.blank::after {
   background: var(--color-ink);
   opacity: 0.18;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0 -1.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -2929,4 +2933,260 @@ body,
   .card-close:hover {
     color: var(--color-ink);
   }
+}
+
+/* --- Desktop shell (issue #89) ----------------------------------------------
+   From 1024 px (src/ui/useWideScreen.ts) the map fills the window. A card at
+   the top left holds the brand, the finder, the journey, the layer chips and
+   the tab buttons; the drawer opens under it; the strip runs along the bottom.
+   The shell sets --covered-left, --covered-right and --covered-bottom on .app
+   (the covered insets, src/map/insets.ts), and everything that floats over the
+   map keeps clear of them. */
+
+.app.desk .title-card {
+  right: 0;
+}
+
+.desk-rail {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: var(--z-sheet);
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+/* Open, the card and the drawer are one column down to the strip, so the
+   covered inset on the left is a true band. */
+.desk-rail.open {
+  bottom: calc(var(--covered-bottom) + var(--space-sm));
+}
+
+.desk-card,
+.desk-drawer {
+  background: var(--color-paper);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+.desk-card {
+  flex: 0 0 auto;
+  padding: var(--space-xs) var(--space-sm) 0;
+}
+.desk-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.desk-logo {
+  width: 28px;
+  height: 28px;
+}
+.desk-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-ink);
+}
+/* The journey bar spans the card edge to edge, as it spans the sheet. */
+.desk-card .journey-bar {
+  margin: var(--space-xs) calc(-1 * var(--space-sm)) 0;
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+.desk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: var(--space-xs);
+}
+.desk-chips .chip.mixed {
+  opacity: 0.7;
+}
+.desk-tabs {
+  display: flex;
+  margin: 0 calc(-1 * var(--space-sm));
+  border-top: var(--rule-hairline) solid var(--color-rule);
+}
+
+.desk-drawer {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-xs) var(--space-sm) var(--space-md);
+}
+/* The journey search fills the drawer. It is not a modal here: the map, the
+   card and the strip stay in reach, and Esc or the ✕ close it. */
+.desk-drawer.bare {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+.desk-drawer .search-scrim {
+  display: none;
+}
+.desk-drawer .search-overlay {
+  position: static;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The strip: one row of frames, scrolled across. Under Leaflet's controls
+   (z-index 1000), so the collapsed credits sit in its right corner, in the band
+   the padding keeps free under the frames. */
+.strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-sheet);
+  padding: var(--space-2xs) var(--space-sm) var(--space-lg);
+  background: var(--color-paper);
+  border-top: var(--rule-hairline) solid var(--color-rule-strong);
+  box-shadow: var(--shadow-whisper);
+}
+.strip-head {
+  margin: var(--space-2xs) 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.strip-row {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-2xs) 0;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.frame {
+  display: flex;
+  flex-direction: column;
+  width: 152px;
+  padding: var(--space-2xs);
+  background: var(--color-paper-2);
+  border: var(--rule-hairline) solid var(--color-rule);
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.frame.lifted {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 -3px 0 var(--color-accent);
+}
+.frame.selected {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+.strip-plate {
+  position: relative;
+  display: block;
+  height: 84px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-3);
+}
+.strip-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.frame-name {
+  margin-top: var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: var(--leading-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.frame-fig {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.frame-name .icon {
+  vertical-align: -0.1em;
+  margin-right: var(--space-3xs);
+}
+.frame-sub {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The controls stack at the top right, clear of the spread when it comes. The
+   scale and the rose sit above the strip, clear of the open drawer. */
+.app.desk .leaflet-top.leaflet-right {
+  right: var(--covered-right);
+}
+.app.desk .leaflet-bottom.leaflet-left {
+  left: var(--covered-left);
+  bottom: var(--covered-bottom);
+}
+.app.desk .leaflet-bottom.leaflet-right {
+  right: var(--covered-right);
+}
+.leaflet-right .basemap-menu {
+  left: auto;
+  right: calc(100% + var(--space-2xs));
+}
+/* The credits rest as one line in the strip's corner, as on a phone, and a
+   click opens them (MapView.tsx). */
+.app.desk .leaflet-control-attribution {
+  cursor: pointer;
+}
+.app.desk .leaflet-control-attribution:not(.is-open) {
+  max-width: 16rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app.desk .leaflet-control-attribution.is-open {
+  max-width: min(40rem, 60vw);
+}
+
+/* The site card keeps clear of the control column and the strip. */
+.app.desk .card {
+  right: calc(var(--covered-right) + 56px);
+  bottom: calc(var(--covered-bottom) + var(--space-sm));
+  max-height: calc(100% - var(--covered-bottom) - 2 * var(--space-sm));
+}
+.app.desk .map-hint {
+  left: calc(var(--covered-left) + (100% - var(--covered-left) - var(--covered-right)) / 2);
+}
+
+/* The paper finish is for the Atlas basemap only in this shell. */
+.app.desk .map:not([data-basemap="atlas"]) .map-finish {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .frame:hover {
+    background: var(--color-paper-3);
+  }
+  .frame.selected:hover {
+    background: var(--color-accent-soft);
+  }
+}
+
+/* The finder is always open in the card, so its ✕ shows only with a query. */
+.desk-card .finder-field:has(input:placeholder-shown) .finder-close {
+  display: none;
 }
