@@ -6,6 +6,7 @@ import {
   PARENT_CATEGORIES,
   PARENT_CATEGORY_COLORS,
   PARENT_CATEGORY_LABELS,
+  SITE_TYPES,
   type ParentCategory,
   type Site,
   type SiteCategory,
@@ -47,7 +48,7 @@ function useLayers(sites: Site[]) {
     }
     return PARENT_CATEGORIES.filter((p) => leaves.has(p)).map((parent) => ({
       parent,
-      leaves: [...leaves.get(parent)!],
+      leaves: SITE_TYPES.filter((t) => leaves.get(parent)!.has(t)),
     }));
   }, [sites]);
 }
@@ -119,7 +120,7 @@ export function DesktopShell() {
 
   // Esc: the finder's results first, then the drawer. The site card and the
   // journey search sit above both (KEY_RANK).
-  useKeyLayer(finding, KEY_RANK.search, onEscape(() => setQuery('')));
+  useKeyLayer(finding && !searchTarget, KEY_RANK.search, onEscape(() => setQuery('')));
   useKeyLayer(drawer !== null, KEY_RANK.sheet, onEscape(() => setDrawer(null)));
 
   // The covered insets. The strip covers the bottom. The card and the drawer

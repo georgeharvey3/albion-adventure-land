@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useFilteredSites, useVisibleSites } from '../state/selectors';
-import { STRIP_WINDOW, stripSites, windowToShow, type SiteView } from '../state/strip';
+import { STRIP_WINDOW, stripSites, windowToShow, type SiteView, type Strip as StripState } from '../state/strip';
 import { siteSwatch, SITE_TYPE_LABELS, type Site } from '../data/types';
 import { formatDistance } from '../geo/haversine';
 import { formatDetour, formatProgress } from '../geo/corridor';
@@ -49,6 +49,14 @@ function frameFigure({ distance, detour, progress }: SiteView): string | null {
   return distance !== null ? formatDistance(distance) : null;
 }
 
+/** The line over the frames, or null for none. */
+function stripMessage(strip: StripState, reported: boolean): string | null {
+  if (strip.kind === 'zoomIn') return copy.strip.zoomIn;
+  if (strip.views.length) return strip.from === 'centre' ? copy.strip.fromCentre : null;
+  if (strip.from === 'journey') return copy.strip.noneOnTheWay;
+  return reported ? copy.strip.none : null;
+}
+
 export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   const filtered = useFilteredSites();
   const visible = useVisibleSites();
@@ -69,22 +77,29 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   );
   const views = strip.kind === 'sites' ? strip.views : [];
 
-  const [count, setCount] = useState(STRIP_WINDOW);
+  /** How many frames are in the DOM. Not a count the user sees. */
+  const [rendered, setRendered] = useState(STRIP_WINDOW);
   const rowRef = useRef<HTMLUListElement>(null);
 
   // A new view is a new strip: back to the first window, at the start. A GPS
   // tick or a tick on a visit changes the frames in place and leaves the
-  // scroll alone.
+  // scroll alone. The journey list does not depend on the view, so a pan
+  // leaves it alone too. A pan that the keyboard cursor caused keeps the
+  // cursor's place: the effect below brings its frame back into sight.
   const inJourney = !!journey;
+  const viewKey = inJourney ? null : viewport;
+  const liftedRef = useRef(lifted);
+  liftedRef.current = lifted;
   useEffect(() => {
-    setCount(STRIP_WINDOW);
+    if (liftedRef.current?.by === 'key') return;
+    setRendered(STRIP_WINDOW);
     rowRef.current?.scrollTo({ left: 0 });
-  }, [viewport, inJourney]);
+  }, [viewKey, inJourney]);
 
   const onScroll = (e: React.UIEvent<HTMLUListElement>) => {
     const row = e.currentTarget;
-    if (count < views.length && row.scrollLeft + 2 * row.clientWidth >= row.scrollWidth) {
-      setCount((n) => n + STRIP_WINDOW);
+    if (rendered < views.length && row.scrollLeft + 2 * row.clientWidth >= row.scrollWidth) {
+      setRendered((n) => n + STRIP_WINDOW);
     }
   };
 
@@ -114,41 +129,31 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   });
 
   // Keep the cursor frame on screen. Only a key moves the strip: a pin lift
-  // must not scroll it away from what the user is looking at.
+  // must not scroll it away from what the user is looking at. Keyed on the
+  // view too, because the cursor's pan can re-sort the strip round it.
   const viewsRef = useRef(views);
   viewsRef.current = views;
   useEffect(() => {
     if (lifted?.by !== 'key') return;
     const index = viewsRef.current.findIndex((v) => v.site.id === lifted.id);
     if (index < 0) return;
-    if (index >= count) {
-      setCount(windowToShow(index));
+    if (index >= rendered) {
+      setRendered(windowToShow(index));
       return;
     }
     rowRef.current
       ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(lifted.id)}"]`)
       ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
-  }, [lifted, count]);
+  }, [lifted, rendered, viewport]);
 
-  const message =
-    strip.kind === 'zoomIn'
-      ? copy.strip.zoomIn
-      : views.length
-        ? strip.from === 'centre'
-          ? copy.strip.fromCentre
-          : null
-        : strip.from === 'journey'
-          ? copy.near.noneInBudget
-          : viewport
-            ? copy.strip.none
-            : null;
+  const message = stripMessage(strip, viewport !== null);
 
   return (
     <section ref={ref} className="strip" aria-label={copy.strip.region}>
       {message && <p className="strip-head">{message}</p>}
       {views.length > 0 && (
         <ul className="strip-row" ref={rowRef} onScroll={onScroll} onWheel={onWheel}>
-          {views.slice(0, count).map((view) => {
+          {views.slice(0, rendered).map((view) => {
             const { site, visited, wishlisted } = view;
             const figure = frameFigure(view);
             const classes = [

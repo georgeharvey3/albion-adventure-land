@@ -15,8 +15,9 @@ import type { Site } from '../data/types';
 // - With a destination, the strip is the journey list: the sites along the
 //   way, in the journey order, at every zoom.
 
-// The shapes of FilteredSiteView and SiteView (selectors.ts), spelt out here
-// so this module stays free of the store and runs under `npm test`.
+// The shapes of FilteredSiteView and SiteView (selectors.ts), spelt out here.
+// Even a type import of selectors.ts pulls the store and the DOM into the
+// type check of tests/, which runs without the DOM library.
 interface FilteredSiteView {
   site: Site;
   visited: boolean;

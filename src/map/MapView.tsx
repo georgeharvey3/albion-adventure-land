@@ -30,9 +30,9 @@ import { copy } from '../copy';
 
 const GB_CENTER: L.LatLngTuple = [53.0, -3.5];
 
-/** Fit padding that also keeps clear of the covered insets, so a fitted
- *  journey or trip never lands under the strip or the drawer. */
-function fitPadding(pad: number): L.FitBoundsOptions {
+/** Padding that also keeps clear of the covered insets, so a fitted journey
+ *  or trip, or a pin brought into view, never lands under the chrome. */
+function fitPadding(pad: number): L.FitBoundsOptions & L.PanInsideOptions {
   const { top, right, bottom, left } = useStore.getState().coveredInsets;
   return { paddingTopLeft: [pad + left, pad + top], paddingBottomRight: [pad + right, pad + bottom] };
 }
@@ -696,11 +696,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const entry = markersRef.current.get(lifted.id);
     if (entry && pinScale(map.getZoom()) >= SPECK_BELOW) {
       // Clear of the covered insets too, or the pin lands under the strip.
-      const { top, right, bottom, left } = useStore.getState().coveredInsets;
-      map.panInside(entry.marker.getLatLng(), {
-        paddingTopLeft: [80 + left, 80 + top],
-        paddingBottomRight: [80 + right, 80 + bottom],
-      });
+      map.panInside(entry.marker.getLatLng(), fitPadding(80));
     }
   }, [lifted]);
 
