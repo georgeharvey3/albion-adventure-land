@@ -329,7 +329,7 @@ shows no peek, because the row already names the site.
 ## The spread (issue #90)
 
 On a desktop, a site opens in the spread on the right of the map. The phone
-keeps the floating card.
+opens it in the sheet (issue #112).
 
 - The spread wraps `SiteBody` with `variant="spread"`. `SiteBody` is a set of
   named parts, and `src/ui/siteBodyLayout.ts` lists where each layout puts
@@ -407,14 +407,8 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
 - At the middle height the sheet reports the part of the map that it covers
   as the bottom covered inset (`coveredBottom`). A fitted journey or a pin
   brought into view then stays clear of the sheet.
-- While the list is over the map, a row opens in place and the floating card
-  does not show. "Show on map" lowers the sheet, and the card shows.
-- The middle height is for browsing, never for reading. Under the head, the
-  list header and the Previous/Next bar, an open row there shows a strip of
-  its first picture and no text. So the tap picks the height. A pin tap drops
-  the sheet to low and opens the card over the map (`pinSheet`). A row tap
-  raises the sheet to full and opens the row in place (`rowSheet`). A sheet
-  that settles at the middle height closes the open site (`opensAt`).
+- On a phone an open site replaces the list in the sheet. See **Phone site
+  sheet** below.
 - A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
   lowers it one height per press.
 - A session opens at the middle height, so the nearest sites show at once.
@@ -423,6 +417,34 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   takes the window.
 - The list still sorts from the user's position. #110 Q4 (option A or B)
   waits for the owner, so option A stays until the owner decides.
+
+## Phone site sheet (issue #112)
+
+On a phone, a site opens in the sheet from #110, in place of the list. The
+floating card and the rows that open in place are gone on the phone. The
+owner chose this design from a prototype (variant C, the branch
+`prototype/110-site-sheet`).
+
+- While a site is open, the tabs hide and the journey bar stays. The peek
+  (`SitePeek` in `src/ui/SiteSheet.tsx`) takes the place of the tabs in the
+  sheet head. So the peek is the low height, and a drag on it moves the sheet.
+- The peek is one row: a thumbnail, the name, the type and distance,
+  Directions and ×. It shows no number except the distance. At 375 px it is
+  about 160 px tall.
+- A pin tap opens the site at the peek (`pinSheet`). The middle height adds
+  the hero picture under the peek. The full height shows the whole page. A
+  tap on the name raises the sheet one height, as the handle does.
+- A row tap, or any other selection, opens the site at the current height.
+- The body is the card layout without its header (`SiteSheetBody`). So
+  `siteBodyLayout.ts` has no phone layout.
+- × or `Esc` closes the site. The list comes back at the height it was at
+  when the site opened (`listSheet` in the store, `listHeight` in
+  `src/state/sheet.ts`), and at its old scroll position.
+- The map pans the pin to the centre of the map between the floating row and
+  the sheet. It follows the sheet between its heights until the user moves
+  the map.
+- The side panel (760 px to 1023 px) keeps the floating card and the rows
+  that open in place, because #107 Q3 is still open.
 
 ## UI copy
 

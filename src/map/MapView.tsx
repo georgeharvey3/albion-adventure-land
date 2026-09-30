@@ -14,7 +14,7 @@ import { COMPASS_ROSE } from './compassRose';
 import { GlowLayer, glowAmount } from './glowLayer';
 import { pinScale, SPECK_BELOW } from './zoomScale';
 import { fenceToPlate, PLATE_BOUNDS, PLATE_MIN_ZOOM } from './plate';
-import { openCentre } from './insets';
+import { NO_INSETS, openCentre } from './insets';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
@@ -199,19 +199,19 @@ export function MapView({ desktop }: { desktop: boolean }) {
   const position = useStore((s) => s.position);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
-  // A pin tap on a phone (issue #110) also lowers the sheet off the middle
-  // height, so the site opens in the floating card over the map
-  // (state/sheet.ts). The height is set first: both updates land in one
-  // render, so the card is there when the pan below looks for it. The pins
-  // are built in effects, so they call it through a ref.
+  // A pin tap on a phone (issue #112) opens the site in the sheet at the
+  // peek, so the pin stays in view above it (state/sheet.ts). The site is
+  // selected first, so the store keeps the height the list was at. Both
+  // updates land in one render. The pins are built in effects, so they call
+  // it through a ref.
   const sidePanel = useSidePanel();
   const pickPin = useRef((_id: string) => {});
   pickPin.current = (id: string) => {
+    setSelected(id);
     if (!desktop) {
       const { sheet, setSheet } = useStore.getState();
       setSheet(pinSheet(sheet, sidePanel));
     }
-    setSelected(id);
   };
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
@@ -968,11 +968,16 @@ export function MapView({ desktop }: { desktop: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.nonce]);
 
-  // Pan to a selected site. The site card floats over the map, so centring on
-  // the whole map hides the pin under the card on a phone. Centre it in the
-  // largest strip of map the card leaves uncovered instead. The card grows as
-  // its picture loads (and on "show more"), so follow its size until the user
-  // moves the map themselves.
+  // Pan to a selected site. On the side panel the site card floats over the
+  // map, so centring on the whole map could hide the pin under the card.
+  // Centre it in the largest strip of map the card leaves uncovered instead.
+  // The card grows as its picture loads (and on "show more"), so follow its
+  // size until the user moves the map themselves.
+  //
+  // On a phone the site is in the sheet (issue #112). The pin goes to the
+  // centre of the map between the floating row and the sheet: the map area
+  // stops at the peek, and the middle height covers more of it. Follow the
+  // sheet as it moves between its heights, until the user moves the map.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedSiteId || desktop) return;
@@ -988,7 +993,13 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const pan = () => {
       const size = map.getSize();
       let target = L.point(size.x / 2, size.y / 2);
-      if (card) {
+      if (!card) {
+        const m = container.getBoundingClientRect();
+        const top = float ? Math.max(0, float.getBoundingClientRect().bottom - m.top) : 0;
+        const bottom = useStore.getState().coveredInsets.bottom;
+        const centre = openCentre(size, { ...NO_INSETS, top, bottom });
+        target = L.point(centre.x, centre.y);
+      } else {
         const m = container.getBoundingClientRect();
         const c = card.getBoundingClientRect();
         const top = c.top - m.top;
@@ -1012,10 +1023,22 @@ export function MapView({ desktop }: { desktop: boolean }) {
     };
 
     pan();
-    if (!card) return;
-    const ro = new ResizeObserver(() => pan());
-    ro.observe(card);
-    const stop = () => ro.disconnect();
+    let stop: () => void;
+    if (card) {
+      const ro = new ResizeObserver(() => pan());
+      ro.observe(card);
+      stop = () => ro.disconnect();
+    } else {
+      // The peek resizes the map, and the middle height covers more of it.
+      const unsubscribe = useStore.subscribe((s, prev) => {
+        if (s.coveredInsets.bottom !== prev.coveredInsets.bottom) pan();
+      });
+      map.on('resize', pan);
+      stop = () => {
+        unsubscribe();
+        map.off('resize', pan);
+      };
+    }
     map.once('dragstart zoomstart', stop);
     return () => {
       stop();

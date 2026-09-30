@@ -8,7 +8,7 @@ import { useStrip } from './Strip';
 import { copy } from '../copy';
 
 // The spread (issue #90): the desktop shell's site page, on the right of the
-// map, in place of the phone's floating card. It wraps the same `SiteBody` as
+// map, in place of the phone's site sheet. It wraps the same `SiteBody` as
 // the card and the browse row, in its spread layout (siteBodyLayout.ts), so
 // the three always show the same content for a site.
 //
