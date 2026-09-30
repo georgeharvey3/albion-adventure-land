@@ -153,6 +153,9 @@ export class GlowLayer extends L.Layer {
     ctx.clearRect(0, 0, w, h);
     // From z8 there is no glow to draw, so a regional pan costs nothing.
     if (glowAmount(this.drawnZoom) <= 0) return;
+    // Browse mode covers the map, and a hidden map has no size. `drawImage`
+    // throws on an empty canvas, and the throw blanks the whole app.
+    if (!w || !h) return;
 
     // Metres per pixel at the view's latitude, for a glow sized on the ground.
     const mpp =
