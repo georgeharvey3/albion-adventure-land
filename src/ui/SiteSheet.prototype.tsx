@@ -98,14 +98,28 @@ export function SiteSheetHead({ site }: { site: Site }) {
     );
   }
 
+  // A: Directions sits in the name bar, so it shows at half height above the
+  // photo. B puts every action first in the body instead.
   return (
     <div className="proto-site-head">
-      <div className="card-type">
-        <span className="dot" style={{ background: siteSwatch(site) }} />
-        {SITE_TYPE_LABELS[site.category]}
-        {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+      <div className="proto-site-head-main">
+        <div className="card-type">
+          <span className="dot" style={{ background: siteSwatch(site) }} />
+          {SITE_TYPE_LABELS[site.category]}
+          {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+        </div>
+        <h2 className="card-title">{site.name}</h2>
       </div>
-      <h2 className="card-title">{site.name}</h2>
+      {protoVariant === 'A' && (
+        <a
+          className="btn primary proto-go"
+          href={directionsToSite(site, position?.manual ? position : undefined)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {copy.site.directions}
+        </a>
+      )}
       {close}
     </div>
   );

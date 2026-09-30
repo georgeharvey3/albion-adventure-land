@@ -245,8 +245,8 @@ export function App() {
             >
               <span className="sheet-grip" aria-hidden="true" />
             </button>
+            <JourneyBar />
             {openSite && <SiteSheetHead site={openSite} />}
-            {!openSite && <JourneyBar />}
             {!openSite && (
             <nav className="tabs">
               {TABS.map((id) => (

@@ -3652,8 +3652,19 @@ body,
 /* --- PROTOTYPE — throwaway (src/ui/SiteSheet.prototype.tsx) --------------- */
 .proto-site-head {
   position: relative;
-  padding: 0 var(--space-md) var(--space-2xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md) var(--space-2xs);
   border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.proto-site-head-main {
+  flex: 1;
+  min-width: 0;
+}
+.proto-site-head .proto-go {
+  flex: 0 0 auto;
+  margin-right: var(--space-lg);
 }
 .proto-site-head .card-title {
   margin-bottom: var(--space-2xs);
