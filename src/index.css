@@ -717,7 +717,8 @@ body,
 .sheet.site-open .sheet-body {
   padding: 0;
 }
-.site-sheet-body {
+/* Two classes, so it beats .row-body, which comes later in the file. */
+.row-body.site-sheet-body {
   padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
 }
 
