@@ -1,8 +1,9 @@
 // The named parts of `SiteBody` (SiteDetail.tsx), and where each layout puts
 // them (issue #90). The card and the browse row stack every part in one
-// column. The spread shows the pictures across its top, and reads the write-up in a main column and puts the actions
-// and the facts in a side column, and a container query folds the two into one
-// column when the spread is narrow.
+// column, and lead with the pictures (issue #108). The spread shows the
+// pictures across its top, reads the write-up in a main column and puts the
+// actions and the facts in a side column, and a container query folds the two
+// into one column when the spread is narrow.
 //
 // CSS alone cannot make the two columns from one flat list: a grid shares its
 // row heights between the columns, so a long write-up spaced the buttons out.
@@ -36,7 +37,9 @@ export const SITE_BODY_LAYOUT: {
     side: readonly SiteBodyPart[];
   };
 } = {
-  card: SITE_BODY_PARTS,
+  // A small card must not make the user scroll to see a picture, so the
+  // pictures come first, as in the spread.
+  card: ['gallery', ...SITE_BODY_PARTS.filter((part) => part !== 'gallery')],
   // The spread shows its pictures as the lead, across the top of the page:
   // one at a time, full size, in a carousel.
   spread: {

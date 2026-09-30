@@ -10,7 +10,6 @@ import {
   siteSwatch,
   type Site,
   type SiteEntry,
-  type SiteImage,
 } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
 import { directionsToSite, placeLink } from '../links/googleMaps';
@@ -86,52 +85,8 @@ function SiteEntries({ entries, collapsed }: { entries: SiteEntry[]; collapsed: 
   );
 }
 
-// Guidebook pictures for the listing, shown above the write-up. Several pictures
-// become a horizontal snap strip rather than a stack, so the card stays short and
-// the map stays visible (the same reason the description collapses).
-//
-// A picture that fails to load is removed instead of leaving a broken-image box:
-// the files are shipped as static assets, so a missing one is a deployment gap,
-// not something the reader should have to look at.
-function SiteGallery({ images }: { images: SiteImage[] }) {
-  const [broken, setBroken] = useState<Set<string>>(new Set());
-  // Which picture the full-screen viewer is showing, or null when it is closed.
-  const [opened, setOpened] = useState<number | null>(null);
-  const shown = images.filter((img) => !broken.has(img.url));
-  if (!shown.length) return null;
-
-  return (
-    <>
-      <div className={shown.length > 1 ? 'card-gallery multi' : 'card-gallery'}>
-        {shown.map((img, i) => (
-          <figure className="card-shot" key={img.url}>
-            <button
-              className="shot-open"
-              onClick={() => setOpened(i)}
-              aria-label={img.caption ? copy.site.enlarge(img.caption) : copy.site.enlargePicture}
-            >
-              <img
-                src={`${import.meta.env.BASE_URL}${img.url}`}
-                alt={img.caption ?? ''}
-                width={img.width}
-                height={img.height}
-                loading="lazy"
-                decoding="async"
-                onError={() => setBroken((b) => new Set(b).add(img.url))}
-              />
-            </button>
-            {img.caption && <figcaption>{img.caption}</figcaption>}
-          </figure>
-        ))}
-      </div>
-      {opened !== null && (
-        <Lightbox images={shown} startIndex={opened} onClose={() => setOpened(null)} />
-      )}
-    </>
-  );
-}
-
-/** The spread's lead (issue #90): every picture of the site, the width of the
+/** The spread's lead (issue #90), and the hero of the phone card and the
+ *  browse row (issue #108): every picture of the site, the width of the
  *  page, one at a time. A swipe or a trackpad scroll moves along them, and so
  *  do the ‹ › buttons and the thumbs, which also show the one in view. The
  *  arrow keys stay with the spread and step between sites.
@@ -143,8 +98,12 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
  *  picture, between two limits, so small pictures get a small lead and a
  *  portrait is not a strip in a wide box. With no picture, or none that loads, a wash in the site's
  *  colour names the kind of site, as in the strip. A click opens the viewer
- *  at the picture in view. */
-function LeadCarousel({ site }: { site: Site }) {
+ *  at the picture in view.
+ *
+ *  As a `hero`, it is shorter, its thumbs are dots, and a site with no
+ *  picture gets no hero: the card keeps its map in view, and a painted wash
+ *  there would cost height and show nothing. */
+function LeadCarousel({ site, hero = false }: { site: Site; hero?: boolean }) {
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const [index, setIndex] = useState(0);
   const [opened, setOpened] = useState<number | null>(null);
@@ -152,6 +111,7 @@ function LeadCarousel({ site }: { site: Site }) {
   const shown = (site.images ?? []).filter((img) => !broken.has(img.url));
 
   if (!shown.length) {
+    if (hero) return null;
     return (
       <div
         className="spread-lead painted"
@@ -179,7 +139,7 @@ function LeadCarousel({ site }: { site: Site }) {
 
   return (
     <div
-      className={multi ? 'spread-lead multi' : 'spread-lead'}
+      className={['spread-lead', multi && 'multi', hero && 'hero'].filter(Boolean).join(' ')}
       style={tallest ? ({ '--lead-h': `${tallest}px` } as React.CSSProperties) : undefined}
     >
       <div className="lead-row" ref={rowRef} onScroll={onScroll}>
@@ -316,7 +276,6 @@ export function SiteBody({
   }, [site.id, writeUp, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
-  const images = site.images ?? [];
 
   // Listing links (derived data). A sub-feature points back to its listing's main
   // write-up; a main point lists the features grouped under it.
@@ -382,14 +341,10 @@ export function SiteBody({
     ),
     access: site.access && <p className="card-meta">{copy.site.access(site.access)}</p>,
     hours: <OpeningTimes site={site} />,
-    // In the spread the pictures are the lead, and a site with none still
-    // gets the painted one.
-    gallery:
-      variant === 'spread' ? (
-        <LeadCarousel site={site} />
-      ) : (
-        images.length > 0 && <SiteGallery images={images} />
-      ),
+    // The pictures lead in every layout. In the spread a site with none
+    // still gets the painted lead; the card gets no hero. The key resets the
+    // row to the first picture when the card moves to another site.
+    gallery: <LeadCarousel key={site.id} site={site} hero={variant === 'card'} />,
     writeUp: (
       <>
         {site.entries ? (

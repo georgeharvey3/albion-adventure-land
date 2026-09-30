@@ -24,3 +24,8 @@ test('the spread reads the write-up in the main column and acts from the side', 
   assert.ok(SITE_BODY_LAYOUT.spread.main.includes('writeUp'));
   assert.ok(SITE_BODY_LAYOUT.spread.side.includes('actions'));
 });
+
+// On the phone the card leads with its pictures, as the spread does (issue #108).
+test('the card and the browse row lead with the pictures', () => {
+  assert.equal(SITE_BODY_LAYOUT.card[0], 'gallery');
+});
