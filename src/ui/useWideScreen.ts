@@ -5,15 +5,27 @@ import { useEffect, useState } from 'react';
 // gets the sheet too. A touch screen at 1024 px gets the desktop shell.
 const DESKTOP = '(min-width:1024px)';
 
-export function useWideScreen(): boolean {
-  const [wide, setWide] = useState(() => window.matchMedia?.(DESKTOP).matches ?? false);
+// From 760 px the sheet is a side panel on the right of the map, not a sheet
+// at the bottom. It takes no drag (issue #110).
+const SIDE_PANEL = '(min-width:760px)';
+
+function useMediaQuery(media: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia?.(media).matches ?? false);
   useEffect(() => {
-    const query = window.matchMedia?.(DESKTOP);
+    const query = window.matchMedia?.(media);
     if (!query) return;
-    const update = () => setWide(query.matches);
+    const update = () => setMatches(query.matches);
     update();
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
-  }, []);
-  return wide;
+  }, [media]);
+  return matches;
+}
+
+export function useWideScreen(): boolean {
+  return useMediaQuery(DESKTOP);
+}
+
+export function useSidePanel(): boolean {
+  return useMediaQuery(SIDE_PANEL);
 }

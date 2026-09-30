@@ -19,6 +19,8 @@ import { KEY_RANK, onEscape } from '../state/keys';
 import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
+import { pinSheet } from '../state/sheet';
+import { useSidePanel } from '../ui/useWideScreen';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -197,6 +199,20 @@ export function MapView({ desktop }: { desktop: boolean }) {
   const position = useStore((s) => s.position);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
+  // A pin tap on a phone (issue #110) also lowers the sheet off the middle
+  // height, so the site opens in the floating card over the map
+  // (state/sheet.ts). The height is set first: both updates land in one
+  // render, so the card is there when the pan below looks for it. The pins
+  // are built in effects, so they call it through a ref.
+  const sidePanel = useSidePanel();
+  const pickPin = useRef((_id: string) => {});
+  pickPin.current = (id: string) => {
+    if (!desktop) {
+      const { sheet, setSheet } = useStore.getState();
+      setSheet(pinSheet(sheet, sidePanel));
+    }
+    setSelected(id);
+  };
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);
@@ -631,7 +647,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
         shape: shapeFor(site.category),
         ...markerStyle(view, site.id === selectedId, scale, site.id === lift?.id),
       });
-      marker.on('click', () => setSelected(site.id));
+      marker.on('click', () => pickPin.current(site.id));
       // Only an interactive pin gets these, so a speck never lifts.
       marker.on('mouseover', () => {
         if (canHover()) setLifted({ id: site.id, by: 'pin' });
@@ -780,7 +796,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
           iconAnchor: [11, 11],
         }),
       })
-        .on('click', () => setSelected(site.id))
+        .on('click', () => pickPin.current(site.id))
         .addTo(layer);
     });
 

@@ -161,6 +161,9 @@
   /* The phone's floating row (issue #109) sits over the map controls and
      under the title card. */
   --z-float: 1020;
+  /* The phone sheet (issue #110) lies over the map, so it clears the map
+     controls and the floating row. The title card still frames it. */
+  --z-phone-sheet: 1030;
   /* The title card sits over the zoom buttons too, because it frames the
      whole map. It takes no taps, so a tap on a covered button still lands. */
   --z-title: 1050;

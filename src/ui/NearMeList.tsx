@@ -11,9 +11,11 @@ import {
 import { formatDistance } from "../geo/haversine";
 import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
-import { CheckIcon, ListIcon, MapIcon, MapPinIcon, StarIcon } from "./icons";
+import { CheckIcon, MapPinIcon, StarIcon } from "./icons";
 import { KEY_RANK, stepCursor } from "../state/keys";
+import { rowSheet, showOnMap } from "../state/sheet";
 import { useKeyLayer } from "./useKeyLayer";
+import { useSidePanel } from "./useWideScreen";
 import { copy } from "../copy";
 
 // Near me now (spec F4): every visible site sorted by haversine distance from
@@ -26,13 +28,14 @@ import { copy } from "../copy";
 // from raw distance to the two numbers that matter on a drive — what the stop
 // costs you and how far into the journey it falls.
 //
-// Browse mode is the same list without the map: the sheet takes the whole
-// screen, rows gain a thumbnail and a teaser, and tapping one opens the full
-// write-up *in place* rather than throwing the reader to a card floating over a
-// map they can no longer see. It is for the armchair half of the loop —
-// "what's out there?" — where the map's 55% of the screen buys nothing. An
-// opened site is stepped through with the prev/next bar closing it, or the
-// arrow keys, so reading ten in a row costs ten taps rather than twenty.
+// While the list lies over the map (`inPlace`: the phone sheet at its middle
+// or full height, issue #110), rows gain a thumbnail and a teaser, and tapping
+// one opens the full write-up *in place* rather than throwing the reader to a
+// card floating under the sheet. An opened site is stepped through with the
+// prev/next bar closing it, or the arrow keys, so reading ten in a row costs
+// ten taps rather than twenty. The side panel shows the map beside the list,
+// so there the rows are compact and open the card until the panel takes the
+// window.
 //
 // Only the nearest PAGE_SIZE rows are rendered (with "show more" paging) —
 // mounting all ~2,600 rows was a large chunk of the mobile jank, and the
@@ -70,7 +73,7 @@ function RowThumb({ site }: { site: Site }) {
   );
 }
 
-export function NearMeList() {
+export function NearMeList({ inPlace }: { inPlace: boolean }) {
   const views = useVisibleSites();
   const [limit, setLimit] = useState(PAGE_SIZE);
   const position = useStore((s) => s.position);
@@ -80,8 +83,9 @@ export function NearMeList() {
   const setRouteSort = useStore((s) => s.setRouteSort);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
-  const browse = useStore((s) => s.browse);
-  const setBrowse = useStore((s) => s.setBrowse);
+  const sheet = useStore((s) => s.sheet);
+  const setSheet = useStore((s) => s.setSheet);
+  const sidePanel = useSidePanel();
   const lifted = useStore((s) => s.lifted);
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
@@ -99,6 +103,13 @@ export function NearMeList() {
   // open write-up — has moved the selection to another row.
   const lastSelected = useRef(selectedSiteId);
 
+  /** Open a site from the list. A row opened at the middle height raises the
+   *  sheet to full, so the write-up has the room to be read (state/sheet.ts). */
+  const openRow = (id: string) => {
+    setSheet(rowSheet(sheet, sidePanel));
+    setSelected(id);
+  };
+
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
    *  ends rather than wrapping: the list is sorted, so wrapping from the
@@ -115,8 +126,15 @@ export function NearMeList() {
     [views, selectedSiteId, setSelected],
   );
 
+  // A sheet raised over the map with a site open shows that site's row. On a
+  // phone the list mounts already in place, so this also covers a first open.
+  // Declared before the scroll effect below, which it feeds.
+  useEffect(() => {
+    if (inPlace) pendingScroll.current = true;
+  }, [inPlace]);
+
   // Bring the open site to the top of the list. When the reader was moved to it
-  // — entering browse mode on a site picked from the map, or stepping to a
+  // — raising the sheet on a site picked from the map, or stepping to a
   // neighbour — it jumps there. When they tapped the row themselves it glides
   // there instead: a row tapped near the bottom of the screen would otherwise
   // open below the fold with no sign that anything happened, and the glide
@@ -135,11 +153,11 @@ export function NearMeList() {
   useEffect(() => {
     const changed = selectedSiteId !== lastSelected.current;
     lastSelected.current = selectedSiteId;
-    if (browse && selectedSiteId && changed && !pendingScroll.current) {
+    if (inPlace && selectedSiteId && changed && !pendingScroll.current) {
       pendingScroll.current = true;
       smoothScroll.current = true;
     }
-    if (!browse || !selectedSiteId || !pendingScroll.current) return;
+    if (!inPlace || !selectedSiteId || !pendingScroll.current) return;
     const index = views.findIndex((v) => v.site.id === selectedSiteId);
     if (index < 0) {
       pendingScroll.current = false; // filtered out — nothing to scroll to
@@ -150,7 +168,7 @@ export function NearMeList() {
       setLimit(Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
       return;
     }
-    // The list header is sticky in browse mode, so the row lands under it
+    // The list header is sticky in place, so the row lands under it
     // unless it is told to stop short. Measured, because the hint wraps to a
     // second line on a narrow phone.
     const row = expandedRef.current;
@@ -166,16 +184,16 @@ export function NearMeList() {
     }
     pendingScroll.current = false;
     smoothScroll.current = false;
-  }, [browse, selectedSiteId, limit, views]);
+  }, [inPlace, selectedSiteId, limit, views]);
 
   // Keys (issue #88). `j` and `k` move the cursor down and up the list, and
   // the cursor lifts the row and its pin. `Enter` opens the row the cursor is
-  // on. In browse mode with a site open, `j`, `k` and the arrow keys do what
-  // the prev/next bar does with a tap. The picture viewer is a modal key
-  // layer, so none of this happens under it.
+  // on. With a row open in place, `j`, `k` and the arrow keys do what the
+  // prev/next bar does with a tap. The picture viewer is a modal key layer, so
+  // none of this happens under it.
   useKeyLayer(true, KEY_RANK.list, ({ key }) => {
     const step = key === "j" || key === "ArrowRight" ? 1 : key === "k" || key === "ArrowLeft" ? -1 : 0;
-    if (browse && selectedSiteId && step) {
+    if (inPlace && selectedSiteId && step) {
       goToNeighbour(step);
       return true;
     }
@@ -196,11 +214,11 @@ export function NearMeList() {
       lifted?.by === "key" &&
       views.some((v) => v.site.id === lifted.id)
     ) {
-      if (browse) {
+      if (inPlace) {
         pendingScroll.current = true;
         smoothScroll.current = true;
       }
-      setSelected(lifted.id);
+      openRow(lifted.id);
       return true;
     }
     return false;
@@ -238,7 +256,7 @@ export function NearMeList() {
   });
 
   return (
-    <div className={browse ? "list browse" : "list"}>
+    <div className="list">
       <div className="list-head" ref={headRef}>
         {!position && (
           <p className="hint">
@@ -251,20 +269,6 @@ export function NearMeList() {
             {copy.near.count(views.length, !!position.manual)}
           </p>
         )}
-        {/* The one way in and out of browse mode. It lives with the list rather
-            than in the tab bar because it is a way of reading *this* list, not
-            an app-wide mode. */}
-        <button
-          className={browse ? "browse-toggle on" : "browse-toggle"}
-          onClick={() => {
-            if (!browse) pendingScroll.current = true;
-            setBrowse(!browse);
-          }}
-          aria-pressed={browse}
-        >
-          {browse ? <MapIcon /> : <ListIcon />}{" "}
-          {browse ? copy.near.map : copy.near.browse}
-        </button>
       </div>
       {routeMode && (
         <div className="route-head">
@@ -298,7 +302,7 @@ export function NearMeList() {
           const { site, distance, detour, progress, visited, wishlisted } =
             view;
           const selected = site.id === selectedSiteId;
-          const expanded = browse && selected;
+          const expanded = inPlace && selected;
           const liftedRow = lifted?.id === site.id;
           const trailing =
             detour !== null && progress !== null ? (
@@ -314,9 +318,9 @@ export function NearMeList() {
               </span>
             );
 
-          // Map mode: the row is the whole control and selection opens the
-          // floating card, exactly as it always has.
-          if (!browse) {
+          // Beside the map (the side panel): the row is the whole control and
+          // selection opens the floating card.
+          if (!inPlace) {
             return (
               <li
                 key={site.id}
@@ -353,14 +357,14 @@ export function NearMeList() {
           const prev = expanded ? views[i - 1] : undefined;
           const next = expanded ? views[i + 1] : undefined;
 
-          // Browse mode: a real disclosure button, so the write-up opens under
+          // In place: a real disclosure button, so the write-up opens under
           // the row and the reader keeps their place in the list.
           return (
             <li
               key={site.id}
               data-site-id={site.id}
               ref={expanded ? expandedRef : undefined}
-              className={`row browse ${expanded ? "expanded" : ""} ${
+              className={`row rich ${expanded ? "expanded" : ""} ${
                 visited ? "is-visited" : ""
               } ${liftedRow ? "lifted" : ""}`}
               {...hoverProps(site.id)}
@@ -368,11 +372,13 @@ export function NearMeList() {
               <button
                 className="row-head"
                 onClick={() => {
-                  if (!expanded) {
-                    pendingScroll.current = true;
-                    smoothScroll.current = true;
+                  if (expanded) {
+                    setSelected(null);
+                    return;
                   }
-                  setSelected(expanded ? null : site.id);
+                  pendingScroll.current = true;
+                  smoothScroll.current = true;
+                  openRow(site.id);
                 }}
                 aria-expanded={expanded}
               >
@@ -402,7 +408,7 @@ export function NearMeList() {
                     site={site}
                     showHeader={false}
                     collapseDescription={false}
-                    onShowOnMap={() => setBrowse(false)}
+                    onShowOnMap={() => setSheet(showOnMap(sidePanel))}
                   />
                   {/* Naming the neighbours turns the step into a decision
                     rather than a leap in the dark. The bar is sticky (see

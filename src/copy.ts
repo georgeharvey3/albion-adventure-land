@@ -127,8 +127,6 @@ export const copy = {
     dropPin: { before: 'Use the', after: 'button on the map to drop a manual location.' },
     count: (n: number, manual: boolean) =>
       `${n} sites ${manual ? 'from your dropped pin' : 'near you'}, nearest first.`,
-    map: 'Map',
-    browse: 'Browse',
     onTheWay: (n: number, destination: string) =>
       `${n} ${n === 1 ? 'site' : 'sites'} on the way to ${destination}.`,
     travelOrder: 'Travel order',
