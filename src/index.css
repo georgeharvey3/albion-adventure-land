@@ -657,7 +657,7 @@ body,
 
 /* The open site on a phone (issue #112). The peek takes the place of the tabs
    in the sheet head, so it is the low height while a site is open: one row
-   with a thumbnail, the name, the type and distance, Directions and ×. The
+   with a thumbnail, the name, the type and distance, and ×. The
    body under it runs edge to edge, so the hero picture bleeds to the glass. */
 .site-peek {
   display: flex;
@@ -689,10 +689,6 @@ body,
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-}
-/* Two classes, so it beats .btn, which comes later in the file. */
-.site-peek .site-peek-go {
-  flex: 0 0 auto;
 }
 /* The distance is what the field asks, so only the type gives way. */
 .site-peek-main .card-type {

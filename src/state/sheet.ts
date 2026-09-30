@@ -65,7 +65,7 @@ export function listInPlace(s: {
 // On a phone a site opens in the sheet, in place of the list (issue #112).
 // The tabs hide, and the journey bar stays. At the low height the sheet is
 // the peek: one row with a thumbnail, the name, the type and distance,
-// Directions and ×, and the pin stays in view above it. The middle height adds
+// and ×, and the pin stays in view above it. The middle height adds
 // the hero picture, and the full height is the whole page. A site opens at
 // the height the sheet is at, from a pin or from a row. The side panel keeps
 // the floating card and the rows that open in place.

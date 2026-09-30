@@ -2,7 +2,6 @@ import { useStore } from '../state/store';
 import { showOnMap, stepSheet } from '../state/sheet';
 import { SITE_TYPE_LABELS, hybridTitle, siteSwatch, type Site } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
-import { directionsToSite } from '../links/googleMaps';
 import { RowThumb } from './RowThumb';
 import { SiteBody } from './SiteDetail';
 import { copy } from '../copy';
@@ -13,9 +12,10 @@ import { copy } from '../copy';
 // The peek is the low height of the sheet while a site is open. It sits in the
 // sheet head under the journey bar, in place of the tabs, so a drag on it
 // moves the sheet as a drag on the tabs does. It holds one row: a thumbnail,
-// the name, the type and distance, Directions and ×. It shows no number but
-// the distance. The body under it is the card's order without its header: the
-// hero picture shows at the middle height, and the full height is the page.
+// the name, the type and distance, and ×. Directions is in the body. It shows
+// no number but the distance. The body under it is the card's order without
+// its header: the hero picture shows at the middle height, and the full
+// height is the page.
 
 /** The peek row. A tap on the name raises the sheet one height, as the handle
  *  does. */
@@ -37,14 +37,6 @@ export function SitePeek({ site }: { site: Site }) {
           {distance !== null && <span className="site-peek-away">{copy.site.away(formatDistance(distance))}</span>}
         </span>
       </button>
-      <a
-        className="btn primary site-peek-go"
-        href={directionsToSite(site, position?.manual ? position : undefined)}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {copy.site.directions}
-      </a>
       <button className="site-peek-close" onClick={() => setSelected(null)} aria-label={copy.site.close}>
         ×
       </button>

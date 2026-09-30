@@ -429,7 +429,8 @@ owner chose this design from a prototype (variant C, the branch
   (`SitePeek` in `src/ui/SiteSheet.tsx`) takes the place of the tabs in the
   sheet head. So the peek is the low height, and a drag on it moves the sheet.
 - The peek is one row: a thumbnail, the name, the type and distance,
-  Directions and ×. It shows no number except the distance.
+  and ×. It shows no number except the distance. Directions is in the
+  actions of the body, as on the card.
 - A site opens at the height that the sheet is at. A pin tap from the low
   height opens the peek. A pin tap from the middle height keeps the middle
   height, where the hero picture shows under the peek. The full height shows
