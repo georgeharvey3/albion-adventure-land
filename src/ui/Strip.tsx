@@ -2,9 +2,10 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { useFilteredSites, useVisibleSites } from '../state/selectors';
 import { STRIP_WINDOW, stripSites, windowToShow, type SiteView, type Strip as StripState } from '../state/strip';
-import { siteSwatch, SITE_TYPE_LABELS, type Site } from '../data/types';
+import { siteSwatch, SITE_TYPE_COLORS, SITE_TYPE_SINGULAR, type Site } from '../data/types';
 import { formatDistance } from '../geo/haversine';
-import { formatDetour, formatProgress } from '../geo/corridor';
+import { formatDetour } from '../geo/corridor';
+import type { Destination, Position } from '../state/store';
 import { CheckIcon, StarIcon } from './icons';
 import { KEY_RANK, stepCursor } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
@@ -23,38 +24,58 @@ import { copy } from '../copy';
 // on a pin marks it, `j` and `k` move the cursor along it, and a click opens
 // the site card.
 
-/** The frame's picture, or the painted placeholder in its layer colour (the
- *  peek's, pinPeek.ts) when there is none or it fails to load. */
-function FramePlate({ site }: { site: Site }) {
+/** The frame's picture, full bleed, with its figure as a badge. With no
+ *  picture, or one that fails to load, a wash in the site's colour names the
+ *  kind of site it stands for. */
+function FramePlate({ site, figure }: { site: Site; figure: string | null }) {
   const [broken, setBroken] = useState(false);
   const image = site.images?.[0];
-  if (!image || broken) {
-    return <span className="strip-plate blank" style={{ background: siteSwatch(site) }} aria-hidden="true" />;
-  }
+  const painted = !image || broken;
   return (
-    <span className="strip-plate">
-      <img
-        src={`${import.meta.env.BASE_URL}${image.url}`}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        onError={() => setBroken(true)}
-      />
+    <span
+      className={painted ? 'strip-plate painted' : 'strip-plate'}
+      style={painted ? ({ '--tint': SITE_TYPE_COLORS[site.category] } as React.CSSProperties) : undefined}
+    >
+      {painted ? (
+        <i>{SITE_TYPE_SINGULAR[site.category]}</i>
+      ) : (
+        <img
+          src={`${import.meta.env.BASE_URL}${image.url}`}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setBroken(true)}
+        />
+      )}
+      {figure && <span className="strip-badge">{figure}</span>}
     </span>
   );
 }
 
-function frameFigure({ distance, detour, progress }: SiteView): string | null {
-  if (detour !== null && progress !== null) return `${formatDetour(detour)} · ${formatProgress(progress)}`;
+/** The distance from the anchor, or on a journey the detour. The order of the
+ *  strip already says how far along the way a site is. */
+function frameFigure({ distance, detour }: SiteView): string | null {
+  if (detour !== null) return formatDetour(detour);
   return distance !== null ? formatDistance(distance) : null;
 }
 
-/** The line over the frames, or null for none. */
-function stripMessage(strip: StripState, reported: boolean): string | null {
+/** The line over the frames: what the order is measured from, or why there
+ *  are no frames. */
+function stripHeading(
+  strip: StripState,
+  reported: boolean,
+  position: Position | null,
+  destination: Destination | null,
+): string | null {
   if (strip.kind === 'zoomIn') return copy.strip.zoomIn;
-  if (strip.views.length) return strip.from === 'centre' ? copy.strip.fromCentre : null;
-  if (strip.from === 'journey') return copy.strip.noneOnTheWay;
-  return reported ? copy.strip.none : null;
+  if (!strip.views.length) {
+    if (strip.from === 'journey') return copy.strip.noneOnTheWay;
+    return reported ? copy.strip.none : null;
+  }
+  if (strip.from === 'journey' && destination) return copy.strip.alongTheWay(destination.label);
+  if (strip.from === 'centre' || !position) return copy.strip.fromCentre;
+  if (position.label) return copy.strip.fromPlace(position.label);
+  return position.manual ? copy.strip.fromPin : copy.strip.fromYou;
 }
 
 export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
@@ -146,11 +167,11 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
       ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [lifted, rendered, viewport]);
 
-  const message = stripMessage(strip, viewport !== null);
+  const heading = stripHeading(strip, viewport !== null, position, destination);
 
   return (
     <section ref={ref} className="strip" aria-label={copy.strip.region}>
-      {message && <p className="strip-head">{message}</p>}
+      {heading && <p className={views.length ? 'strip-head' : 'strip-head empty'}>{heading}</p>}
       {views.length > 0 && (
         <ul className="strip-row" ref={rowRef} onScroll={onScroll} onWheel={onWheel}>
           {views.slice(0, rendered).map((view) => {
@@ -173,15 +194,16 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
                   }}
                   onPointerLeave={() => dropLifted(site.id)}
                 >
-                  <FramePlate site={site} />
+                  <FramePlate site={site} figure={figure} />
                   <span className="frame-name">
-                    {visited && <CheckIcon />}
-                    {wishlisted && !visited && <StarIcon filled />}
-                    {(visited || wishlisted) && ' '}
-                    {site.name}
+                    <span className="dot" style={{ background: siteSwatch(site) }} aria-hidden="true" />
+                    <span className="frame-text">
+                      {visited && <CheckIcon />}
+                      {wishlisted && !visited && <StarIcon filled />}
+                      {(visited || wishlisted) && ' '}
+                      {site.name}
+                    </span>
                   </span>
-                  <span className="frame-sub">{SITE_TYPE_LABELS[site.category]}</span>
-                  {figure && <span className="frame-fig">{figure}</span>}
                 </button>
               </li>
             );

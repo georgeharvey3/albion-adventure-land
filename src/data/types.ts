@@ -296,6 +296,28 @@ export const SITE_TYPE_LABELS: Record<SiteCategory, string> = {
   scrambles: 'Scrambles',
 };
 
+/** One site of each type: the painted placeholder on a strip frame names the
+ *  one site it stands for ("Cave", not "Caves"). */
+export const SITE_TYPE_SINGULAR: Record<SiteCategory, string> = {
+  wells: 'Holy well',
+  natural_water_features: 'Water feature',
+  wild_places: 'Wild place',
+  hills: 'Hill',
+  hillforts: 'Hillfort',
+  earthworks: 'Earthwork',
+  burial_chambers: 'Burial chamber',
+  standing_stones: 'Standing stone',
+  stone_circles: 'Stone circle',
+  natural_stones: 'Natural stone',
+  sacred_buildings: 'Sacred building',
+  caves: 'Cave',
+  other: 'Folklore site',
+  historic_pubs: 'Historic pub',
+  wild_swims: 'Wild swim',
+  ruins: 'Ruin',
+  scrambles: 'Scramble',
+};
+
 // Distinct, colour-blind-friendly-ish palette for map pins and list dots.
 export const SITE_TYPE_COLORS: Record<SiteCategory, string> = {
   wells: '#2a9d8f',

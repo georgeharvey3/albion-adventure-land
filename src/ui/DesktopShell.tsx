@@ -130,12 +130,17 @@ export function DesktopShell() {
   const stripRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const measure = () => {
-      const strip = stripRef.current?.getBoundingClientRect();
+      // The strip's top padding is a fade the map shows through, so the
+      // covered band starts where its content does.
+      const strip = stripRef.current;
+      const stripTop = strip
+        ? strip.getBoundingClientRect().top + parseFloat(getComputedStyle(strip).paddingTop)
+        : window.innerHeight;
       const rail = railRef.current?.getBoundingClientRect();
       setCoveredInsets({
         top: 0,
         right: 0,
-        bottom: strip ? Math.round(window.innerHeight - strip.top) : 0,
+        bottom: Math.round(window.innerHeight - stripTop),
         left: drawerOpen && rail ? Math.round(rail.right) : 0,
       });
     };

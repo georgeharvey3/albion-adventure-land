@@ -2499,6 +2499,9 @@ body,
    carry. The focus ring is deliberately absent from this block: it has no
    transition to remove. */
 @media (prefers-reduced-motion: reduce) {
+  .frame {
+    transition: none;
+  }
   .me-marker--live .me-pulse {
     animation: none;
     opacity: 0.35;
@@ -2850,21 +2853,17 @@ body,
 /* No picture: the layer colour laid on like a wash — pale at the edges, the
    pigment pooled off-centre, and the same paper grain as the map finish. */
 .pin-peek-plate.blank::before,
-.pin-peek-plate.blank::after,
-.strip-plate.blank::before,
-.strip-plate.blank::after {
+.pin-peek-plate.blank::after {
   content: "";
   position: absolute;
   inset: 0;
 }
-.pin-peek-plate.blank::before,
-.strip-plate.blank::before {
+.pin-peek-plate.blank::before {
   background:
     radial-gradient(ellipse 70% 60% at 35% 40%, transparent 0 40%, var(--color-paper-2) 100%),
     linear-gradient(160deg, color-mix(in oklch, var(--color-paper-2) 45%, transparent), transparent 60%);
 }
-.pin-peek-plate.blank::after,
-.strip-plate.blank::after {
+.pin-peek-plate.blank::after {
   background: var(--color-ink);
   opacity: 0.18;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 0 -1.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -3038,33 +3037,46 @@ body,
   box-shadow: none;
 }
 
-/* The strip: one row of frames, scrolled across. Under Leaflet's controls
-   (z-index 1000), so the collapsed credits sit in its right corner, in the band
-   the padding keeps free under the frames. */
+/* The strip: one row of frames floating on the bottom of the map. The paper
+   comes up from the bottom edge and fades out above the frames, so the map
+   shows through behind the heading and never ends in a hard band. It sits
+   under Leaflet's controls (z-index 1000), so the collapsed credits rest in
+   its right corner, in the band the padding keeps free under the frames. */
 .strip {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: var(--z-sheet);
-  padding: var(--space-2xs) var(--space-sm) var(--space-lg);
-  background: var(--color-paper);
-  border-top: var(--rule-hairline) solid var(--color-rule-strong);
-  box-shadow: var(--shadow-whisper);
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+  background: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--color-paper) 96%, transparent) 60%,
+    color-mix(in oklch, var(--color-paper) 0%, transparent)
+  );
+  pointer-events: none;
 }
+.strip > * {
+  pointer-events: auto;
+}
+/* What the order is measured from. A line of the page, so the serif. */
 .strip-head {
-  margin: var(--space-2xs) 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-md);
+  color: var(--color-ink);
+}
+.strip-head.empty {
+  padding: var(--space-md) 0;
   color: var(--color-muted);
 }
 .strip-row {
   display: flex;
   gap: var(--space-xs);
   margin: 0;
-  padding: var(--space-2xs) 0;
+  /* Room for a frame to rise on hover without being clipped. */
+  padding: var(--space-xs) var(--space-3xs) var(--space-2xs);
   list-style: none;
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -3073,29 +3085,31 @@ body,
 .frame {
   display: flex;
   flex-direction: column;
-  width: 152px;
-  padding: var(--space-2xs);
+  width: 150px;
+  padding: 0;
+  overflow: hidden;
   background: var(--color-paper-2);
-  border: var(--rule-hairline) solid var(--color-rule);
+  border: 0;
   border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px var(--ink-shadow);
   color: var(--color-ink);
   text-align: left;
   cursor: pointer;
+  transition:
+    transform var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
 }
 .frame.lifted {
-  border-color: var(--color-accent);
-  box-shadow: inset 0 -3px 0 var(--color-accent);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px var(--ink-shadow);
 }
 .frame.selected {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-ink), 0 6px 18px var(--ink-shadow);
 }
 .strip-plate {
   position: relative;
   display: block;
-  height: 84px;
-  overflow: hidden;
-  border-radius: var(--radius-sm);
+  height: 74px;
   background: var(--color-paper-3);
 }
 .strip-plate img {
@@ -3104,34 +3118,61 @@ body,
   height: 100%;
   object-fit: cover;
 }
-.frame-name {
-  margin-top: var(--space-2xs);
+/* No picture: the site's colour, pooled off-centre and darkening to the
+   edge, with the kind of site written across it. */
+.strip-plate.painted {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--tint),
+    color-mix(in oklch, var(--tint) 55%, var(--color-ink))
+  );
+}
+.strip-plate.painted i {
   font-family: var(--font-display);
   font-size: var(--text-md);
-  line-height: var(--leading-display);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--color-paper-2);
+  text-shadow: 0 1px 2px var(--ink-shadow);
 }
-.frame-fig {
+.strip-badge {
+  position: absolute;
+  right: var(--space-2xs);
+  bottom: var(--space-2xs);
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-paper-2) 88%, transparent);
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
-  color: var(--color-muted);
   font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
 }
-.frame-name .icon {
+.frame-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  /* Two lines of name, then the padding. */
+  box-sizing: content-box;
+  height: 2.3em;
+  padding: var(--space-2xs) var(--space-xs) var(--space-xs);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: var(--leading-display);
+}
+.frame-name .dot {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--radius-pill);
+}
+.frame-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.frame-text .icon {
   vertical-align: -0.1em;
   margin-right: var(--space-3xs);
-}
-.frame-sub {
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--color-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* The controls stack at the top right, clear of the spread when it comes. The
@@ -3182,10 +3223,11 @@ body,
 
 @media (hover: hover) and (pointer: fine) {
   .frame:hover {
-    background: var(--color-paper-3);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px var(--ink-shadow);
   }
   .frame.selected:hover {
-    background: var(--color-accent-soft);
+    box-shadow: 0 0 0 2px var(--color-ink), 0 6px 18px var(--ink-shadow);
   }
 }
 

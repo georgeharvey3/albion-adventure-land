@@ -143,7 +143,11 @@ export const copy = {
 
   strip: {
     region: 'Sites in view',
-    fromCentre: 'Nearest the map centre',
+    fromCentre: 'Nearest the map centre first',
+    fromYou: 'Nearest you first',
+    fromPin: 'Nearest your pin first',
+    fromPlace: (place: string) => `Nearest ${place} first`,
+    alongTheWay: (destination: string) => `Along the way to ${destination}`,
     zoomIn: 'Zoom in to see the sites here',
     none: 'No sites here',
     noneOnTheWay: 'No sites within this detour',
