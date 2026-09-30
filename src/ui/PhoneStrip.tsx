@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { STRIP_WINDOW, windowToShow } from '../state/strip';
-import { middleFrame } from '../state/phoneStrip';
+import { middleFrame, swipeOpens } from '../state/phoneStrip';
 import { siteSwatch } from '../data/types';
 import { FramePlate, frameFigure, useStrip } from './Strip';
 import { CheckIcon, StarIcon } from './icons';
@@ -13,10 +13,13 @@ import { copy } from '../copy';
 // is the strip's rule (src/state/strip.ts), so the row reads the view from the
 // last `moveend` and a pan costs it nothing.
 //
-// The frame in the middle lifts its pin, and the lift follows the swipe. A
-// pin tap lifts the pin, and this row brings its frame to the middle
-// (MapView.tsx). A tap on a frame opens the site at the middle height, with
-// its hero picture (issue #112). × brings the row back.
+// The frame in the middle lifts its pin, and the lift follows the swipe.
+// While a site is open, the row shows over its peek and the middle frame is
+// the open site: a swipe steps to the next site when it comes to rest, as
+// Prev and Next do in the desktop spread, and a pin tap brings its frame to
+// the middle. The map holds the view while a site is open (MapView.tsx), so
+// the row does not re-sort under the steps. A tap on a frame opens the site
+// at the middle height, with its hero picture (issue #112).
 //
 // The row is outside the Leaflet container, so a swipe on it never pans the
 // map, and a map pan never moves the row. It stays mounted while it hides, so
@@ -53,7 +56,7 @@ export function PhoneStrip({
   const rowRef = useRef<HTMLUListElement>(null);
   /** The site whose frame is in the middle, as this row last lifted it. */
   const middle = useRef<string | null>(null);
-  /** Set while a pin tap scrolls the row, so the frames it passes stay down. */
+  /** Set while the row scrolls itself, so the frames it passes stay down. */
   const steering = useRef(false);
   const idle = useRef(0);
   const frame = useRef(0);
@@ -71,7 +74,9 @@ export function PhoneStrip({
     };
   }, [onHeight, showing]);
 
-  const liftMiddle = () => {
+  /** Read the middle frame and lift its pin. At the end of a swipe by the
+   *  user, while a site is open, open the middle frame's site too. */
+  const takeMiddle = (atRest: boolean) => {
     const row = rowRef.current;
     if (!row) return;
     const frames = Array.from(row.children as HTMLCollectionOf<HTMLElement>, (li) => ({
@@ -80,35 +85,73 @@ export function PhoneStrip({
       width: li.offsetWidth,
     }));
     const id = middleFrame(frames, row.scrollLeft, row.clientWidth);
-    if (!id || id === middle.current) return;
-    middle.current = id;
-    setLifted({ id, by: 'strip' });
+    if (!id) return;
+    if (id !== middle.current) {
+      middle.current = id;
+      setLifted({ id, by: 'strip' });
+    }
+    if (!atRest) return;
+    const opens = swipeOpens({
+      middle: id,
+      selected: useStore.getState().selectedSiteId,
+      byUser: !steering.current,
+    });
+    steering.current = false;
+    if (opens) setSelected(opens);
   };
 
-  // A new view is a new row: back to the first window, at the start, and the
-  // nearest site lifts. The journey list does not depend on the view, so a
-  // pan leaves it alone. The row lifts only while it shows.
+  /** Scroll the row itself to `left`. The frames it passes lift nothing, and
+   *  the stop opens nothing. */
+  const steer = (left: number, smooth: boolean) => {
+    const row = rowRef.current;
+    if (!row) return;
+    const to = Math.max(0, Math.min(left, row.scrollWidth - row.clientWidth));
+    // A scroll to where the row already is fires no event to end it.
+    if (Math.abs(to - row.scrollLeft) < 1) return;
+    steering.current = true;
+    row.scrollTo({ left: to, behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' });
+  };
+
+  // A new view is a new row: back to the first window, at the start. The
+  // journey list does not depend on the view, so a pan leaves it alone.
   const inJourney = strip.kind === 'sites' && strip.from === 'journey';
   const viewKey = inJourney ? null : viewport;
   useEffect(() => {
     setRendered(STRIP_WINDOW);
-    rowRef.current?.scrollTo({ left: 0 });
     middle.current = null;
-    steering.current = false;
+    steer(0, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewKey, inJourney]);
 
+  // The open site's frame is in the middle: a pin tap, a search or a step
+  // brings it there. With no site open, the nearest site lifts on a new view.
+  const selectedSiteId = useStore((s) => s.selectedSiteId);
   useEffect(() => {
     if (!showing) {
-      // Hidden, the row lifts nothing: the list and the peek have the pins.
+      // Hidden, the row lifts nothing: the list and the card have the pins.
       const { lifted: now } = useStore.getState();
       if (now?.by === 'strip') dropLifted(now.id);
       middle.current = null;
       return;
     }
-    liftMiddle();
-    // A new first frame is a new middle.
+    const index = selectedSiteId ? views.findIndex((v) => v.site.id === selectedSiteId) : -1;
+    if (index < 0) {
+      if (!middle.current) takeMiddle(false);
+      return;
+    }
+    if (selectedSiteId === middle.current) return;
+    if (index >= rendered) {
+      setRendered(windowToShow(index));
+      return;
+    }
+    const row = rowRef.current;
+    const li = row?.children[index] as HTMLElement | undefined;
+    if (!row || !li) return;
+    middle.current = selectedSiteId;
+    setLifted({ id: selectedSiteId!, by: 'strip' });
+    steer(li.offsetLeft + li.offsetWidth / 2 - row.clientWidth / 2, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showing, viewKey, views[0]?.site.id]);
+  }, [showing, selectedSiteId, rendered, viewKey, views[0]?.site.id]);
 
   useEffect(
     () => () => {
@@ -125,35 +168,11 @@ export function PhoneStrip({
       setRendered((n) => n + STRIP_WINDOW);
     }
     window.clearTimeout(idle.current);
-    idle.current = window.setTimeout(() => {
-      steering.current = false;
-      liftMiddle();
-    }, IDLE);
+    idle.current = window.setTimeout(() => takeMiddle(true), IDLE);
     if (steering.current) return;
     cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(liftMiddle);
+    frame.current = requestAnimationFrame(() => takeMiddle(false));
   };
-
-  // A pin tap lifts its site: bring its frame to the middle.
-  useEffect(() => {
-    if (!showing || lifted?.by !== 'strip' || lifted.id === middle.current) return;
-    const index = views.findIndex((v) => v.site.id === lifted.id);
-    if (index < 0) return;
-    if (index >= rendered) {
-      setRendered(windowToShow(index));
-      return;
-    }
-    const li = rowRef.current?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(lifted.id)}"]`);
-    if (!li) return;
-    middle.current = lifted.id;
-    steering.current = true;
-    li.scrollIntoView({
-      inline: 'center',
-      block: 'nearest',
-      behavior: reducedMotion() ? 'auto' : 'smooth',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lifted, rendered, showing]);
 
   return (
     <div ref={boxRef} className={showing ? 'phone-strip' : 'phone-strip away'} aria-hidden={!showing}>

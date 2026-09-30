@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { middleFrame, pinInSight, pinTap, rowShown } from '../src/state/phoneStrip';
+import { middleFrame, pinInSight, rowShown, swipeOpens } from '../src/state/phoneStrip';
 
 // Three 270 px frames with an 8 px gap, in a 375 px row whose padding puts the
 // first frame in the middle at scroll 0.
@@ -25,29 +25,25 @@ test('an empty row has no middle frame', () => {
   assert.equal(middleFrame([], 0, 375), null);
 });
 
-const low = { sheet: 'low' as const, siteOpen: false, inRow: true, lifted: null };
-
-test('at the low height a pin tap lifts its frame', () => {
-  assert.equal(pinTap({ ...low, id: 'a' }), 'lift');
-  assert.equal(pinTap({ ...low, lifted: 'b', id: 'a' }), 'lift');
+test('with a site open, a swipe that rests opens the middle frame', () => {
+  assert.equal(swipeOpens({ middle: 'b', selected: 'a', byUser: true }), 'b');
 });
 
-test('a second tap on the lifted pin opens the site', () => {
-  assert.equal(pinTap({ ...low, lifted: 'a', id: 'a' }), 'open');
+test('a swipe opens nothing with no site open, or on the open site', () => {
+  assert.equal(swipeOpens({ middle: 'b', selected: null, byUser: true }), null);
+  assert.equal(swipeOpens({ middle: 'a', selected: 'a', byUser: true }), null);
+  assert.equal(swipeOpens({ middle: null, selected: 'a', byUser: true }), null);
 });
 
-test('a pin with no frame, or a tap with the row away, opens the site', () => {
-  assert.equal(pinTap({ ...low, inRow: false, id: 'a' }), 'open');
-  assert.equal(pinTap({ ...low, sheet: 'mid', id: 'a' }), 'open');
-  assert.equal(pinTap({ ...low, siteOpen: true, id: 'a' }), 'open');
+test('a scroll that the row made itself opens nothing', () => {
+  assert.equal(swipeOpens({ middle: 'b', selected: 'a', byUser: false }), null);
 });
 
-test('the row shows on a phone at the low height, with no site open', () => {
-  const base = { phone: true, sheet: 'low' as const, siteOpen: false };
-  assert.equal(rowShown(base), true);
-  assert.equal(rowShown({ ...base, phone: false }), false);
-  assert.equal(rowShown({ ...base, sheet: 'mid' }), false);
-  assert.equal(rowShown({ ...base, siteOpen: true }), false);
+test('the row shows on a phone at the low height, with a site open or not', () => {
+  assert.equal(rowShown({ phone: true, sheet: 'low' }), true);
+  assert.equal(rowShown({ phone: false, sheet: 'low' }), false);
+  assert.equal(rowShown({ phone: true, sheet: 'mid' }), false);
+  assert.equal(rowShown({ phone: true, sheet: 'full' }), false);
 });
 
 // A 375 × 560 map: the floating row takes the top 50 px, the picture row the

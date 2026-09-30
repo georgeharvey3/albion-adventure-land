@@ -432,9 +432,8 @@ owner chose this design from a prototype (variant C, the branch
 - The peek is one row: a thumbnail, the name, the type and distance,
   and ×. It shows no number except the distance. Directions is in the
   actions of the body, as on the card.
-- A site opens at the height that the sheet is at. At the low height the
-  first pin tap lifts the pin in the picture row (issue #111), and a second
-  tap opens the peek. A pin tap from the middle height keeps the middle
+- A site opens at the height that the sheet is at. A pin tap from the low
+  height opens the peek, under the picture row (issue #111). A pin tap from the middle height keeps the middle
   height, where the hero picture shows under the peek. The full height shows
   the whole page. A tap on the name raises the sheet one height, as the
   handle does.
@@ -465,24 +464,28 @@ layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
 - One wide frame sits in the middle, and its neighbours show at the edges.
   The frame in the middle lifts its pin (`by: 'strip'`). The lift follows the
   swipe, not only the frame where the swipe stops.
+- The row shows at every low height, over the peek too. While a site is
+  open, the middle frame is the open site. A swipe that comes to rest opens
+  the middle frame's site, as Prev and Next do in the desktop spread. A pin
+  tap opens the site, and the row brings its frame to the middle. So one site
+  is current on the screen, never two.
+- While a site is open on a phone, the map holds the view, as the desktop
+  does for the spread. The pan to each site then does not re-sort the row. A
+  drag, a zoom or a search move by the user ends the hold.
 - A tap on a frame opens the site at the middle height, where its hero
-  picture shows. × brings the list back at the low height, with the row. At
-  the low height, a tap on a
-  pin lifts it and brings its frame to the middle. A second tap on the lifted
-  pin opens the site. The rules are pure and live in
-  `src/state/phoneStrip.ts`.
-- A lift from the row pans the map only when the pin is out of sight: under
-  the floating row, under the picture row, or off the map on a journey. The
-  pan waits until the lift rests, so a fast swipe pans once. It holds the
-  view, so the row does not re-sort under the finger. A drag or a zoom by the
-  user ends the hold.
+  picture shows. × brings the list back at the low height, with the row.
+- With no site open, a lift from the row pans the map only when the pin is
+  out of sight: under the floating row, under the picture row, or off the map
+  on a journey. The pan waits until the lift rests, so a fast swipe pans once,
+  and it holds the view too.
+- The rules are pure and live in `src/state/phoneStrip.ts`.
 - The row is the bottom covered inset while it shows, so the view box and the
   pans keep clear of it. The rose, the scale and the credits stand on top of it.
-- The row hides while a site is open, and at the middle and full heights. A
-  hidden row lifts nothing. It stays through a drag, under the rising sheet,
-  so the covered inset changes only when the sheet rests.
-- A new view lifts the first frame, so the nearest pin is marked before any
-  swipe.
+- The row hides at the middle and full heights. A hidden row lifts nothing.
+  It stays through a drag, under the rising sheet, so the covered inset
+  changes only when the sheet rests.
+- With no site open, a new view lifts the first frame, so the nearest pin is
+  marked before any swipe. At national zoom the row is empty, as the strip is.
 - The row is outside the Leaflet container, so a swipe on it never pans the
   map, and a map pan never moves the row.
 

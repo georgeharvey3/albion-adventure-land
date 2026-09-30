@@ -1,13 +1,14 @@
 // The phone's picture row (issue #111). At the low height of the sheet, one
 // row of frames floats over the bottom of the map, one wide frame in the
 // middle and its neighbours at the edges. The frame in the middle lifts its
-// pin, and the lift follows the swipe. The owner chose this layout from a
-// prototype (variant A, the branch `prototype/111-phone-strip`).
+// pin, and the lift follows the swipe. While a site is open, the middle frame
+// is the open site. The owner chose this layout from a prototype (variant A,
+// the branch `prototype/111-phone-strip`).
 //
 // What the row holds, and in what order, is the desktop strip's rule
 // (src/state/strip.ts). The rules here are only the phone's: which frame is
-// in the middle, what a pin tap does, and when the map must pan. They are
-// pure, so the tests load them without a DOM. This module imports nothing.
+// in the middle, when a swipe opens a site, and when the map must pan. They
+// are pure, so the tests load them without a DOM.
 
 import type { SheetHeight } from './sheet';
 
@@ -35,27 +36,26 @@ export function middleFrame(
   return best;
 }
 
-/** Whether the row shows: on a phone, at the low height, with no site open.
- *  An open site's peek takes the low height, and the list covers the map at
- *  the other heights. The row stays through a drag, under the rising sheet,
- *  so the covered inset changes only when the sheet rests. */
-export function rowShown(s: { phone: boolean; sheet: SheetHeight; siteOpen: boolean }): boolean {
-  return s.phone && s.sheet === 'low' && !s.siteOpen;
+/** Whether the row shows: on a phone, at the low height. An open site's
+ *  peek is the low height too, and the row shows over it. The list covers the
+ *  map at the other heights. The row stays through a drag, under the rising
+ *  sheet, so the covered inset changes only when the sheet rests. */
+export function rowShown(s: { phone: boolean; sheet: SheetHeight }): boolean {
+  return s.phone && s.sheet === 'low';
 }
 
-/** A pin tap while the row shows. The first tap lifts the pin and brings its
- *  frame to the middle. A tap on the lifted pin opens the site. A pin with no
- *  frame, or a tap while the row is away, opens the site as before. */
-export function pinTap(s: {
-  sheet: SheetHeight;
-  siteOpen: boolean;
-  /** Whether the row has a frame for this pin. */
-  inRow: boolean;
-  lifted: string | null;
-  id: string;
-}): 'lift' | 'open' {
-  if (s.sheet !== 'low' || s.siteOpen || !s.inRow) return 'open';
-  return s.lifted === s.id ? 'open' : 'lift';
+/** The site that a swipe opens when it comes to rest. While a site is open,
+ *  the middle frame is the open site, so a swipe steps to the next one, as
+ *  Prev and Next do in the desktop spread. With no site open, a swipe only
+ *  lifts. A scroll that the row made itself (to bring a frame to the middle)
+ *  opens nothing. */
+export function swipeOpens(s: {
+  middle: string | null;
+  selected: string | null;
+  byUser: boolean;
+}): string | null {
+  if (!s.byUser || !s.selected || !s.middle || s.middle === s.selected) return null;
+  return s.middle;
 }
 
 /** Whether a pin at `at` (map container px) shows between the floating row at

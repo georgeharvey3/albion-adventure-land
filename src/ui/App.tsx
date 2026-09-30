@@ -145,7 +145,7 @@ export function App() {
   // At the low height the phone's picture row (issue #111) is the band at the
   // bottom of the map, so the view box, a fitted journey and a pin brought
   // into view keep clear of it.
-  const stripShown = rowShown({ phone, sheet, siteOpen: !!openSite });
+  const stripShown = rowShown({ phone, sheet });
   const [stripPx, setStripPx] = useState(0);
   const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) + stripPx : 0;
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { categoryColorsOf, SITE_TYPE_COLORS, type SiteCategory } from '../data/types';
@@ -20,8 +20,7 @@ import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
 import { useSidePanel } from '../ui/useWideScreen';
-import { useStrip } from '../ui/Strip';
-import { PIN_MARGIN, pinInSight, pinTap } from '../state/phoneStrip';
+import { PIN_MARGIN, pinInSight } from '../state/phoneStrip';
 
 /** How long, in ms, a lift from the phone's picture row must rest before the
  *  map pans to it. */
@@ -210,27 +209,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // through a ref.
   const sidePanel = useSidePanel();
   const pickPin = useRef((_id: string) => {});
-  // At the low height the phone's picture row takes the first tap (issue
-  // #111): the pin lifts and its frame comes to the middle of the row. A tap
-  // on the lifted pin opens the site.
-  const strip = useStrip();
-  const rowIds = useMemo(
-    () => new Set(strip.kind === 'sites' ? strip.views.map((v) => v.site.id) : []),
-    [strip],
-  );
-  pickPin.current = (id: string) => {
-    const { sheet, lifted: lift } = useStore.getState();
-    const phone = !desktop && !sidePanel;
-    const tap = pinTap({
-      sheet,
-      siteOpen: !!selectedSiteId,
-      inRow: phone && rowIds.has(id),
-      lifted: lift?.id ?? null,
-      id,
-    });
-    if (tap === 'lift') setLifted({ id, by: 'strip' });
-    else setSelected(id);
-  };
+  pickPin.current = (id: string) => setSelected(id);
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);
@@ -631,20 +610,23 @@ export function MapView({ desktop }: { desktop: boolean }) {
 
   // Hold the strip's view from the moment a site opens in the spread, before
   // the spread's inset or its pan can report a new one. Declared before the
-  // inset effect below, so it runs first.
+  // inset effect below, so it runs first. On a phone the picture row (issue
+  // #111) holds its view the same way while a site is open, so a swipe that
+  // steps to the next site does not re-sort the row.
   useEffect(() => {
-    const open = desktop && !!selectedSiteId;
+    // The side panel (760 px to 1023 px) has no strip and no row.
+    const open = (desktop || !sidePanel) && !!selectedSiteId;
     const wasHeld = holdViewRef.current;
     holdViewRef.current = open;
     if (wasHeld && !open) reportViewRef.current?.();
-  }, [desktop, selectedSiteId]);
+  }, [desktop, sidePanel, selectedSiteId]);
 
   // The chrome moved, so the fence and the part of the map that shows moved
   // with it. Setting the fence pans the map back inside it if needed.
-  // On a phone nothing holds the view across that: the picture row's pan hold
-  // ends when the row hides or a sheet covers the map.
+  // On a phone with no site open, nothing holds the view across that: the
+  // picture row's pan hold ends when the row hides or a sheet covers the map.
   useEffect(() => {
-    if (!desktop) holdViewRef.current = false;
+    if (!desktop && !useStore.getState().selectedSiteId) holdViewRef.current = false;
     refenceRef.current?.();
     reportViewRef.current?.();
   }, [coveredInsets, desktop]);
@@ -778,7 +760,9 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // the user ends the hold.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || desktop || lifted?.by !== 'strip') return;
+    // With a site open, the row's lift is the open site, and the site's own
+    // pan below brings it into view.
+    if (!map || desktop || lifted?.by !== 'strip' || selectedSiteId) return;
     const site = useStore.getState().sites.find((x) => x.id === lifted.id);
     if (!site) return;
     const pan = () => {
