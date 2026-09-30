@@ -37,7 +37,7 @@ import {
 import { matchesFilter, tagsByParent } from "./filter";
 import { mergeBackup, parseBackup, serializeBackup, type RestoreCounts } from "./backup";
 import { loadViewState, saveViewState } from "./viewState";
-import type { SearchResult, SearchTarget } from "../search/types";
+import type { JourneyEnd, SearchResult, SearchTarget } from "../search/types";
 import { NO_INSETS, sameInsets, type CoveredInsets } from "../map/insets";
 import type { Viewport } from "./strip";
 import { copy } from "../copy";
@@ -184,11 +184,12 @@ interface AppState {
   // (a store flag for one, a ref inside MapView for the other) each had to
   // remember to disarm the other. `picking` can only name one end at a time,
   // so a tap can only ever mean one thing.
-  picking: SearchTarget | null;
+  picking: JourneyEnd | null;
 
   // Location search (issue #28). Non-null means the search overlay is open and
   // filling THAT end of the journey — which is why picking a result needs no
-  // "start or destination?" follow-up question.
+  // "start or destination?" follow-up question. 'map' is the phone's
+  // magnifier (issue #109): the pick only moves the map, and fills no end.
   searchTarget: SearchTarget | null;
 
   // A one-shot request for the map to move somewhere, consumed by MapView.
@@ -208,9 +209,9 @@ interface AppState {
   // a key lift shows the peek over the map. A row lift shows no peek: the row
   // already names the site. Ephemeral, like the selection.
   lifted: Lift | null;
-  // A request to put the cursor in the site finder (the `/` key). The finder's
-  // state is the near-me list's own, so the list takes the request when it is
-  // mounted — which may be only after the key has switched the tab to it.
+  // A request to put the cursor in the desktop site finder (the `/` key). The
+  // finder is in the card, which takes the request. On a phone `/` opens the
+  // search overlay on the map instead (issue #109).
   finderWanted: boolean;
   // UI (issue #89): the bands of the map that the desktop chrome covers. The
   // desktop shell measures them; on a phone they are all 0. See map/insets.ts.
@@ -266,7 +267,7 @@ interface AppState {
   // warrant it (issue #29). Fire-and-forget: it never throws, never blocks a
   // render, and a failure simply leaves `route` null.
   syncRoute: () => void;
-  setPicking: (target: SearchTarget | null) => void;
+  setPicking: (target: JourneyEnd | null) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
   applySearchResult: (result: SearchResult) => void;
@@ -1100,6 +1101,27 @@ export const useStore = create<AppState>((set, get) => ({
   applySearchResult: (result) => {
     const { searchTarget } = get();
     if (!searchTarget) return;
+
+    // The phone's magnifier (issue #109) fills no end: it only shows the
+    // answer on the map. A site is revealed before it is selected, as the
+    // site finder does, so a filtered-out site still gets its pin.
+    if (searchTarget === "map") {
+      if (result.siteId) {
+        get().revealSite(result.siteId);
+        get().setSelected(result.siteId);
+      }
+      set({
+        searchTarget: null,
+        browse: false,
+        focus: {
+          lat: result.lat,
+          lng: result.lng,
+          zoom: result.siteId ? 13 : 12,
+          nonce: Date.now(),
+        },
+      });
+      return;
+    }
 
     if (searchTarget === "destination") {
       get().setDestination({

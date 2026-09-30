@@ -55,8 +55,8 @@ fully offline. See spec §4 and §7.
 - Derivable things are derived, never stored as state. The parent category, the
   listing `parentId` and the categories a merged duplicate is findable under all
   follow this rule. **There is no rarity index and no completion statistics.**
-  Both are torn out. Do not add a number to the app that counts sites by type
-  until the product asks for one.
+  Both are torn out. A count of the sites that a filter shows is not a
+  completion statistic, so the filter chips and the layer chips show one.
 - `SiteCategory` (leaf) is a controlled vocabulary mapped at ingest, *not* a raw
   CSV value; the two-level taxonomy (Folklore → leaves; Historic pubs) lives in
   `src/data/types.ts`.
@@ -224,7 +224,8 @@ two visited ticks and two outing slots.
 - A filter chip counts the sites that the chip shows, so a merged place is
   counted under each of its categories. The chips therefore sum to more than the
   number of pins, by the number of merged places. A layer header counts sites,
-  not chips.
+  not chips. `siteLayers` in `src/state/layers.ts` makes the layer counts for
+  the Filters tab and the layer chips.
 
 ## National glow (issue #74)
 
@@ -262,7 +263,7 @@ It says what the app is, and nothing else.
 - `src/ui/LogoMark.tsx` draws the logo inline, so the triskele can turn alone.
   It copies `public/favicon.svg`, which stays the source for the PWA icons.
   Change both together.
-- The card shows no site counts. The no-counts rule holds here too.
+- The card shows no site counts.
 
 ## Painted plate
 
@@ -352,6 +353,35 @@ keeps the floating card.
   this hold (`holdViewRef` in `src/map/MapView.tsx`).
 - The strip stops at the left edge of the spread, so no frame is under it.
 - From 1024 px to 1199 px, a spread closes the drawer.
+
+## Phone finder (issue #109)
+
+On a phone, one row floats at the top of the map (`src/ui/PhoneFinder.tsx`):
+a round magnifier, then the layer chips. The desktop card holds a site finder
+and the same chips. No tab must open to search or to turn a layer on or off.
+
+- The chips get the room, not the search. A user turns layers on and off in
+  the field all the time. A visit starts from "what is near here", so a
+  search by name is rare, and a pill across the map costs too much.
+- One `LayerChips` component (`src/ui/LayerChips.tsx`) serves both shells.
+  On a phone, the chips are one row that scrolls sideways.
+- The magnifier opens `SearchOverlay` with the target `'map'`. It finds
+  places, postcodes, grid references and sites in one box. A pick moves the
+  map, or selects the site and opens its card. It fills no journey end, so
+  the overlay shows no shortcuts in this mode.
+- A search panel opens next to the control that opened it. The map search
+  opens at the top, under the magnifier (`.search-overlay.at-top`). The
+  journey searches open at the bottom, at the journey bar. The top panel
+  stops at the keyboard: `SearchOverlay` writes `--vv-top` and `--vv-h` from
+  the visual viewport.
+- The phone has no name-only site finder. `SiteFinder.tsx` serves the desktop
+  card only. On a phone, `/` opens the overlay, as the magnifier does.
+- The zoom and basemap controls are at the top right, under the row.
+  `PhoneFinder` writes its height to `--float-h` on the map area, and the CSS
+  moves the corner down by that height.
+- The Filters tab stays. It holds the leaf categories and the tags.
+- The title card covers the row on a first visit (`--z-float` is under
+  `--z-title`).
 
 ## UI copy
 

@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useStore } from '../state/store';
+import { layerState, siteLayers } from '../state/layers';
 import {
-  SITE_TYPES,
   SITE_TYPE_COLORS,
   SITE_TYPE_LABELS,
-  PARENT_CATEGORIES,
   PARENT_CATEGORY_LABELS,
   categoriesOf,
   parentOf,
@@ -48,19 +47,14 @@ export function Filters() {
   // A chip's count is what turning that chip on shows, so a cross-source
   // duplicate is counted under every category it is findable as (`categoriesOf`
   // — Old Sarum under Ruins and under Hillforts). The chips therefore sum to
-  // more than the number of pins, by the number of merged places.
+  // more than the number of pins, by the number of merged places. A layer's
+  // count is sites, not the sum of its chips (`siteLayers`).
   const counts = new Map<SiteCategory, number>();
-  // A layer's count is sites, not the sum of its chips: a place found under two
-  // leaves of ONE layer belongs to that layer once.
-  const layerCounts = new Map<ParentCategory, number>();
   const tagCounts = new Map<ParentCategory, Map<string, number>>();
   for (const s of sites) {
-    const parents = new Set<ParentCategory>();
     for (const category of categoriesOf(s)) {
       counts.set(category, (counts.get(category) ?? 0) + 1);
-      parents.add(parentOf(category));
     }
-    for (const p of parents) layerCounts.set(p, (layerCounts.get(p) ?? 0) + 1);
     if (!s.tags?.length) continue;
     const parent = parentOf(s.category);
     let forParent = tagCounts.get(parent);
@@ -69,10 +63,7 @@ export function Filters() {
   }
 
   // Leaves present in the dataset, grouped by parent (dataset order via SITE_TYPES).
-  const layers = PARENT_CATEGORIES.map((parent) => ({
-    parent,
-    leaves: SITE_TYPES.filter((t) => counts.has(t) && parentOf(t) === parent),
-  })).filter((g) => g.leaves.length > 0);
+  const layers = useMemo(() => siteLayers(sites), [sites]);
 
   // Every leaf in the dataset — the target of the all-layer controls.
   const allLeaves = layers.flatMap((g) => g.leaves);
@@ -98,11 +89,11 @@ export function Filters() {
         </button>
       </div>
 
-      {layers.map(({ parent, leaves }) => {
-        const groupCount = layerCounts.get(parent) ?? 0;
+      {layers.map(({ parent, leaves, count: groupCount }) => {
         const activeCount = leaves.filter((t) => activeTypes.has(t)).length;
-        const allOn = activeCount === leaves.length;
-        const noneOn = activeCount === 0;
+        const state = layerState(leaves, activeTypes);
+        const allOn = state === 'on';
+        const noneOn = state === 'off';
         // A single-leaf parent (e.g. Historic pubs) has no finer subcategories.
         const hasSubs = !(leaves.length === 1 && (leaves[0] as string) === parent);
         // Commonest tags first — the long tail is behind "Show all". A layer

@@ -11,6 +11,7 @@ import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
+import { PhoneFinder } from './PhoneFinder';
 import { useWideScreen } from './useWideScreen';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
@@ -30,6 +31,7 @@ export function App() {
   const setBrowse = useStore((s) => s.setBrowse);
   const setSelected = useStore((s) => s.setSelected);
   const requestFinder = useStore((s) => s.requestFinder);
+  const openSearch = useStore((s) => s.openSearch);
   const insets = useStore((s) => s.coveredInsets);
   // The shell (issue #89): the desktop shell from 1024 px, the sheet below.
   // Both share the store, the map and SiteBody: the phone opens a site in
@@ -98,15 +100,13 @@ export function App() {
     KEY_RANK.sheet,
     onEscape(() => (browse ? setBrowse(false) : setCollapsed(true))),
   );
-  // `/` puts the cursor in the site finder. On a phone it lives in the Nearby
-  // tab; on a desktop it is in the card.
+  // `/` searches. On a desktop it puts the cursor in the site finder in the
+  // card. On a phone it opens the search overlay for the map (issue #109), as
+  // the magnifier does.
   useKeyLayer(true, KEY_RANK.list, ({ key }) => {
     if (key !== '/') return false;
-    if (!desktop) {
-      setTab('near');
-      setCollapsed(false);
-    }
-    requestFinder();
+    if (desktop) requestFinder();
+    else openSearch('map');
     return true;
   });
 
@@ -129,6 +129,8 @@ export function App() {
           the size back up. */}
       <div className={browse && !desktop ? 'map-area hidden' : 'map-area'}>
         <MapView desktop={desktop} />
+        {/* On a desktop the finder and the chips are in the card. */}
+        {!desktop && <PhoneFinder />}
         {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
         {selectedSiteId && !desktop && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}

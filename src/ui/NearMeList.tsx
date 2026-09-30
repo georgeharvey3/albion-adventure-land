@@ -12,14 +12,7 @@ import { formatDistance } from "../geo/haversine";
 import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
 import { CheckIcon, ListIcon, MapIcon, MapPinIcon, StarIcon } from "./icons";
-import {
-  SiteFinderField,
-  SiteFinderResults,
-  SiteFinderToggle,
-  useFinderResults,
-  useSiteFinder,
-} from "./SiteFinder";
-import { KEY_RANK, onEscape, stepCursor } from "../state/keys";
+import { KEY_RANK, stepCursor } from "../state/keys";
 import { useKeyLayer } from "./useKeyLayer";
 import { copy } from "../copy";
 
@@ -89,17 +82,9 @@ export function NearMeList() {
   const setSelected = useStore((s) => s.setSelected);
   const browse = useStore((s) => s.browse);
   const setBrowse = useStore((s) => s.setBrowse);
-  const revealSite = useStore((s) => s.revealSite);
   const lifted = useStore((s) => s.lifted);
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
-  const finderWanted = useStore((s) => s.finderWanted);
-  const takeFinderRequest = useStore((s) => s.takeFinderRequest);
-
-  // Finding a site by name is a way of reading THIS list, like browse mode, so
-  // it lives in the list's header rather than in the app chrome.
-  const finder = useSiteFinder();
-  const finderResults = useFinderResults(finder.query);
 
   const routeMode = !!position && !!destination;
   const expandedRef = useRef<HTMLLIElement | null>(null);
@@ -129,28 +114,6 @@ export function NearMeList() {
     },
     [views, selectedSiteId, setSelected],
   );
-
-  /** Take a site from the finder. The finder closes and forgets its query —
-   *  after a pick the answer is what you want to look at, not the search that
-   *  found it — and the reader is MOVED to the row, so the same pending-scroll
-   *  path as the prev/next bar applies.
-   *
-   *  `revealSite` first: a site the filters exclude has no row and no pin, so
-   *  selecting it before revealing it would scroll to something that isn't
-   *  there. */
-  const pickFound = (site: Site) => {
-    revealSite(site.id);
-    pendingScroll.current = true;
-    setSelected(site.id);
-    // On the map the card opens over wherever the map happens to be, so the map
-    // is sent to the site as well. In browse there is no map to move.
-    if (!browse) {
-      useStore.setState({
-        focus: { lat: site.lat, lng: site.lng, zoom: 13, nonce: Date.now() },
-      });
-    }
-    finder.close();
-  };
 
   // Bring the open site to the top of the list. When the reader was moved to it
   // — entering browse mode on a site picked from the map, or stepping to a
@@ -210,7 +173,7 @@ export function NearMeList() {
   // on. In browse mode with a site open, `j`, `k` and the arrow keys do what
   // the prev/next bar does with a tap. The picture viewer is a modal key
   // layer, so none of this happens under it.
-  useKeyLayer(!finder.filtering, KEY_RANK.list, ({ key }) => {
+  useKeyLayer(true, KEY_RANK.list, ({ key }) => {
     const step = key === "j" || key === "ArrowRight" ? 1 : key === "k" || key === "ArrowLeft" ? -1 : 0;
     if (browse && selectedSiteId && step) {
       goToNeighbour(step);
@@ -242,17 +205,6 @@ export function NearMeList() {
     }
     return false;
   });
-
-  useKeyLayer(finder.open, KEY_RANK.search, onEscape(finder.close));
-
-  // The `/` key asked for the finder. It may have switched the tab to this list
-  // first, so the request waits in the store until the list is here to take it.
-  useEffect(() => {
-    if (!finderWanted) return;
-    takeFinderRequest();
-    finder.show();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finderWanted, takeFinderRequest]);
 
   // Keep the cursor row on screen. Only a key moves the view: a row lifted by
   // the mouse is already under it, and a pin lift must not scroll the list away
@@ -313,24 +265,8 @@ export function NearMeList() {
           {browse ? <MapIcon /> : <ListIcon />}{" "}
           {browse ? copy.near.map : copy.near.browse}
         </button>
-        <SiteFinderToggle open={finder.open} onToggle={finder.toggle} />
       </div>
-      {finder.open && (
-        <SiteFinderField
-          query={finder.query}
-          onQuery={finder.setQuery}
-          onClose={finder.close}
-          onPickFirst={() => {
-            const first = finderResults[0];
-            if (first) pickFound(first.site);
-          }}
-          focusRequest={finder.focusRequest}
-        />
-      )}
-      {finder.filtering && (
-        <SiteFinderResults results={finderResults} onPick={pickFound} />
-      )}
-      {routeMode && !finder.filtering && (
+      {routeMode && (
         <div className="route-head">
           <p className="hint">
             {copy.near.onTheWay(views.length, destination.label)}
@@ -354,167 +290,165 @@ export function NearMeList() {
           </div>
         </div>
       )}
-      {routeMode && !finder.filtering && views.length === 0 && (
+      {routeMode && views.length === 0 && (
         <p className="hint">{copy.near.noneInBudget}</p>
       )}
-      {!finder.filtering && (
-        <ul ref={listRef}>
-          {views.slice(0, limit).map((view, i) => {
-            const { site, distance, detour, progress, visited, wishlisted } =
-              view;
-            const selected = site.id === selectedSiteId;
-            const expanded = browse && selected;
-            const liftedRow = lifted?.id === site.id;
-            const trailing =
-              detour !== null && progress !== null ? (
-                <span className="row-dist row-route">
-                  <span className="row-detour">{formatDetour(detour)}</span>
-                  <span className="row-progress">
-                    {formatProgress(progress)}
-                  </span>
+      <ul ref={listRef}>
+        {views.slice(0, limit).map((view, i) => {
+          const { site, distance, detour, progress, visited, wishlisted } =
+            view;
+          const selected = site.id === selectedSiteId;
+          const expanded = browse && selected;
+          const liftedRow = lifted?.id === site.id;
+          const trailing =
+            detour !== null && progress !== null ? (
+              <span className="row-dist row-route">
+                <span className="row-detour">{formatDetour(detour)}</span>
+                <span className="row-progress">
+                  {formatProgress(progress)}
                 </span>
-              ) : (
-                <span className="row-dist">
-                  {distance !== null ? formatDistance(distance) : "—"}
-                </span>
-              );
+              </span>
+            ) : (
+              <span className="row-dist">
+                {distance !== null ? formatDistance(distance) : "—"}
+              </span>
+            );
 
-            // Map mode: the row is the whole control and selection opens the
-            // floating card, exactly as it always has.
-            if (!browse) {
-              return (
-                <li
-                  key={site.id}
-                  data-site-id={site.id}
-                  className={`row ${selected ? "selected" : ""} ${visited ? "is-visited" : ""} ${liftedRow ? "lifted" : ""}`}
-                  onClick={() => setSelected(site.id)}
-                  {...hoverProps(site.id)}
-                >
-                  <span
-                    className="dot"
-                    style={{ background: siteSwatch(site) }}
-                    title={hybridTitle(site)}
-                  />
-                  <span className="row-main">
-                    <span className="row-name">
-                      {visited && <CheckIcon />}
-                      {wishlisted && !visited && <StarIcon filled />}
-                      {(visited || wishlisted) && " "}
-                      {site.name}
-                    </span>
-                    <span className="row-sub">
-                      {SITE_TYPE_LABELS[site.category]}
-                      {site.county ? ` · ${site.county}` : ""}
-                    </span>
-                  </span>
-                  {trailing}
-                </li>
-              );
-            }
-
-            // Neighbours come from the full list, not the rendered page, so the
-            // last row on screen still steps forward (raising the limit as it
-            // goes) instead of dead-ending at an arbitrary multiple of 150.
-            const prev = expanded ? views[i - 1] : undefined;
-            const next = expanded ? views[i + 1] : undefined;
-
-            // Browse mode: a real disclosure button, so the write-up opens under
-            // the row and the reader keeps their place in the list.
+          // Map mode: the row is the whole control and selection opens the
+          // floating card, exactly as it always has.
+          if (!browse) {
             return (
               <li
                 key={site.id}
                 data-site-id={site.id}
-                ref={expanded ? expandedRef : undefined}
-                className={`row browse ${expanded ? "expanded" : ""} ${
-                  visited ? "is-visited" : ""
-                } ${liftedRow ? "lifted" : ""}`}
+                className={`row ${selected ? "selected" : ""} ${visited ? "is-visited" : ""} ${liftedRow ? "lifted" : ""}`}
+                onClick={() => setSelected(site.id)}
                 {...hoverProps(site.id)}
               >
-                <button
-                  className="row-head"
-                  onClick={() => {
-                    if (!expanded) {
-                      pendingScroll.current = true;
-                      smoothScroll.current = true;
-                    }
-                    setSelected(expanded ? null : site.id);
-                  }}
-                  aria-expanded={expanded}
-                >
-                  <RowThumb site={site} />
-                  <span className="row-main">
-                    <span className="row-name">
-                      {visited && <CheckIcon />}
-                      {wishlisted && !visited && <StarIcon filled />}
-                      {(visited || wishlisted) && " "}
-                      {site.name}
-                    </span>
-                    <span className="row-sub">
-                      {SITE_TYPE_LABELS[site.category]}
-                      {site.county ? ` · ${site.county}` : ""}
-                    </span>
-                    {!expanded && site.description && (
-                      <span className="row-teaser">{site.description}</span>
-                    )}
+                <span
+                  className="dot"
+                  style={{ background: siteSwatch(site) }}
+                  title={hybridTitle(site)}
+                />
+                <span className="row-main">
+                  <span className="row-name">
+                    {visited && <CheckIcon />}
+                    {wishlisted && !visited && <StarIcon filled />}
+                    {(visited || wishlisted) && " "}
+                    {site.name}
                   </span>
-                  {trailing}
-                </button>
-                {expanded && (
-                  <div className="row-body">
-                    {/* The row header above is already the site's header — name,
-                      type and distance — so the body starts at the write-up. */}
-                    <SiteBody
-                      site={site}
-                      showHeader={false}
-                      collapseDescription={false}
-                      onShowOnMap={() => setBrowse(false)}
-                    />
-                    {/* Naming the neighbours turns the step into a decision
-                      rather than a leap in the dark. The bar is sticky (see
-                      .row-nav): it closes the entry, but on a write-up longer
-                      than the screen it rides the bottom of the viewport, so
-                      the step to the next site never costs a scroll past text
-                      the reader has already given up on. */}
-                    <div className="row-nav">
-                      <button
-                        className="row-nav-btn"
-                        onClick={() => goToNeighbour(-1)}
-                        disabled={!prev}
-                        aria-label={
-                          prev
-                            ? copy.near.previousSite(prev.site.name)
-                            : copy.near.noPrevious
-                        }
-                      >
-                        <span className="row-nav-dir">{copy.near.previous}</span>
-                        {prev && (
-                          <span className="row-nav-name">{prev.site.name}</span>
-                        )}
-                      </button>
-                      <button
-                        className="row-nav-btn next"
-                        onClick={() => goToNeighbour(1)}
-                        disabled={!next}
-                        aria-label={
-                          next
-                            ? copy.near.nextSite(next.site.name)
-                            : copy.near.noNext
-                        }
-                      >
-                        <span className="row-nav-dir">{copy.near.next}</span>
-                        {next && (
-                          <span className="row-nav-name">{next.site.name}</span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  <span className="row-sub">
+                    {SITE_TYPE_LABELS[site.category]}
+                    {site.county ? ` · ${site.county}` : ""}
+                  </span>
+                </span>
+                {trailing}
               </li>
             );
-          })}
-        </ul>
-      )}
-      {!finder.filtering && views.length > limit && (
+          }
+
+          // Neighbours come from the full list, not the rendered page, so the
+          // last row on screen still steps forward (raising the limit as it
+          // goes) instead of dead-ending at an arbitrary multiple of 150.
+          const prev = expanded ? views[i - 1] : undefined;
+          const next = expanded ? views[i + 1] : undefined;
+
+          // Browse mode: a real disclosure button, so the write-up opens under
+          // the row and the reader keeps their place in the list.
+          return (
+            <li
+              key={site.id}
+              data-site-id={site.id}
+              ref={expanded ? expandedRef : undefined}
+              className={`row browse ${expanded ? "expanded" : ""} ${
+                visited ? "is-visited" : ""
+              } ${liftedRow ? "lifted" : ""}`}
+              {...hoverProps(site.id)}
+            >
+              <button
+                className="row-head"
+                onClick={() => {
+                  if (!expanded) {
+                    pendingScroll.current = true;
+                    smoothScroll.current = true;
+                  }
+                  setSelected(expanded ? null : site.id);
+                }}
+                aria-expanded={expanded}
+              >
+                <RowThumb site={site} />
+                <span className="row-main">
+                  <span className="row-name">
+                    {visited && <CheckIcon />}
+                    {wishlisted && !visited && <StarIcon filled />}
+                    {(visited || wishlisted) && " "}
+                    {site.name}
+                  </span>
+                  <span className="row-sub">
+                    {SITE_TYPE_LABELS[site.category]}
+                    {site.county ? ` · ${site.county}` : ""}
+                  </span>
+                  {!expanded && site.description && (
+                    <span className="row-teaser">{site.description}</span>
+                  )}
+                </span>
+                {trailing}
+              </button>
+              {expanded && (
+                <div className="row-body">
+                  {/* The row header above is already the site's header — name,
+                    type and distance — so the body starts at the write-up. */}
+                  <SiteBody
+                    site={site}
+                    showHeader={false}
+                    collapseDescription={false}
+                    onShowOnMap={() => setBrowse(false)}
+                  />
+                  {/* Naming the neighbours turns the step into a decision
+                    rather than a leap in the dark. The bar is sticky (see
+                    .row-nav): it closes the entry, but on a write-up longer
+                    than the screen it rides the bottom of the viewport, so
+                    the step to the next site never costs a scroll past text
+                    the reader has already given up on. */}
+                  <div className="row-nav">
+                    <button
+                      className="row-nav-btn"
+                      onClick={() => goToNeighbour(-1)}
+                      disabled={!prev}
+                      aria-label={
+                        prev
+                          ? copy.near.previousSite(prev.site.name)
+                          : copy.near.noPrevious
+                      }
+                    >
+                      <span className="row-nav-dir">{copy.near.previous}</span>
+                      {prev && (
+                        <span className="row-nav-name">{prev.site.name}</span>
+                      )}
+                    </button>
+                    <button
+                      className="row-nav-btn next"
+                      onClick={() => goToNeighbour(1)}
+                      disabled={!next}
+                      aria-label={
+                        next
+                          ? copy.near.nextSite(next.site.name)
+                          : copy.near.noNext
+                      }
+                    >
+                      <span className="row-nav-dir">{copy.near.next}</span>
+                      {next && (
+                        <span className="row-nav-name">{next.site.name}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {views.length > limit && (
         <p className="hint">
           <button
             className="link"

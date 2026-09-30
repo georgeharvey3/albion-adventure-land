@@ -149,14 +149,16 @@ const MANUAL_ICON = L.divIcon({
   iconAnchor: [13, 35],
 });
 
-// Where the controls sit. On a phone: zoom and basemap at the top left, locate
-// at the bottom right, in thumb reach. In the desktop shell (issue #89) the
-// card has the top left, so all three stack in one column at the top right.
-// A top corner stacks down in the order the controls are placed.
+// Where the controls sit. Zoom and basemap stack at the top right in both
+// shells: the desktop card has the top left, and on a phone the floating
+// finder spans the top, so the CSS moves the corner down under it (issue
+// #109). Locate is at the bottom right on a phone, in thumb reach, and joins
+// the column on a desktop. A top corner stacks down in the order the controls
+// are placed.
 type ControlSet = { zoom: L.Control; basemap: L.Control; locate: L.Control };
 function placeControls({ zoom, basemap, locate }: ControlSet, desktop: boolean) {
-  zoom.setPosition(desktop ? 'topright' : 'topleft');
-  basemap.setPosition(desktop ? 'topright' : 'topleft');
+  zoom.setPosition('topright');
+  basemap.setPosition('topright');
   locate.setPosition(desktop ? 'topright' : 'bottomright');
 }
 
@@ -346,7 +348,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     // and take every Esc from then on.
     let dropMenuKeys: (() => void) | null = null;
     const BasemapCtl = L.Control.extend({
-      options: { position: 'topleft' as L.ControlPosition },
+      options: { position: 'topright' as L.ControlPosition },
       onAdd() {
         const root = L.DomUtil.create('div', 'basemap-ctl');
         const btn = L.DomUtil.create('button', 'drop-pin-btn basemap-btn', root);
@@ -963,6 +965,9 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const latlng = L.latLng(v.site.lat, v.site.lng);
     const container = map.getContainer();
     const card = container.parentElement?.querySelector<HTMLElement>('.card');
+    // The floating finder (issue #109) spans the top of the map, so the free
+    // strip above the card starts under it.
+    const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
 
     const pan = () => {
       const size = map.getSize();
@@ -973,9 +978,10 @@ export function MapView({ desktop }: { desktop: boolean }) {
         const top = c.top - m.top;
         const left = c.left - m.left;
         const right = c.right - m.left;
+        const floatBottom = float ? Math.max(0, Math.min(top, float.getBoundingClientRect().bottom - m.top)) : 0;
         // The free strips above, left of and right of the card; take the biggest.
         const strips = [
-          { area: top * size.x, at: L.point(size.x / 2, top / 2) },
+          { area: (top - floatBottom) * size.x, at: L.point(size.x / 2, (floatBottom + top) / 2) },
           { area: left * size.y, at: L.point(left / 2, size.y / 2) },
           { area: (size.x - right) * size.y, at: L.point((size.x + right) / 2, size.y / 2) },
         ];

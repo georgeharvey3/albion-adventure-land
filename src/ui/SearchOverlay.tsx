@@ -7,14 +7,15 @@ import { parsePostcode } from '../search/postcode';
 import { canonical, matchScore } from '../search/normalize';
 import type { SearchResult } from '../search/types';
 import { formatDistance } from '../geo/haversine';
-import { FlagIcon, LocateFixedIcon, MapIcon, MapPinIcon } from './icons';
+import { FlagIcon, LocateFixedIcon, MapIcon, MapPinIcon, SearchIcon } from './icons';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
 
 // The search overlay (issue #28). Opened from either end of the journey bar,
 // and it fills THAT end — which is why there is no "start or destination?"
-// question after picking a result.
+// question after picking a result. The phone's magnifier (issue #109) opens it
+// for the map alone: a pick moves the map or opens the site, and fills no end.
 //
 // IT IS A PANEL OVER THE APP, NOT A SCREEN. It used to be full-height, and that
 // was wrong: naming a place is one step of a journey you are already looking at,
@@ -142,16 +143,21 @@ export function SearchOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local, online, query, near?.lat, near?.lng]);
 
-  // The panel is pinned to the bottom of the LAYOUT viewport, which the phone
-  // keyboard covers rather than shrinks. Publish how much of the screen the
-  // keyboard is eating so the panel can sit on top of it; 0 when there is no
-  // keyboard, and never set at all where the API is missing.
+  // The panel is pinned to the LAYOUT viewport, which the phone keyboard
+  // covers rather than shrinks. Publish how much of the screen the keyboard is
+  // eating so the bottom panel can sit on top of it; 0 when there is no
+  // keyboard, and never set at all where the API is missing. The top panel
+  // (the map search) needs the other side: where the visible part starts,
+  // when the browser scrolls the page for the keyboard, and how tall it is.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!target || !vv) return;
+    const root = document.documentElement.style;
     const apply = () => {
       const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      document.documentElement.style.setProperty('--kb-inset', `${Math.round(covered)}px`);
+      root.setProperty('--kb-inset', `${Math.round(covered)}px`);
+      root.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+      root.setProperty('--vv-h', `${Math.round(vv.height)}px`);
     };
     apply();
     vv.addEventListener('resize', apply);
@@ -159,7 +165,9 @@ export function SearchOverlay() {
     return () => {
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
-      document.documentElement.style.removeProperty('--kb-inset');
+      root.removeProperty('--kb-inset');
+      root.removeProperty('--vv-top');
+      root.removeProperty('--vv-h');
     };
   }, [target]);
 
@@ -168,6 +176,7 @@ export function SearchOverlay() {
   if (!target) return null;
 
   const isOrigin = target === 'origin';
+  const forMap = target === 'map';
   const grouped = groupByKind(results);
 
   const typed = query.trim().length >= 2;
@@ -190,11 +199,18 @@ export function SearchOverlay() {
     <>
       {/* Tapping past the panel is "never mind" — the same thing the ✕ does. */}
       <div className="search-scrim" onClick={closeSearch} aria-hidden="true" />
-      <div className="search-overlay" role="dialog" aria-modal="true" aria-label={copy.search.dialog}>
+      {/* The map search opens at the top, where its magnifier is. A journey
+          search opens at the bottom, where the journey bar is. */}
+      <div
+        className={forMap ? 'search-overlay at-top' : 'search-overlay'}
+        role="dialog"
+        aria-modal="true"
+        aria-label={copy.search.dialog}
+      >
       <header className="search-head">
         <span className="search-for">
-          {isOrigin ? <MapPinIcon /> : <FlagIcon />}
-          {isOrigin ? copy.search.startFrom : copy.search.travelTo}
+          {forMap ? <SearchIcon /> : isOrigin ? <MapPinIcon /> : <FlagIcon />}
+          {forMap ? copy.search.findOnMap : isOrigin ? copy.search.startFrom : copy.search.travelTo}
         </span>
         <button className="search-close" onClick={closeSearch} aria-label={copy.search.close}>
           ✕
@@ -212,7 +228,13 @@ export function SearchOverlay() {
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-label={isOrigin ? copy.search.originField : copy.search.destinationField}
+          aria-label={
+            forMap
+              ? copy.search.mapField
+              : isOrigin
+                ? copy.search.originField
+                : copy.search.destinationField
+          }
         />
         {query && (
           <button className="search-clear" onClick={() => setQuery('')} aria-label={copy.search.clear}>
@@ -230,29 +252,32 @@ export function SearchOverlay() {
           control, which a user in the search panel has no reason to look for.
           The gesture is the same one either way; only the end it fills
           differs. "Use my location" stays origin-only, because a destination
-          where you already are is not a journey. */}
-      <div className="search-shortcuts">
-        {isOrigin && (
+          where you already are is not a journey. A search for the map alone
+          fills no end, so it has neither. */}
+      {!forMap && (
+        <div className="search-shortcuts">
+          {isOrigin && (
+            <button
+              onClick={() => {
+                useMyLocation();
+                closeSearch();
+              }}
+            >
+              <LocateFixedIcon />
+              {copy.search.useMyLocation}
+            </button>
+          )}
           <button
             onClick={() => {
-              useMyLocation();
+              setPicking(target);
               closeSearch();
             }}
           >
-            <LocateFixedIcon />
-            {copy.search.useMyLocation}
+            <MapIcon />
+            {copy.search.pickOnMap}
           </button>
-        )}
-        <button
-          onClick={() => {
-            setPicking(target);
-            closeSearch();
-          }}
-        >
-          <MapIcon />
-          {copy.search.pickOnMap}
-        </button>
-      </div>
+        </div>
+      )}
 
       <div className="search-results">
 
