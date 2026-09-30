@@ -61,6 +61,29 @@ export function listInPlace(s: {
   return s.height !== 'low' || s.dragging;
 }
 
+// The middle height is for browsing, never for reading: under the head, the
+// list header and the prev/next bar, an open row there shows a strip of its
+// first picture and no text. So how a site was opened picks the height it is
+// read at. A pin tap is a look at the map: the sheet drops, and the floating
+// card opens over the map with the pin still in view. A row tap is a read:
+// the sheet rises, and the row opens in place with the whole screen.
+
+/** Whether a site can stay open at this height. A drag or a tab that brings a
+ *  phone sheet to the middle height closes the open site. */
+export function opensAt(height: SheetHeight, sidePanel: boolean): boolean {
+  return sidePanel || height !== 'mid';
+}
+
+/** The height after a tap on a pin. */
+export function pinSheet(height: SheetHeight, sidePanel: boolean): SheetHeight {
+  return !sidePanel && height === 'mid' ? 'low' : height;
+}
+
+/** The height after a row is opened in the list. */
+export function rowSheet(height: SheetHeight, sidePanel: boolean): SheetHeight {
+  return !sidePanel && height === 'mid' ? 'full' : height;
+}
+
 /** "Show on map" in an open row: the highest height that shows the card. */
 export function showOnMap(sidePanel: boolean): SheetHeight {
   return sidePanel ? 'mid' : 'low';

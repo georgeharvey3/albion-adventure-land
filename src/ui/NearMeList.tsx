@@ -13,7 +13,7 @@ import { formatDetour, formatProgress } from "../geo/corridor";
 import { SiteBody } from "./SiteDetail";
 import { CheckIcon, MapPinIcon, StarIcon } from "./icons";
 import { KEY_RANK, stepCursor } from "../state/keys";
-import { showOnMap } from "../state/sheet";
+import { rowSheet, showOnMap } from "../state/sheet";
 import { useKeyLayer } from "./useKeyLayer";
 import { useSidePanel } from "./useWideScreen";
 import { copy } from "../copy";
@@ -83,6 +83,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   const setRouteSort = useStore((s) => s.setRouteSort);
   const selectedSiteId = useStore((s) => s.selectedSiteId);
   const setSelected = useStore((s) => s.setSelected);
+  const sheet = useStore((s) => s.sheet);
   const setSheet = useStore((s) => s.setSheet);
   const sidePanel = useSidePanel();
   const lifted = useStore((s) => s.lifted);
@@ -101,6 +102,13 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
   // outside the list — a "Part of" or "Nearby in this listing" link inside an
   // open write-up — has moved the selection to another row.
   const lastSelected = useRef(selectedSiteId);
+
+  /** Open a site from the list. A row opened at the middle height raises the
+   *  sheet to full, so the write-up has the room to be read (state/sheet.ts). */
+  const openRow = (id: string) => {
+    setSheet(rowSheet(sheet, sidePanel));
+    setSelected(id);
+  };
 
   /** Step to the site before or after the open one, in whatever order the list
    *  is currently in (distance, or travel order on a corridor). Stops at both
@@ -210,7 +218,7 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
         pendingScroll.current = true;
         smoothScroll.current = true;
       }
-      setSelected(lifted.id);
+      openRow(lifted.id);
       return true;
     }
     return false;
@@ -364,11 +372,13 @@ export function NearMeList({ inPlace }: { inPlace: boolean }) {
               <button
                 className="row-head"
                 onClick={() => {
-                  if (!expanded) {
-                    pendingScroll.current = true;
-                    smoothScroll.current = true;
+                  if (expanded) {
+                    setSelected(null);
+                    return;
                   }
-                  setSelected(expanded ? null : site.id);
+                  pendingScroll.current = true;
+                  smoothScroll.current = true;
+                  openRow(site.id);
                 }}
                 aria-expanded={expanded}
               >

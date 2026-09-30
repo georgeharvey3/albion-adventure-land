@@ -409,6 +409,12 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   brought into view then stays clear of the sheet.
 - While the list is over the map, a row opens in place and the floating card
   does not show. "Show on map" lowers the sheet, and the card shows.
+- The middle height is for browsing, never for reading. Under the head, the
+  list header and the Previous/Next bar, an open row there shows a strip of
+  its first picture and no text. So the tap picks the height. A pin tap drops
+  the sheet to low and opens the card over the map (`pinSheet`). A row tap
+  raises the sheet to full and opens the row in place (`rowSheet`). A sheet
+  that settles at the middle height closes the open site (`opensAt`).
 - A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
   lowers it one height per press.
 - A session opens at the middle height, so the nearest sites show at once.

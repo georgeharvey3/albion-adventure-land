@@ -19,6 +19,7 @@ import { KEY_RANK, onEscape } from '../state/keys';
 import {
   coveredBottom,
   listInPlace,
+  opensAt,
   sameStops,
   sheetStops,
   stepSheet,
@@ -105,6 +106,14 @@ export function App() {
   const dragging = dragPx !== null;
   const sheetPx = dragPx ?? stops?.[sheet] ?? null;
   const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
+
+  // The middle height is for browsing, never for reading (state/sheet.ts): a
+  // row open there is a strip of picture and no text. So a sheet that settles
+  // there closes the open site. A pin tap and a row tap move the sheet off the
+  // middle height before they select, so they never land here.
+  useEffect(() => {
+    if (!desktop && selectedSiteId && !opensAt(sheet, sidePanel)) setSelected(null);
+  }, [desktop, sheet, sidePanel, selectedSiteId, setSelected]);
 
   // The middle sheet covers the lower half of the map, so a fitted journey or
   // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
