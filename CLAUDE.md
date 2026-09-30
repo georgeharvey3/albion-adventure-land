@@ -369,6 +369,11 @@ and the same chips. No tab must open to search or to turn a layer on or off.
   places, postcodes, grid references and sites in one box. A pick moves the
   map, or selects the site and opens its card. It fills no journey end, so
   the overlay shows no shortcuts in this mode.
+- A search panel opens next to the control that opened it. The map search
+  opens at the top, under the magnifier (`.search-overlay.at-top`). The
+  journey searches open at the bottom, at the journey bar. The top panel
+  stops at the keyboard: `SearchOverlay` writes `--vv-top` and `--vv-h` from
+  the visual viewport.
 - The phone has no name-only site finder. `SiteFinder.tsx` serves the desktop
   card only. On a phone, `/` opens the overlay, as the magnifier does.
 - The zoom and basemap controls are at the top right, under the row.

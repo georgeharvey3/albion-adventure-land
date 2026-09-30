@@ -2793,6 +2793,31 @@ body,
   }
 }
 
+/* The map search (issue #109) opens at the top, where its magnifier is. The
+   keyboard then fills the bottom, and the results sit between the two. The
+   top follows the visible part of the page, which a phone scrolls when the
+   keyboard opens, and the height stops at the keyboard. SearchOverlay writes
+   both from the visual viewport. */
+.search-overlay.at-top {
+  top: calc(var(--vv-top, 0px) + env(safe-area-inset-top));
+  bottom: auto;
+  max-height: min(calc(var(--vv-h, 100svh) - env(safe-area-inset-top) - var(--space-md)), 32rem);
+  border-top: 0;
+  border-bottom: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding-bottom: 0;
+}
+@media (min-width: 760px) {
+  /* The side panel has the right; the magnifier is on the left of the map. */
+  .search-overlay.at-top {
+    left: 0;
+    right: auto;
+    width: 380px;
+    border-right: var(--rule-hairline) solid var(--color-rule-strong);
+    border-radius: 0 0 var(--radius-md) 0;
+  }
+}
+
 /* --- Backup (Saved tab foot) -----------------------------------------------
    Set off from the two lists above it by a rule and a wider gap: this is
    housekeeping, not part of the collection. */

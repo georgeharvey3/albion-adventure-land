@@ -143,16 +143,21 @@ export function SearchOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [local, online, query, near?.lat, near?.lng]);
 
-  // The panel is pinned to the bottom of the LAYOUT viewport, which the phone
-  // keyboard covers rather than shrinks. Publish how much of the screen the
-  // keyboard is eating so the panel can sit on top of it; 0 when there is no
-  // keyboard, and never set at all where the API is missing.
+  // The panel is pinned to the LAYOUT viewport, which the phone keyboard
+  // covers rather than shrinks. Publish how much of the screen the keyboard is
+  // eating so the bottom panel can sit on top of it; 0 when there is no
+  // keyboard, and never set at all where the API is missing. The top panel
+  // (the map search) needs the other side: where the visible part starts,
+  // when the browser scrolls the page for the keyboard, and how tall it is.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!target || !vv) return;
+    const root = document.documentElement.style;
     const apply = () => {
       const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      document.documentElement.style.setProperty('--kb-inset', `${Math.round(covered)}px`);
+      root.setProperty('--kb-inset', `${Math.round(covered)}px`);
+      root.setProperty('--vv-top', `${Math.round(vv.offsetTop)}px`);
+      root.setProperty('--vv-h', `${Math.round(vv.height)}px`);
     };
     apply();
     vv.addEventListener('resize', apply);
@@ -160,7 +165,9 @@ export function SearchOverlay() {
     return () => {
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
-      document.documentElement.style.removeProperty('--kb-inset');
+      root.removeProperty('--kb-inset');
+      root.removeProperty('--vv-top');
+      root.removeProperty('--vv-h');
     };
   }, [target]);
 
@@ -192,7 +199,14 @@ export function SearchOverlay() {
     <>
       {/* Tapping past the panel is "never mind" — the same thing the ✕ does. */}
       <div className="search-scrim" onClick={closeSearch} aria-hidden="true" />
-      <div className="search-overlay" role="dialog" aria-modal="true" aria-label={copy.search.dialog}>
+      {/* The map search opens at the top, where its magnifier is. A journey
+          search opens at the bottom, where the journey bar is. */}
+      <div
+        className={forMap ? 'search-overlay at-top' : 'search-overlay'}
+        role="dialog"
+        aria-modal="true"
+        aria-label={copy.search.dialog}
+      >
       <header className="search-head">
         <span className="search-for">
           {forMap ? <SearchIcon /> : isOrigin ? <MapPinIcon /> : <FlagIcon />}
