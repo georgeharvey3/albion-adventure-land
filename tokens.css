@@ -17,6 +17,8 @@
   --color-paper: oklch(97% 0.006 160); /* base surface            */
   --color-paper-2: oklch(99.2% 0.004 160); /* raised: card, journey bar */
   --color-paper-3: oklch(94% 0.009 160); /* recessed bands, blank swatch */
+  --color-page: oklch(98.4% 0.012 85); /* the spread: a warm page   */
+  --color-page-edge: oklch(92% 0.018 80); /* the spread's cut edge     */
 
   --color-rule: oklch(87% 0.011 160); /* hairline dividers       */
   --color-rule-strong: oklch(79% 0.014 160); /* control outlines at rest */
@@ -109,6 +111,7 @@
   --text-lg: 1.2rem; /* 19.2px — layer names, card title    */
   --text-xl: 1.44rem; /* 23px   — reserved                   */
   --text-2xl: 1.728rem; /* 27.6px — the Saved figure           */
+  --text-3xl: 2.488rem; /* 39.8px — the spread's site name     */
 
   --leading-display: 1.15;
   --leading-ui: 1.3;

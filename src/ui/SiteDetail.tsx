@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import {
   PARENT_CATEGORY_LABELS,
   SITE_TYPE_COLORS,
   SITE_TYPE_LABELS,
+  SITE_TYPE_SINGULAR,
   hybridTitle,
   parentOf,
   siteSwatch,
@@ -17,6 +18,7 @@ import { Lightbox } from './Lightbox';
 import { BanIcon, CheckIcon, ClockIcon, FlagIcon, StarIcon } from './icons';
 import { OpeningTimes } from './OpeningTimes';
 import { PubGradeMark } from './PubGradeMark';
+import { SITE_BODY_LAYOUT, type SiteBodyPart } from './siteBodyLayout';
 import { copy } from '../copy';
 
 // Selected-site card (map pin / list tap). MVP shows metadata, visited/wishlist
@@ -129,6 +131,48 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
   );
 }
 
+/** The spread's lead: the first picture, the width of the page. A picture too
+ *  small to fill it sits whole on a dark ground rather than blown up. With no
+ *  picture, or one that fails to load, a wash in the site's colour names the
+ *  kind of site, as in the strip. A click opens the viewer on every picture. */
+function LeadPicture({ site }: { site: Site }) {
+  const [broken, setBroken] = useState(false);
+  const [opened, setOpened] = useState(false);
+  useEffect(() => setBroken(false), [site.id]);
+  const images = site.images ?? [];
+  const image = images[0];
+  if (!image || broken) {
+    return (
+      <div
+        className="spread-lead painted"
+        style={{ '--tint': SITE_TYPE_COLORS[site.category] } as React.CSSProperties}
+      >
+        <i>{SITE_TYPE_SINGULAR[site.category]}</i>
+      </div>
+    );
+  }
+  const small = !!image.width && image.width < 600;
+  return (
+    <div className="spread-lead">
+      <button
+        className="shot-open"
+        onClick={() => setOpened(true)}
+        aria-label={image.caption ? copy.site.enlarge(image.caption) : copy.site.enlargePicture}
+      >
+        <img
+          key={image.url}
+          className={small ? 'small' : undefined}
+          src={`${import.meta.env.BASE_URL}${image.url}`}
+          alt={image.caption ?? ''}
+          decoding="async"
+          onError={() => setBroken(true)}
+        />
+      </button>
+      {opened && <Lightbox images={images} startIndex={0} onClose={() => setOpened(false)} />}
+    </div>
+  );
+}
+
 interface SiteBodyProps {
   site: Site;
   /** Browse mode only: hands the reader back to the map at this site. Omitted by
@@ -143,6 +187,9 @@ interface SiteBodyProps {
    *  protect and opening the row was already the request to read, so it
    *  starts expanded. */
   collapseDescription?: boolean;
+  /** The desktop spread (issue #90) lifts the first picture out as the lead,
+   *  and lays the parts out in two columns. See siteBodyLayout.ts. */
+  variant?: 'card' | 'spread';
 }
 
 /** Everything there is to say about one site: pictures, write-up, listing links
@@ -153,6 +200,7 @@ export function SiteBody({
   onShowOnMap,
   showHeader = true,
   collapseDescription = true,
+  variant = 'card',
 }: SiteBodyProps) {
   const sites = useStore((s) => s.sites);
   const position = useStore((s) => s.position);
@@ -191,6 +239,9 @@ export function SiteBody({
   }, [site.id, writeUp, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
+  // The spread shows the first picture as its lead, so its gallery is the rest.
+  const images = site.images ?? [];
+  const gallery = variant === 'spread' ? images.slice(1) : images;
 
   // Listing links (derived data). A sub-feature points back to its listing's main
   // write-up; a main point lists the features grouped under it.
@@ -203,101 +254,108 @@ export function SiteBody({
     setSelected(id);
   };
 
-  return (
-    <>
-      {showHeader && (
-        <>
-          <div className="card-type">
-            <span
-              className="dot"
-              style={{ background: siteSwatch(site) }}
-              title={hybridTitle(site)}
-            />
-            {SITE_TYPE_LABELS[site.category]}
-            {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+  const parts: Record<SiteBodyPart, ReactNode> = {
+    header: showHeader && (
+      <>
+        <div className="card-type">
+          <span
+            className="dot"
+            style={{ background: siteSwatch(site) }}
+            title={hybridTitle(site)}
+          />
+          {SITE_TYPE_LABELS[site.category]}
+          {distance !== null ? copy.site.away(formatDistance(distance)) : ''}
+        </div>
+        <h2 className="card-title">{site.name}</h2>
+      </>
+    ),
+    // Outside the header on purpose: the grade is a fact about the pub, not a
+    // repeat of the type/distance line, so a browse row — which draws its own
+    // header and turns this one off — still shows it.
+    grade: <PubGradeMark site={site} />,
+    badges: (
+      <>
+        {visited && (
+          <div className="badge visited">
+            <CheckIcon /> {copy.site.visitedOn(visited.visitedAt.slice(0, 10))}
           </div>
-          <h2 className="card-title">{site.name}</h2>
-        </>
-      )}
-      {/* Outside the header block on purpose: the grade is a fact about the pub,
-          not a repeat of the type/distance line, so a browse row — which draws
-          its own header and turns this one off — still shows it. */}
-      <PubGradeMark site={site} />
-      {visited && (
-        <div className="badge visited">
-          <CheckIcon /> {copy.site.visitedOn(visited.visitedAt.slice(0, 10))}
-        </div>
-      )}
-      {wishlisted && !visited && (
-        <div className="badge wish">
-          <StarIcon filled /> {copy.site.wishlist}
-        </div>
-      )}
-      {hidden && (
-        <div className="badge">
-          <BanIcon /> {copy.site.hidden}
-        </div>
-      )}
-      {parent && (
-        <p className="card-listing">
-          {copy.site.partOf}{' '}
-          <button className="link" onClick={() => openRelated(parent.id)}>
-            {parent.listingTitle ?? parent.name}
-          </button>
-        </p>
-      )}
-      {site.walkTime && (
-        <p className="card-meta">
-          <ClockIcon /> {copy.site.walkIn(site.walkTime)}
-        </p>
-      )}
-      {site.access && <p className="card-meta">{copy.site.access(site.access)}</p>}
-      <OpeningTimes site={site} />
-      {site.images && site.images.length > 0 && <SiteGallery images={site.images} />}
-      {site.entries ? (
-        <SiteEntries entries={site.entries} collapsed={descCollapsed} />
-      ) : (
-        site.description && (
-          <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
-            {site.description}
-          </p>
-        )
-      )}
-      {collapsible && (
-        <button
-          className="desc-toggle"
-          onClick={() => setDescCollapsed((c) => !c)}
-          aria-expanded={!descCollapsed}
-        >
-          {descCollapsed ? copy.site.showMore : copy.site.showLess}
+        )}
+        {wishlisted && !visited && (
+          <div className="badge wish">
+            <StarIcon filled /> {copy.site.wishlist}
+          </div>
+        )}
+        {hidden && (
+          <div className="badge">
+            <BanIcon /> {copy.site.hidden}
+          </div>
+        )}
+      </>
+    ),
+    partOf: parent && (
+      <p className="card-listing">
+        {copy.site.partOf}{' '}
+        <button className="link" onClick={() => openRelated(parent.id)}>
+          {parent.listingTitle ?? parent.name}
         </button>
-      )}
-      {/* A merged site carries its attribution inside each entry, next to the
-          text that came from it. */}
-      {!site.entries && site.sourceUrl && (
-        <p className="card-source">
-          {copy.site.via}{' '}
-          <a href={site.sourceUrl} target="_blank" rel="noreferrer">
-            {sourceLinkLabel(site.sourceUrl)} ↗
-          </a>
-        </p>
-      )}
-
-      {children.length > 0 && (
-        <div className="card-listing">
-          <span className="card-listing-label">{copy.site.nearbyInListing}</span>
-          <ul className="listing-children">
-            {children.map((c) => (
-              <li key={c.id}>
-                <button className="link" onClick={() => openRelated(c.id)}>
-                  {c.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
+      </p>
+    ),
+    walkTime: site.walkTime && (
+      <p className="card-meta">
+        <ClockIcon /> {copy.site.walkIn(site.walkTime)}
+      </p>
+    ),
+    access: site.access && <p className="card-meta">{copy.site.access(site.access)}</p>,
+    hours: <OpeningTimes site={site} />,
+    gallery: gallery.length > 0 && <SiteGallery images={gallery} />,
+    writeUp: (
+      <>
+        {site.entries ? (
+          <SiteEntries entries={site.entries} collapsed={descCollapsed} />
+        ) : (
+          site.description && (
+            <p className={descCollapsed ? 'card-desc collapsed' : 'card-desc'}>
+              {site.description}
+            </p>
+          )
+        )}
+        {/* The spread has the room for the whole write-up, and never clamps. */}
+        {collapsible && variant === 'card' && (
+          <button
+            className="desc-toggle"
+            onClick={() => setDescCollapsed((c) => !c)}
+            aria-expanded={!descCollapsed}
+          >
+            {descCollapsed ? copy.site.showMore : copy.site.showLess}
+          </button>
+        )}
+      </>
+    ),
+    // A merged site carries its attribution inside each entry, next to the
+    // text that came from it.
+    source: !site.entries && site.sourceUrl && (
+      <p className="card-source">
+        {copy.site.via}{' '}
+        <a href={site.sourceUrl} target="_blank" rel="noreferrer">
+          {sourceLinkLabel(site.sourceUrl)} ↗
+        </a>
+      </p>
+    ),
+    listing: children.length > 0 && (
+      <div className="card-listing">
+        <span className="card-listing-label">{copy.site.nearbyInListing}</span>
+        <ul className="listing-children">
+          {children.map((c) => (
+            <li key={c.id}>
+              <button className="link" onClick={() => openRelated(c.id)}>
+                {c.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+    actions: (
       <div className="card-actions">
         <a
           className="btn primary"
@@ -376,6 +434,20 @@ export function SiteBody({
             {copy.site.addToTrip}
           </button>
         )}
+      </div>
+    ),
+  };
+  const place = (names: readonly SiteBodyPart[]) =>
+    names.map((name) => <Fragment key={name}>{parts[name]}</Fragment>);
+
+  if (variant === 'card') return <>{place(SITE_BODY_LAYOUT.card)}</>;
+  const { main, side } = SITE_BODY_LAYOUT.spread;
+  return (
+    <>
+      <LeadPicture site={site} />
+      <div className="spread-body">
+        <div className="spread-main">{place(main)}</div>
+        <div className="spread-side">{place(side)}</div>
       </div>
     </>
   );

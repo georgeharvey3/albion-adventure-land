@@ -32,7 +32,8 @@ export function App() {
   const requestFinder = useStore((s) => s.requestFinder);
   const insets = useStore((s) => s.coveredInsets);
   // The shell (issue #89): the desktop shell from 1024 px, the sheet below.
-  // Both share the store, the map and the site card.
+  // Both share the store, the map and SiteBody: the phone opens a site in
+  // the card, the desktop in the spread.
   const desktop = useWideScreen();
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
@@ -88,8 +89,8 @@ export function App() {
   useGeolocation();
 
   // Keys (issue #88). Esc closes one layer per press, top first — see
-  // KEY_RANK. The site card is the selection: on the map it floats, and in
-  // browse mode it is the row open in place.
+  // KEY_RANK. The site card is the selection: on the map it floats, in
+  // browse mode it is the row open in place, and on a desktop it is the spread.
   useKeyLayer(!!selectedSiteId, KEY_RANK.card, onEscape(() => setSelected(null)));
   // Last, the sheet: browse mode ends first, then the sheet folds down.
   useKeyLayer(
@@ -128,7 +129,8 @@ export function App() {
           the size back up. */}
       <div className={browse && !desktop ? 'map-area hidden' : 'map-area'}>
         <MapView desktop={desktop} />
-        {selectedSiteId && <SiteDetail />}
+        {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
+        {selectedSiteId && !desktop && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}
       </div>
 

@@ -22,7 +22,7 @@ import { copy } from '../copy';
 //
 // A frame is a list row in another shape. A hover on it lifts its pin, a hover
 // on a pin marks it, `j` and `k` move the cursor along it, and a click opens
-// the site card.
+// the spread (Spread.tsx), whose Prev and Next step along the same order.
 
 /** The frame's picture, full bleed, with its figure as a badge. With no
  *  picture, or one that fails to load, a wash in the site's colour names the
@@ -78,9 +78,22 @@ function stripHeading(
   return position.manual ? copy.strip.fromPin : copy.strip.fromYou;
 }
 
-export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
+/** What the strip shows now. The spread steps through the same order. */
+export function useStrip(): StripState {
   const filtered = useFilteredSites();
   const visible = useVisibleSites();
+  const position = useStore((s) => s.position);
+  const destination = useStore((s) => s.destination);
+  const viewport = useStore((s) => s.viewport);
+  // useVisibleSites is the along-the-way list only when both ends are set.
+  const journey = position && destination ? visible : null;
+  return useMemo(
+    () => stripSites({ filtered, journey, anchor: position, viewport }),
+    [filtered, journey, position, viewport],
+  );
+}
+
+export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   const position = useStore((s) => s.position);
   const destination = useStore((s) => s.destination);
   const viewport = useStore((s) => s.viewport);
@@ -90,12 +103,7 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   const setLifted = useStore((s) => s.setLifted);
   const dropLifted = useStore((s) => s.dropLifted);
 
-  // useVisibleSites is the along-the-way list only when both ends are set.
-  const journey = position && destination ? visible : null;
-  const strip = useMemo(
-    () => stripSites({ filtered, journey, anchor: position, viewport }),
-    [filtered, journey, position, viewport],
-  );
+  const strip = useStrip();
   const views = strip.kind === 'sites' ? strip.views : [];
 
   /** How many frames are in the DOM. Not a count the user sees. */
@@ -107,7 +115,7 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
   // scroll alone. The journey list does not depend on the view, so a pan
   // leaves it alone too. A pan that the keyboard cursor caused keeps the
   // cursor's place: the effect below brings its frame back into sight.
-  const inJourney = !!journey;
+  const inJourney = strip.kind === 'sites' && strip.from === 'journey';
   const viewKey = inJourney ? null : viewport;
   const liftedRef = useRef(lifted);
   liftedRef.current = lifted;
@@ -166,6 +174,31 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
       ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(lifted.id)}"]`)
       ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [lifted, rendered, viewport]);
+
+  // Keep the open site's frame on screen too, so a step in the spread shows
+  // where it is in the strip. Once per new selection: after that, the user's
+  // own scroll wins.
+  const followRef = useRef<string | null>(null);
+  useEffect(() => {
+    followRef.current = selectedSiteId;
+  }, [selectedSiteId]);
+  useEffect(() => {
+    const id = followRef.current;
+    if (!id) return;
+    const index = views.findIndex((v) => v.site.id === id);
+    if (index < 0) {
+      followRef.current = null;
+      return;
+    }
+    if (index >= rendered) {
+      setRendered(windowToShow(index));
+      return;
+    }
+    followRef.current = null;
+    rowRef.current
+      ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(id)}"]`)
+      ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  });
 
   const heading = stripHeading(strip, viewport !== null, position, destination);
 
