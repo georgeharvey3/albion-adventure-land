@@ -30,5 +30,9 @@ export interface SearchResult {
   score: number;
 }
 
-/** Which end of the journey a search is filling. */
-export type SearchTarget = 'origin' | 'destination';
+/** An end of the journey: what a map tap or a search can fill. */
+export type JourneyEnd = 'origin' | 'destination';
+
+/** What a search is for: an end of the journey, or, from the phone's
+ *  magnifier (issue #109), only a place to show on the map. */
+export type SearchTarget = JourneyEnd | 'map';

@@ -8,7 +8,7 @@ import {
   type Site,
 } from "../data/types";
 import { formatDistance, haversine } from "../geo/haversine";
-import { CheckIcon, SearchIcon, StarIcon } from "./icons";
+import { CheckIcon, StarIcon } from "./icons";
 import { copy } from "../copy";
 
 // The site finder. Answers ONE question — "which of my sites is that?" — by
@@ -20,10 +20,11 @@ import { copy } from "../copy";
 // Both remain able to find a site by name, deliberately — a name typed into
 // either box should find the thing it names.
 //
-// WHERE IT LIVES. On a desktop, in the card at the top left. On a phone, as a
-// pill floating at the top of the map (src/ui/PhoneFinder.tsx, issue #109), so
-// no tab needs to open to find a site. The results show under the field in
-// both shells, and a pick selects the site and sends the map to it.
+// WHERE IT LIVES. On a desktop only, in the card at the top left. The results
+// show in the drawer, and a pick selects the site and sends the map to it. A
+// phone has no room for a second box: its magnifier (src/ui/PhoneFinder.tsx,
+// issue #109) opens the journey search for the map alone, which finds sites
+// by name too.
 //
 // Name only, on purpose. The Filters tab is how you ask for a type and the
 // journey search is how you ask for a place — a finder that also matched
@@ -105,7 +106,7 @@ export function useFinderResults(query: string): FinderResult[] {
 }
 
 /**
- * Take a site from the finder, in either shell. `revealSite` first: a site
+ * Take a site from the finder. `revealSite` first: a site
  * the filters exclude has no pin, so selecting it before revealing it would
  * open a card for nothing on the map. The map then flies to the site, and
  * `done` resets the finder: after a pick, the answer is what the user wants
@@ -130,7 +131,6 @@ export function SiteFinderField({
   onClose,
   onPickFirst,
   focusRequest,
-  pill = false,
 }: {
   query: string;
   onQuery: (next: string) => void;
@@ -138,9 +138,6 @@ export function SiteFinderField({
   onPickFirst: () => void;
   /** A change puts the cursor back in the field (the `/` key, issue #88). */
   focusRequest: number;
-  /** The phone's floating pill: it leads with the magnifier, and it shows the
-   *  close button only while a query is in. */
-  pill?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   // The field is always there, so the cursor waits for `/`.
@@ -151,8 +148,7 @@ export function SiteFinderField({
   }, [focusRequest]);
 
   return (
-    <div className={pill ? "finder-field pill" : "finder-field"}>
-      {pill && <SearchIcon />}
+    <div className="finder-field">
       <input
         ref={ref}
         type="search"
@@ -171,15 +167,13 @@ export function SiteFinderField({
           }
         }}
       />
-      {(!pill || query) && (
-        <button
-          className="finder-close"
-          onClick={onClose}
-          aria-label={copy.finder.close}
-        >
-          ✕
-        </button>
-      )}
+      <button
+        className="finder-close"
+        onClick={onClose}
+        aria-label={copy.finder.close}
+      >
+        ✕
+      </button>
     </div>
   );
 }

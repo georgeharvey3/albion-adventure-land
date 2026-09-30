@@ -2192,8 +2192,8 @@ body,
 }
 
 /* --- Site finder -----------------------------------------------------------
-   One field, in the desktop card and in the phone's floating pill. Its results
-   show under it, in the drawer or in the floating panel. */
+   One field, in the desktop card. Its results show in the drawer. The phone
+   searches through the magnifier and the search overlay instead. */
 .finder-field {
   display: flex;
   align-items: center;
@@ -2248,41 +2248,45 @@ body,
 }
 
 /* --- Floating finder (issue #109) ------------------------------------------
-   On a phone the finder pill and one row of layer chips float at the top of
-   the map. The column lets taps through, so only the pill, the chips and the
-   results take them, and the map under the gaps still pans. */
+   On a phone one row floats at the top of the map: a round magnifier, then the
+   layer chips. The row lets taps through, so only the button and the chips
+   take them, and the map under the gaps still pans. */
 .float-finder {
   position: absolute;
   top: var(--space-xs);
   left: var(--space-xs);
   right: var(--space-xs);
-  max-height: calc(100% - 2 * var(--space-xs));
   z-index: var(--z-float);
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: var(--space-2xs);
   pointer-events: none;
 }
 .float-finder > * {
   pointer-events: auto;
 }
-.finder-field.pill {
+.float-search {
   flex: 0 0 auto;
-  margin-top: 0;
-  min-height: 40px;
-  padding: 0 var(--space-sm);
-  gap: var(--space-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: var(--rule-hairline) solid var(--color-edge);
   border-radius: var(--radius-pill);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
   box-shadow: var(--shadow-float);
+  cursor: pointer;
 }
-.finder-field.pill > .icon {
-  color: var(--color-muted);
+.float-search:active {
+  transform: translateY(1px);
 }
-/* One row that scrolls sideways, as wide as its chips, so the map to the
-   right of the last chip still takes a pan. */
+/* The chips scroll sideways, as wide as they are, so the map to the right of
+   the last chip still takes a pan. */
 .float-chips {
-  align-self: flex-start;
-  max-width: 100%;
+  min-width: 0;
   display: flex;
   gap: var(--space-2xs);
   overflow-x: auto;
@@ -2307,19 +2311,7 @@ body,
 .float-chips .chip.off .dot {
   opacity: 0.4;
 }
-.float-results {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 var(--space-sm) var(--space-xs);
-  background: var(--color-paper-2);
-  border: var(--rule-hairline) solid var(--color-rule-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-float);
-}
-/* The zoom and the basemap controls and the map hint sit under the pill and
-   the chips. PhoneFinder.tsx sets --float-h on the map area. */
+/* The zoom and the basemap controls and the map hint sit under the row. PhoneFinder.tsx sets --float-h on the map area. */
 .app:not(.desk) .leaflet-top.leaflet-right {
   top: var(--float-h, 0px);
 }

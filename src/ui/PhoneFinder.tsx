@@ -1,55 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from '../state/store';
-import { KEY_RANK, onEscape } from '../state/keys';
-import { useKeyLayer } from './useKeyLayer';
 import { LayerChips } from './LayerChips';
-import { SiteFinderField, SiteFinderResults, useFinderPick, useFinderResults } from './SiteFinder';
+import { SearchIcon } from './icons';
+import { copy } from '../copy';
 
-// The phone's floating finder (issue #109): a pill at the top of the map, and
-// one row of layer chips under it. The desktop has both in its card, so on a
-// phone they float over the map in the same way, and neither needs a tab.
+// The phone's floating row (issue #109): a magnifier and the layer chips, at
+// the top of the map. The desktop has both in its card, so on a phone they
+// float over the map in the same way, and neither needs a tab.
 //
-// While a query is in, the results take the place of the chips. A pick
-// selects the site and sends the map to it, as on the desktop. The Filters
-// tab keeps the leaves and the tags; the chips are the quick form only.
+// The chips get the room. A layer is switched on and off in the field all the
+// time; a site is looked up by name rarely, because a visit starts from "what
+// is near here", not from a name. So search is one round button, not a pill.
+//
+// The magnifier opens the search overlay for the map alone ('map'): places,
+// postcodes, grid references and sites in one box, and a pick moves the map
+// or opens the site. It fills no end of the journey.
 //
 // It sits in .map-area, so browse mode hides it with the map, and the title
 // card covers it on a first visit.
 
 export function PhoneFinder() {
-  const finderWanted = useStore((s) => s.finderWanted);
-  const takeFinderRequest = useStore((s) => s.takeFinderRequest);
+  const openSearch = useStore((s) => s.openSearch);
 
-  const [query, setQuery] = useState('');
-  const [focusRequest, setFocusRequest] = useState(0);
-  const results = useFinderResults(query);
-  const finding = !!query.trim();
-
-  // A closed finder gives the cursor back, so the keyboard on a phone folds.
-  const close = () => {
-    setQuery('');
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  };
-
-  const pickFound = useFinderPick(close);
-
-  // `/` asks for the finder (App.tsx), which ends browse mode first so the
-  // pill is on screen to take the cursor.
-  useEffect(() => {
-    if (!finderWanted) return;
-    takeFinderRequest();
-    setFocusRequest((n) => n + 1);
-  }, [finderWanted, takeFinderRequest]);
-
-  // The zoom and basemap controls sit under the pill and the chips. The map
-  // area carries their height as --float-h, and the CSS moves the top right
-  // corner down by it. Only the resting height counts: the results cover the
-  // controls while they show, and the controls stay where they are.
+  // The zoom and basemap controls sit under the row. The map area carries its
+  // height as --float-h, and the CSS moves the top right corner down by it.
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     const area = el?.parentElement;
-    if (!el || !area || finding) return;
+    if (!el || !area) return;
     const measure = () => {
       const box = el.getBoundingClientRect();
       // Browse mode hides the map area, and a hidden box measures nothing.
@@ -61,31 +40,19 @@ export function PhoneFinder() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [finding]);
-
-  // Esc clears the results first. The site card sits above (KEY_RANK).
-  useKeyLayer(finding, KEY_RANK.search, onEscape(close));
+  }, []);
 
   return (
     <div ref={ref} className="float-finder">
-      <SiteFinderField
-        query={query}
-        onQuery={setQuery}
-        onClose={close}
-        onPickFirst={() => {
-          const first = results[0];
-          if (first) pickFound(first.site);
-        }}
-        focusRequest={focusRequest}
-        pill
-      />
-      {finding ? (
-        <div className="float-results">
-          <SiteFinderResults results={results} onPick={pickFound} />
-        </div>
-      ) : (
-        <LayerChips className="float-chips" />
-      )}
+      <button
+        className="float-search"
+        onClick={() => openSearch('map')}
+        aria-label={copy.search.open}
+        title={copy.search.open}
+      >
+        <SearchIcon />
+      </button>
+      <LayerChips className="float-chips" />
     </div>
   );
 }
