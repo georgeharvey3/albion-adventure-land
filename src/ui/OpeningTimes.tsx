@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { WEEKDAYS, WEEKDAY_LABELS, type OpeningHours, type Site, type Weekday } from '../data/types';
+import { WEEKDAYS, type OpeningHours, type Site, type Weekday } from '../data/types';
 import { ClockIcon } from './icons';
 import { copy } from '../copy';
 
@@ -82,7 +82,7 @@ export function OpeningTimes({ site }: { site: Site }) {
             aria-expanded={open}
           >
             <ClockIcon />
-            <span className="hours-today-day">{WEEKDAY_LABELS[todayRow.day]}</span>
+            <span className="hours-today-day">{copy.hours.days[todayRow.day]}</span>
             <span className="hours-today-text">{todayRow.text}</span>
             <span className="hours-chevron" aria-hidden="true">
               {open ? '▴' : '▾'}
@@ -92,7 +92,7 @@ export function OpeningTimes({ site }: { site: Site }) {
             <dl className="hours-week">
               {rows.map(({ day, text }) => (
                 <div key={day} className={day === today ? 'hours-row is-today' : 'hours-row'}>
-                  <dt>{WEEKDAY_LABELS[day]}</dt>
+                  <dt>{copy.hours.days[day]}</dt>
                   <dd>{text}</dd>
                 </div>
               ))}

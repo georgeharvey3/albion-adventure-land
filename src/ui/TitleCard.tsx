@@ -56,7 +56,7 @@ export function TitleCard({ onClosed }: { onClosed: () => void }) {
         <h1 className="title-card-name">{copy.title.name}</h1>
         <p className="title-card-sub">{copy.title.sub}</p>
         <div className="title-card-hint" aria-live="polite">
-          {dataLoaded ? copy.title.begin : copy.title.loading}
+          {dataLoaded ? copy.title.begin : copy.app.loading}
         </div>
       </div>
     </div>

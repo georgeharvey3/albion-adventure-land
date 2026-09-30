@@ -1,3 +1,5 @@
+import { copy } from '../copy';
+
 // Normalized, read-only site model (spec §5.1). Site data is replaceable;
 // user state (in IndexedDB) is keyed on the stable `id` and must never be lost.
 
@@ -264,11 +266,7 @@ export function outingSlotResolver(
 
 export function outingSlotLabel(slot: OutingSlot): string {
   if (isUnionSlot(slot)) {
-    const labels = unionMembers(slot).map((m) => SITE_TYPE_LABELS[m]);
-    // "A or B" reads naturally for the small subsets this is used on; keep the
-    // first two and summarise a longer tail so the failure line stays short.
-    if (labels.length <= 2) return labels.join(' or ');
-    return `${labels[0]}, ${labels[1]} or ${labels.length - 2} more`;
+    return copy.outing.anyOfSlot(unionMembers(slot).map((m) => SITE_TYPE_LABELS[m]));
   }
   return isParentSlot(slot) ? PARENT_CATEGORY_LABELS[slot] : SITE_TYPE_LABELS[slot];
 }
@@ -528,16 +526,6 @@ export const WEEKDAYS: readonly Weekday[] = [
   'saturday',
   'sunday',
 ];
-
-export const WEEKDAY_LABELS: Record<Weekday, string> = {
-  monday: 'Mon',
-  tuesday: 'Tue',
-  wednesday: 'Wed',
-  thursday: 'Thu',
-  friday: 'Fri',
-  saturday: 'Sat',
-  sunday: 'Sun',
-};
 
 /** Why a site is shut, as the source states it. `label` is the source's own
  *  short status ("Temporarily Closed"); `note` is the full sentence, which

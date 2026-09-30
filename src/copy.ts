@@ -26,8 +26,11 @@ export const copy = {
   app: {
     tabs: { near: 'Nearby', filters: 'Filters', outing: 'Outing', stats: 'Saved' },
     loading: 'Loading sites…',
-    loadFailed: (error: string) => `Couldn't load site data: ${error}. Run`,
-    ingestCommand: 'npm run ingest',
+    loadFailed: {
+      before: (error: string) => `Couldn't load site data: ${error}. Run`,
+      command: 'npm run ingest',
+      after: '.',
+    },
     httpStatus: (status: number) => `HTTP ${status}`,
     expand: 'Expand panel',
     collapse: 'Collapse panel',
@@ -37,7 +40,6 @@ export const copy = {
     name: 'Albion Adventure Land',
     sub: 'A field companion for Britain',
     begin: 'Tap the map to begin',
-    loading: 'Loading sites…',
   },
 
   location: {
@@ -49,6 +51,7 @@ export const copy = {
 
   map: {
     layers: 'Map layers',
+    north: 'N',
     basemaps: { street: 'Street', atlas: 'Atlas', satellite: 'Satellite' },
     zoomToMe: 'Zoom to my location',
     zoomToTap: 'Zoom in to tap a pin',
@@ -162,19 +165,24 @@ export const copy = {
     replaceConfirm: 'Replace your hand-picked trip with a found outing?',
     drive: (base: string, stops: number, withStops: string, extra: string) =>
       `Your drive is ${base}. With ${stops === 1 ? 'this stop' : `these ${stops} stops`}: ${withStops} (+${extra}).`,
-    stopsFrom: (stops: number, distance: string, manual: boolean) =>
-      `${stops} stops, starting ${distance} from ${manual ? 'your dropped pin' : 'you'}`,
-    stops: (stops: number) => `${stops} stops`,
-    spread: (distance: string) => `, spread over ${distance}`,
-    end: '.',
-    unrouted: ' — drop a location to route them.',
+    /** `start` is null with no location; `spread` is null for one stop. */
+    summary: (
+      stops: number,
+      start: { distance: string; manual: boolean } | null,
+      spread: string | null,
+    ) =>
+      (start
+        ? `${stops} stops, starting ${start.distance} from ${start.manual ? 'your dropped pin' : 'you'}`
+        : `${stops} stops`) +
+      (spread ? `, spread over ${spread}` : '') +
+      (start ? '.' : ' — drop a location to route them.'),
     clear: 'Clear',
     remove: (name: string) => `Remove ${name} from trip`,
     destination: 'Destination',
     openInMaps: 'Open route in Google Maps ↗',
     tooManyStops: 'Too many stops for one Google Maps link — open directions from each site\'s card instead.',
     empty: { before: 'Build a trip by tapping', action: '+ Add to trip', after: 'on any site — or let the app find one below.' },
-    finder: 'Find one for me',
+    findForMe: 'Find one for me',
     pickOnTheWay: (destination: string) =>
       `Pick the kinds of day you want — one of each on your way to ${destination}, as a ready-made route.`,
     pickNearest: 'Pick the kinds of day you want — the nearest cluster with one of each, as a ready-made route.',
@@ -186,6 +194,12 @@ export const copy = {
     anyFolklore: 'One stop — any folklore sub-type.',
     anyOne: 'One stop of the selected type.',
     anySelected: (n: number) => `One stop — any of the ${n} selected.`,
+    // "A or B" reads well for a small set. A longer set keeps the first two
+    // and counts the rest, so the failure line stays short.
+    anyOfSlot: (labels: string[]) =>
+      labels.length <= 2
+        ? labels.join(' or ')
+        : `${labels[0]}, ${labels[1]} or ${labels.length - 2} more`,
     includeVisited: 'Include sites I\'ve already visited',
     find: 'Find outing',
     findAnother: 'Find another',
@@ -245,6 +259,15 @@ export const copy = {
   },
 
   hours: {
+    days: {
+      monday: 'Mon',
+      tuesday: 'Tue',
+      wednesday: 'Wed',
+      thursday: 'Thu',
+      friday: 'Fri',
+      saturday: 'Sat',
+      sunday: 'Sun',
+    },
     closed: 'Closed',
     midnight: 'midnight',
     surveyed: 'Surveyed',

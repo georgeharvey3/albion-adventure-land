@@ -28,7 +28,8 @@ const SRC = join(ROOT, 'src');
 // never reach a user. Each entry says why.
 const EXEMPT: { path: RegExp; why: string }[] = [
   { path: /^src\/copy\.ts$/, why: 'the copy module itself' },
-  { path: /^src\/data\//, why: 'site data: category names, and the build-time ingest log' },
+  { path: /^src\/data\/types\.ts$/, why: 'the category names are site data' },
+  { path: /^src\/data\/(ingest\.ts|mappings\/)/, why: 'the build-time ingest log never reaches a user' },
   { path: /^src\/map\/mapLabels\.ts$/, why: 'sea and landmark names are map data' },
   { path: /^src\/map\/basemaps\.ts$/, why: 'tile attributions are data; the layer names are in copy' },
   { path: /^src\/geo\/osrm\.ts$/, why: 'the OSRM attribution is data' },

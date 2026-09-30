@@ -113,7 +113,8 @@ export function App() {
       {!dataLoaded && !titleOpen && <div className="overlay">{copy.app.loading}</div>}
       {dataError && (
         <div className="overlay error">
-          {copy.app.loadFailed(dataError)} <code>{copy.app.ingestCommand}</code>.
+          {copy.app.loadFailed.before(dataError)} <code>{copy.app.loadFailed.command}</code>
+          {copy.app.loadFailed.after}
         </div>
       )}
 

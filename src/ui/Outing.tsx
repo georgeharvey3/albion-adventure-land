@@ -122,17 +122,18 @@ export function Outing() {
               </p>
             ) : (
               <p className="hint">
-                {position
-                  ? copy.outing.stopsFrom(
-                      stops.length,
-                      formatDistance(outing.distanceFromAnchor),
-                      !!position.manual,
-                    )
-                  : copy.outing.stops(stops.length)}
-                {outing.radiusM != null &&
-                  stops.length > 1 &&
-                  copy.outing.spread(formatDistance(outing.radiusM))}
-                {position ? copy.outing.end : copy.outing.unrouted}
+                {copy.outing.summary(
+                  stops.length,
+                  position
+                    ? {
+                        distance: formatDistance(outing.distanceFromAnchor),
+                        manual: !!position.manual,
+                      }
+                    : null,
+                  outing.radiusM != null && stops.length > 1
+                    ? formatDistance(outing.radiusM)
+                    : null,
+                )}
               </p>
             )}
             <button className="btn small" onClick={clearOuting}>
@@ -208,7 +209,7 @@ export function Outing() {
       )}
 
       <details className="outing-finder">
-        <summary>{copy.outing.finder}</summary>
+        <summary>{copy.outing.findForMe}</summary>
 
         <p className="hint">
           {destination
