@@ -12,6 +12,7 @@ import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
 import { PhoneFinder } from './PhoneFinder';
+import { PhoneStrip } from './PhoneStrip';
 import { SitePeek, SiteSheetBody } from './SiteSheet';
 import { useSidePanel, useWideScreen } from './useWideScreen';
 import { useSheetDrag } from './useSheetDrag';
@@ -26,6 +27,7 @@ import {
   tapTab,
   type SheetStops,
 } from '../state/sheet';
+import { rowShown } from '../state/phoneStrip';
 import { NO_INSETS } from '../map/insets';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
@@ -139,7 +141,13 @@ export function App() {
   // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
   // Set when the sheet rests, never during a drag. The desktop shell sets its
   // own insets, and the side panel keeps none, as before.
-  const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) : 0;
+  //
+  // At the low height the phone's picture row (issue #111) is the band at the
+  // bottom of the map, so the view box, a fitted journey and a pin brought
+  // into view keep clear of it.
+  const stripShown = rowShown({ phone, sheet, dragging, siteOpen: !!openSite });
+  const [stripPx, setStripPx] = useState(0);
+  const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) + stripPx : 0;
   useEffect(() => {
     if (desktop) return;
     setCoveredInsets({ ...NO_INSETS, bottom: covered });
@@ -207,10 +215,11 @@ export function App() {
           the raised sheet lies over the map. So the map never resizes during
           a drag, and it stays mounted under the full list: tearing Leaflet
           down would throw away the view the reader is coming back to. */}
-      <div className="map-area">
+      <div className={stripPx ? 'map-area strip-up' : 'map-area'}>
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder />}
+        {phone && <PhoneStrip shown={stripShown} onHeight={setStripPx} />}
         {/* A phone opens the site in the sheet, and a desktop in the spread
             (DesktopShell.tsx). The side panel keeps the floating card. */}
         {selectedSiteId && sidePanel && !desktop && !inPlace && <SiteDetail />}

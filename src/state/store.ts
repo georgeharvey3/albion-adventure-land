@@ -60,10 +60,12 @@ export interface Position {
   label?: string;
 }
 
-/** A lifted site (issue #88), and what lifted it. */
+/** A lifted site (issue #88), and what lifted it. `strip` is the phone's
+ *  picture row (issue #111): the frame in its middle, or a pin tap that
+ *  brought a frame there. */
 export interface Lift {
   id: string;
-  by: 'pin' | 'row' | 'key';
+  by: 'pin' | 'row' | 'key' | 'strip';
 }
 
 // Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps

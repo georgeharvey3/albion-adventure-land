@@ -408,7 +408,8 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   as the bottom covered inset (`coveredBottom`). A fitted journey or a pin
   brought into view then stays clear of the sheet.
 - On a phone an open site replaces the list in the sheet. See **Phone site
-  sheet** below.
+  sheet** below. At the low height a row of pictures floats over the map. See
+  **Phone picture row** below.
 - A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
   lowers it one height per press.
 - A session opens at the middle height, so the nearest sites show at once.
@@ -449,6 +450,34 @@ owner chose this design from a prototype (variant C, the branch
   the map.
 - The side panel (760 px to 1023 px) keeps the floating card and the rows
   that open in place, because #107 Q3 is still open.
+
+## Phone picture row (issue #111)
+
+On a phone, at the low height of the sheet, one row of picture frames floats
+over the bottom of the map (`src/ui/PhoneStrip.tsx`). The owner chose this
+layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
+
+- The row holds what the desktop strip holds. It calls `useStrip` and
+  `FramePlate` from `src/ui/Strip.tsx`, so it obeys `matchesFilter` and reads
+  the view from the last `moveend`. The frame shows the distance, or the
+  detour on a journey. It shows no counts.
+- One wide frame sits in the middle, and its neighbours show at the edges.
+  The frame in the middle lifts its pin (`by: 'strip'`). The lift follows the
+  swipe, not only the frame where the swipe stops.
+- A tap on a frame opens the site in the peek. At the low height, a tap on a
+  pin lifts it and brings its frame to the middle. A second tap on the lifted
+  pin opens the site. The rules are pure and live in
+  `src/state/phoneStrip.ts`.
+- A lift from the row pans the map only when the pin is out of sight. That
+  pan holds the view, so the row does not re-sort under the finger. A drag or
+  a zoom by the user ends the hold. In practice only a journey's row holds
+  sites outside the view.
+- The row is the bottom covered inset while it shows, so the view box and the
+  pans keep clear of it. The rose, the scale and the credits stand on top of it.
+- The row hides while a site is open, and at the middle and full heights. A
+  hidden row lifts nothing.
+- The row is outside the Leaflet container, so a swipe on it never pans the
+  map, and a map pan never moves the row.
 
 ## UI copy
 

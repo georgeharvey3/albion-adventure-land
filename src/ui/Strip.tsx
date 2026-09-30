@@ -26,8 +26,8 @@ import { copy } from '../copy';
 
 /** The frame's picture, full bleed, with its figure as a badge. With no
  *  picture, or one that fails to load, a wash in the site's colour names the
- *  kind of site it stands for. */
-function FramePlate({ site, figure }: { site: Site; figure: string | null }) {
+ *  kind of site it stands for. The phone's picture row uses it too. */
+export function FramePlate({ site, figure }: { site: Site; figure: string | null }) {
   const [broken, setBroken] = useState(false);
   const image = site.images?.[0];
   const painted = !image || broken;
@@ -54,7 +54,7 @@ function FramePlate({ site, figure }: { site: Site; figure: string | null }) {
 
 /** The distance from the anchor, or on a journey the detour. The order of the
  *  strip already says how far along the way a site is. */
-function frameFigure({ distance, detour }: SiteView): string | null {
+export function frameFigure({ distance, detour }: SiteView): string | null {
   if (detour !== null) return formatDetour(detour);
   return distance !== null ? formatDistance(distance) : null;
 }
