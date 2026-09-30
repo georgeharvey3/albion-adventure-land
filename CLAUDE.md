@@ -289,6 +289,29 @@ site, plus 80 km. The map does not pan past it.
   also cover a surround, sized for a 4K screen. `plateHasTile` asks Leaflet for
   shipped tiles only, so a missing tile is never a 404.
 
+## UI copy
+
+The screen carries labels, not explanations. A string earns its place only
+when the user needs it at that moment to act or to avoid a mistake. The
+default for any new panel, button or state is no helper text.
+
+- The reason for a design lives in code comments and in this file. The
+  rationale in this file is for you, not for the user: keep it off the
+  screen, even when it reassures.
+- A control says what it does in two to four words. A status message says
+  what happened in one short sentence.
+- A warning appears at the point of risk, in the step where the risk occurs.
+- UI strings are outside the `simple-english` skill. Cut them, then stop.
+- `docs/ui-copy.txt` lists every string the app can show. After a change to
+  any string, run `npm run copy` and commit the file with the change. Read
+  its diff before you open a pull request: every added line must pass the
+  test above. `npm run copy:check` fails when the file is out of date.
+
+Too much — the Backup panel once said:
+"Restoring only ever adds — it never removes a visit, so loading the wrong
+file, or the same one twice, costs nothing."
+Right — the panel now has a heading and four buttons, and nothing else.
+
 ## Build order (each phase independently shippable)
 
 - **Phase 1 (MVP): shipped** — ingest (2 sources) → map → two-level type filter
