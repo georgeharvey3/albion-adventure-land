@@ -284,7 +284,7 @@ site, plus 80 km. The map does not pan past it.
   drag runs onto blank map and springs back. So the limit widens that axis to
   exactly the view at each zoom, and the axis cannot move.
 - The fence reads `coveredInsets` (`src/map/insets.ts`), so the edge of the
-  plate can go under the desktop strip or drawer, but the part of the map that
+  plate can go under the desktop strip, drawer or spread, but the part of the map that
   the user can see never shows past the plate.
 - The zoom floor is the zoom where the whole plate fits the screen
   (`src/map/MapView.tsx`).
@@ -309,6 +309,8 @@ listener to a component. Register a key layer instead.
 - `j` and `k` move the cursor through the Nearby list, and `Enter` opens the
   cursor row. `/` opens the site finder. The arrow keys pan the map, as
   Leaflet does.
+- In the desktop spread, the left and right arrow keys and `j` and `k` step
+  to the previous and next site in the strip. `Esc` closes the spread first.
 
 The store keeps one `lifted` site, and what lifted it: a pin, a row
 or a key. A lifted site marks its pin and its row together. A pin lift or a
@@ -322,6 +324,27 @@ shows no peek, because the row already names the site.
 - Hover needs a mouse. On a touch screen, no hover effect occurs.
 - The peek shows no numbers. A site with no picture gets a painted
   placeholder in its layer colour.
+
+## The spread (issue #90)
+
+On a desktop, a site opens in the spread on the right of the map. The phone
+keeps the floating card.
+
+- The spread wraps `SiteBody` with `variant="spread"`. `SiteBody` is a set of
+  named parts, and `src/ui/siteBodyLayout.ts` lists where each layout puts
+  them. A new part must go in the card layout and the spread layout.
+  `tests/siteBody.test.ts` fails until it does.
+- One CSS grid cannot make the two columns. A grid shares its row heights
+  between the columns, so a long write-up moved the buttons apart.
+- The spread is the covered inset on the right. The map pans the site to the
+  centre of the part of the view that shows (`openCentre`), and keeps the zoom.
+- Prev and Next step through the order of the strip (`stripNeighbours`). They
+  stop at both ends, as `j` and `k` do.
+- While the spread is open, the map reports no new view to the strip, so a
+  step does not re-sort it. A drag, a zoom or a search move by the user ends
+  this hold (`holdViewRef` in `src/map/MapView.tsx`).
+- The strip stops at the left edge of the spread, so no frame is under it.
+- From 1024 px to 1199 px, a spread closes the drawer.
 
 ## UI copy
 

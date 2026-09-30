@@ -532,6 +532,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
     };
     reportViewRef.current = reportView;
     map.on('dragstart zoomstart', releaseView);
+    // Leaflet's own arrow-key pan fires neither of those.
+    map.getContainer().addEventListener('keydown', releaseView);
     map.on('moveend', reportView);
     reportView();
 
@@ -575,6 +577,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
       map.off('moveend', persist);
       map.off('moveend', reportView);
       map.off('dragstart zoomstart', releaseView);
+      map.getContainer().removeEventListener('keydown', releaseView);
       // The hint lives in the container, which outlives the map.
       window.clearTimeout(hintTimer);
       hint.remove();
@@ -1005,10 +1008,17 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // waits for the spread's inset: the fence reads the insets, and before the
   // spread is measured it pulls a site near the edge of the plate back under
   // the spread. A step in the spread keeps the inset and pans at once.
+  //
+  // Only a new site, or the spread's first measure, pans. A resize changes
+  // the inset too, and must not pull the map back after the user has moved it.
   const spreadInset = desktop ? coveredInsets.right : 0;
+  const pannedRef = useRef<string | null>(null);
   useEffect(() => {
     const map = mapRef.current;
+    if (!selectedSiteId || !spreadInset) pannedRef.current = null;
     if (!map || !selectedSiteId || !spreadInset) return;
+    if (pannedRef.current === selectedSiteId) return;
+    pannedRef.current = selectedSiteId;
     const site = useStore.getState().sites.find((x) => x.id === selectedSiteId);
     if (!site) return;
     const size = map.getSize();

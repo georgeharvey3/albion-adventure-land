@@ -3304,6 +3304,25 @@ body,
   object-fit: contain;
   background: color-mix(in oklch, var(--color-ink) 90%, var(--color-paper));
 }
+/* The caption sits on the foot of the picture, as it sits under it in the
+   card. */
+.spread-lead {
+  position: relative;
+}
+.spread-caption {
+  position: absolute;
+  left: var(--space-sm);
+  bottom: var(--space-sm);
+  max-width: calc(100% - 2 * var(--space-sm));
+  margin: 0;
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--color-ink) 70%, transparent);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  color: var(--color-paper-2);
+  pointer-events: none;
+}
 .spread-lead.painted {
   display: grid;
   place-items: center;

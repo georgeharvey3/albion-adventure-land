@@ -168,6 +168,7 @@ function LeadPicture({ site }: { site: Site }) {
           onError={() => setBroken(true)}
         />
       </button>
+      {image.caption && <p className="spread-caption">{image.caption}</p>}
       {opened && <Lightbox images={images} startIndex={0} onClose={() => setOpened(false)} />}
     </div>
   );

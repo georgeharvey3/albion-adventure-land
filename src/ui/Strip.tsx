@@ -137,6 +137,12 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY;
   };
 
+  /** Scroll the strip so that the frame for `id` is in sight. */
+  const showFrame = (id: string) =>
+    rowRef.current
+      ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(id)}"]`)
+      ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+
   // Keys (issue #88): `j` and `k` move the cursor along the strip, and Enter
   // opens the frame under it.
   useKeyLayer(views.length > 0, KEY_RANK.list, ({ key }) => {
@@ -170,9 +176,7 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
       setRendered(windowToShow(index));
       return;
     }
-    rowRef.current
-      ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(lifted.id)}"]`)
-      ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    showFrame(lifted.id);
   }, [lifted, rendered, viewport]);
 
   // Keep the open site's frame on screen too, so a step in the spread shows
@@ -195,9 +199,7 @@ export const Strip = forwardRef<HTMLElement>(function Strip(_props, ref) {
       return;
     }
     followRef.current = null;
-    rowRef.current
-      ?.querySelector<HTMLElement>(`[data-site-id="${CSS.escape(id)}"]`)
-      ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    showFrame(id);
   });
 
   const heading = stripHeading(strip, viewport !== null, position, destination);

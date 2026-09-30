@@ -118,9 +118,24 @@ export function DesktopShell() {
 
   // From 1024 px to 1199 px the drawer and the spread do not fit together, so
   // a spread closes the drawer (issue #87, Q5).
+  // A drawer opened at that width closes the spread, and a window that
+  // shrinks to it with both open closes the drawer.
+  const narrow = () => window.innerWidth < SPREAD_AND_DRAWER;
   useEffect(() => {
-    if (selectedSiteId && window.innerWidth < SPREAD_AND_DRAWER) setDrawer(null);
+    if (selectedSiteId && narrow()) setDrawer(null);
   }, [selectedSiteId]);
+  useEffect(() => {
+    if (!selectedSiteId || drawer === null) return;
+    const onResize = () => {
+      if (narrow()) setDrawer(null);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [selectedSiteId, drawer]);
+  const openDrawer = (tab: DrawerTab | null) => {
+    if (tab && selectedSiteId && narrow()) setSelected(null);
+    setDrawer(tab);
+  };
 
   // `/` asks for the finder (App.tsx). Here the finder is always mounted.
   useEffect(() => {
@@ -202,7 +217,7 @@ export function DesktopShell() {
               <button
                 key={id}
                 className={drawer === id ? 'tab active' : 'tab'}
-                onClick={() => setDrawer(drawer === id ? null : id)}
+                onClick={() => openDrawer(drawer === id ? null : id)}
                 aria-pressed={drawer === id}
               >
                 {copy.app.tabs[id]}
