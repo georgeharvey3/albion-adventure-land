@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useStore } from "../state/store";
 import { searchSites } from "../search/sites";
 import {
@@ -20,11 +20,10 @@ import { copy } from "../copy";
 // Both remain able to find a site by name, deliberately — a name typed into
 // either box should find the thing it names.
 //
-// WHY IT LIVES IN THE NEARBY LIST. The finder's result IS a list row: picking
-// one selects the site, and the selection is then read on the map as a card or
-// in browse mode as the expanded row. Putting the control anywhere else would
-// have made it a third search-shaped thing in the chrome; here it is the list's
-// own control, next to Browse, costing nothing until it is opened.
+// WHERE IT LIVES. On a desktop, in the card at the top left. On a phone, as a
+// pill floating at the top of the map (src/ui/PhoneFinder.tsx, issue #109), so
+// no tab needs to open to find a site. The results show under the field in
+// both shells, and a pick selects the site and sends the map to it.
 //
 // Name only, on purpose. The Filters tab is how you ask for a type and the
 // journey search is how you ask for a place — a finder that also matched
@@ -105,34 +104,13 @@ export function useFinderResults(query: string): FinderResult[] {
   }, [query, sites, hidden, visited, wishlist, lat, lng]);
 }
 
-/** The magnifier that opens the field. Lives in the list's header row. */
-export function SiteFinderToggle({
-  open,
-  onToggle,
-}: {
-  open: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      className={open ? "finder-toggle on" : "finder-toggle"}
-      onClick={onToggle}
-      aria-expanded={open}
-      aria-label={open ? copy.finder.close : copy.finder.open}
-      title={open ? copy.finder.close : copy.finder.open}
-    >
-      <SearchIcon />
-    </button>
-  );
-}
-
 export function SiteFinderField({
   query,
   onQuery,
   onClose,
   onPickFirst,
   focusRequest,
-  focusOnMount = true,
+  pill = false,
 }: {
   query: string;
   onQuery: (next: string) => void;
@@ -140,19 +118,21 @@ export function SiteFinderField({
   onPickFirst: () => void;
   /** A change puts the cursor back in the field (the `/` key, issue #88). */
   focusRequest: number;
-  /** In the Nearby list the field opens on a tap, so it takes the cursor. In
-   *  the desktop card it is always there, and the cursor waits for `/`. */
-  focusOnMount?: boolean;
+  /** The phone's floating pill: it leads with the magnifier, and it shows the
+   *  close button only while a query is in. */
+  pill?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+  // The field is always there, so the cursor waits for `/`.
   const firstRequest = useRef(focusRequest);
   useEffect(() => {
-    if (focusOnMount || focusRequest !== firstRequest.current) ref.current?.focus();
+    if (focusRequest !== firstRequest.current) ref.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusRequest]);
 
   return (
-    <div className="finder-field">
+    <div className={pill ? "finder-field pill" : "finder-field"}>
+      {pill && <SearchIcon />}
       <input
         ref={ref}
         type="search"
@@ -161,7 +141,7 @@ export function SiteFinderField({
         aria-label={copy.finder.field}
         onChange={(e) => onQuery(e.target.value)}
         onKeyDown={(e) => {
-          // Esc belongs to the key layer in NearMeList, so it closes the
+          // Esc belongs to the key layer of the shell, so it closes the
           // finder only when nothing sits above it. Enter takes the top row —
           // the common case is that you typed enough of the name to have
           // already won.
@@ -171,13 +151,15 @@ export function SiteFinderField({
           }
         }}
       />
-      <button
-        className="finder-close"
-        onClick={onClose}
-        aria-label={copy.finder.close}
-      >
-        ✕
-      </button>
+      {(!pill || query) && (
+        <button
+          className="finder-close"
+          onClick={onClose}
+          aria-label={copy.finder.close}
+        >
+          ✕
+        </button>
+      )}
     </div>
   );
 }
@@ -234,37 +216,4 @@ export function SiteFinderResults({
       ))}
     </ul>
   );
-}
-
-/** Open/closed + query, with the "always starts closed and empty" rule in one
- *  place. Ephemeral like selection and browse: an abandoned search must not
- *  outlive the visit to the tab, let alone the session. */
-export function useSiteFinder() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  // Bumped each time the field is asked for, so an open field takes the
-  // cursor back.
-  const [focusRequest, setFocusRequest] = useState(0);
-
-  const close = () => {
-    setOpen(false);
-    setQuery("");
-  };
-
-  return {
-    open,
-    focusRequest,
-    /** Open the field, or put the cursor back in it if it is open. */
-    show: () => {
-      setOpen(true);
-      setFocusRequest((n) => n + 1);
-    },
-    query,
-    /** True while results are standing in for the list. */
-    filtering: open && !!query.trim(),
-    setQuery,
-    close,
-    toggle: () => (open ? close() : setOpen(true)),
-  };
 }

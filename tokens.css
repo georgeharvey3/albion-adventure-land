@@ -158,6 +158,9 @@
   --z-sheet: 500;
   --z-card: 600;
   --z-overlay: 700;
+  /* The phone's floating finder (issue #109) sits over the zoom buttons, so
+     its results cover them, and under the title card. */
+  --z-float: 1020;
   /* The title card sits over the zoom buttons too, because it frames the
      whole map. It takes no taps, so a tap on a covered button still lands. */
   --z-title: 1050;

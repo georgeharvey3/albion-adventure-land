@@ -11,6 +11,7 @@ import { JourneyBar } from './JourneyBar';
 import { SearchOverlay } from './SearchOverlay';
 import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
+import { PhoneFinder } from './PhoneFinder';
 import { useWideScreen } from './useWideScreen';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
@@ -98,14 +99,11 @@ export function App() {
     KEY_RANK.sheet,
     onEscape(() => (browse ? setBrowse(false) : setCollapsed(true))),
   );
-  // `/` puts the cursor in the site finder. On a phone it lives in the Nearby
-  // tab; on a desktop it is in the card.
+  // `/` puts the cursor in the site finder. On a phone it floats over the map,
+  // so browse mode ends first; on a desktop it is in the card.
   useKeyLayer(true, KEY_RANK.list, ({ key }) => {
     if (key !== '/') return false;
-    if (!desktop) {
-      setTab('near');
-      setCollapsed(false);
-    }
+    if (!desktop) setBrowse(false);
     requestFinder();
     return true;
   });
@@ -129,6 +127,8 @@ export function App() {
           the size back up. */}
       <div className={browse && !desktop ? 'map-area hidden' : 'map-area'}>
         <MapView desktop={desktop} />
+        {/* On a desktop the finder and the chips are in the card. */}
+        {!desktop && <PhoneFinder />}
         {/* On a desktop the site opens in the spread (DesktopShell.tsx). */}
         {selectedSiteId && !desktop && <SiteDetail />}
         {titleOpen && <TitleCard onClosed={() => setTitleOpen(false)} />}

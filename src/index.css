@@ -2168,7 +2168,6 @@ body,
 .browse-toggle {
   flex: 0 0 auto;
   margin-left: auto;
-  /* Same box as .finder-toggle beside it, so the two tops and bottoms line up. */
   display: inline-flex;
   align-items: center;
   gap: var(--space-3xs);
@@ -2193,29 +2192,8 @@ body,
 }
 
 /* --- Site finder -----------------------------------------------------------
-   The magnifier joins the list header's control group beside Browse, and costs
-   no height until it is opened — which is the whole reason the finder lives on
-   this surface rather than in the app chrome. The open field takes its own row
-   under the header, and its results stand in for the list. */
-.finder-toggle {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.9rem;
-  height: 1.7rem;
-  padding: 0;
-  border: var(--rule-hairline) solid var(--color-edge);
-  border-radius: var(--radius-sm);
-  background: var(--color-paper-2);
-  color: var(--color-ink);
-  cursor: pointer;
-}
-.finder-toggle.on {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
+   One field, in the desktop card and in the phone's floating pill. Its results
+   show under it, in the drawer or in the floating panel. */
 .finder-field {
   display: flex;
   align-items: center;
@@ -2267,6 +2245,92 @@ body,
 }
 .finder-empty {
   padding-top: var(--space-sm);
+}
+
+/* --- Floating finder (issue #109) ------------------------------------------
+   On a phone the finder pill and one row of layer chips float at the top of
+   the map. The column lets taps through, so only the pill, the chips and the
+   results take them, and the map under the gaps still pans. */
+.float-finder {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  right: var(--space-xs);
+  max-height: calc(100% - 2 * var(--space-xs));
+  z-index: var(--z-float);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  pointer-events: none;
+}
+.float-finder > * {
+  pointer-events: auto;
+}
+.finder-field.pill {
+  flex: 0 0 auto;
+  margin-top: 0;
+  min-height: 40px;
+  padding: 0 var(--space-sm);
+  gap: var(--space-xs);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
+}
+.finder-field.pill > .icon {
+  color: var(--color-muted);
+}
+/* One row that scrolls sideways, as wide as its chips, so the map to the
+   right of the last chip still takes a pan. */
+.float-chips {
+  align-self: flex-start;
+  max-width: 100%;
+  display: flex;
+  gap: var(--space-2xs);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.float-chips::-webkit-scrollbar {
+  display: none;
+}
+.float-chips .chip {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
+  white-space: nowrap;
+}
+/* Over the map a see-through chip is lost in the paint, so an off chip keeps
+   its paper and greys its words instead. */
+.float-chips .chip.off {
+  opacity: 1;
+  color: var(--color-muted);
+}
+.float-chips .chip.off .dot {
+  opacity: 0.4;
+}
+.float-results {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--space-sm) var(--space-xs);
+  background: var(--color-paper-2);
+  border: var(--rule-hairline) solid var(--color-rule-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+/* The zoom and the basemap controls sit under the pill and the chips.
+   PhoneFinder.tsx sets --float-h on the map area. */
+.app:not(.desk) .leaflet-top.leaflet-right {
+  top: var(--float-h, 0px);
+}
+@media (min-width: 760px) {
+  /* The side panel lies over the map's right 380px. */
+  .app:not(.desk) .float-finder {
+    right: calc(380px + var(--space-xs));
+  }
+  .app:not(.desk) .leaflet-top.leaflet-right {
+    right: 380px;
+  }
 }
 
 /* A browse row is a disclosure: the header is a real button (keyboard-operable,
@@ -2863,7 +2927,6 @@ body,
     background: var(--color-paper-3);
   }
   .browse-toggle:hover,
-  .finder-toggle:hover,
   .drop-pin-btn:hover,
   .row-nav-btn:hover:not(:disabled) {
     border-color: var(--color-ink);
@@ -2873,7 +2936,6 @@ body,
     background: var(--color-paper-3);
   }
   .browse-toggle.on:hover,
-  .finder-toggle.on:hover,
   .drop-pin-btn.active:hover {
     background: var(--color-accent-soft);
     border-color: var(--color-accent-deep);
@@ -2954,7 +3016,7 @@ body,
   flex-wrap: wrap;
   padding-top: var(--space-xs);
 }
-.desk-chips .chip.mixed {
+.layer-chips .chip.mixed {
   opacity: 0.7;
 }
 .desk-tabs {

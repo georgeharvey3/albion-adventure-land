@@ -1,16 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import {
-  categoriesOf,
-  parentOf,
-  PARENT_CATEGORIES,
-  PARENT_CATEGORY_COLORS,
-  PARENT_CATEGORY_LABELS,
-  SITE_TYPES,
-  type ParentCategory,
-  type Site,
-  type SiteCategory,
-} from '../data/types';
+import type { Site } from '../data/types';
 import { DRAWER_TABS, loadViewState, saveViewState, type DrawerTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
@@ -21,6 +11,7 @@ import { Stats } from './Stats';
 import { SearchOverlay } from './SearchOverlay';
 import { SiteFinderField, SiteFinderResults, useFinderResults } from './SiteFinder';
 import { LogoMark } from './LogoMark';
+import { LayerChips } from './LayerChips';
 import { Strip } from './Strip';
 import { Spread } from './Spread';
 import { NO_INSETS } from '../map/insets';
@@ -35,53 +26,6 @@ import { copy } from '../copy';
 // The shell measures the parts of the map that it covers and puts them in the
 // store as the covered insets (src/map/insets.ts). The fence, the strip's view
 // and the floating controls all read that one value.
-
-function useLayers(sites: Site[]) {
-  return useMemo(() => {
-    const leaves = new Map<ParentCategory, Set<SiteCategory>>();
-    for (const site of sites) {
-      for (const category of categoriesOf(site)) {
-        const parent = parentOf(category);
-        let set = leaves.get(parent);
-        if (!set) leaves.set(parent, (set = new Set()));
-        set.add(category);
-      }
-    }
-    return PARENT_CATEGORIES.filter((p) => leaves.has(p)).map((parent) => ({
-      parent,
-      leaves: SITE_TYPES.filter((t) => leaves.get(parent)!.has(t)),
-    }));
-  }, [sites]);
-}
-
-/** One chip per layer: the quick form of the switch at the head of each layer
- *  in Filters. No counts. */
-function LayerChips() {
-  const sites = useStore((s) => s.sites);
-  const activeTypes = useStore((s) => s.activeTypes);
-  const setTypesActive = useStore((s) => s.setTypesActive);
-  const layers = useLayers(sites);
-  return (
-    <div className="desk-chips">
-      {layers.map(({ parent, leaves }) => {
-        const on = leaves.filter((t) => activeTypes.has(t)).length;
-        const allOn = on === leaves.length;
-        return (
-          <button
-            key={parent}
-            className={`chip ${allOn ? 'on' : on ? 'mixed' : 'off'}`}
-            onClick={() => setTypesActive(leaves, !allOn)}
-            aria-pressed={allOn}
-            aria-label={copy.filters.show(PARENT_CATEGORY_LABELS[parent])}
-          >
-            <span className="dot" style={{ background: PARENT_CATEGORY_COLORS[parent] }} />
-            {PARENT_CATEGORY_LABELS[parent]}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 /** The narrowest window that shows the drawer and the spread together. */
 const SPREAD_AND_DRAWER = 1200;
@@ -208,10 +152,9 @@ export function DesktopShell() {
               if (first) pickFound(first.site);
             }}
             focusRequest={focusRequest}
-            focusOnMount={false}
           />
           <JourneyBar />
-          <LayerChips />
+          <LayerChips className="desk-chips" />
           <nav className="desk-tabs">
             {DRAWER_TABS.map((id) => (
               <button
