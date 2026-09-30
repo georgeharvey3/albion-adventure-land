@@ -751,6 +751,27 @@ export function MapView({ desktop }: { desktop: boolean }) {
     }
   }, [lifted]);
 
+  /** On a phone, bring a pin into the band of map between the floating row
+   *  and the bottom inset, by the smallest pan, only when it is out of sight
+   *  there (issue #111). The pan holds the view, so the picture row does not
+   *  re-sort under it. Returns false when the pin was in sight. */
+  const panIntoSight = (map: L.Map, latlng: L.LatLngExpression): boolean => {
+    const container = map.getContainer();
+    const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
+    const top = float
+      ? Math.max(0, float.getBoundingClientRect().bottom - container.getBoundingClientRect().top)
+      : 0;
+    const bottom = useStore.getState().coveredInsets.bottom;
+    if (pinInSight(map.latLngToContainerPoint(latlng), map.getSize(), { top, bottom })) return false;
+    holdViewRef.current = true;
+    const pad = 2 * PIN_MARGIN;
+    map.panInside(latlng, {
+      paddingTopLeft: [pad, top + pad],
+      paddingBottomRight: [pad, bottom + pad],
+    });
+    return true;
+  };
+
   // A lift from the phone's picture row (issue #111) pans the map only when the
   // pin is out of sight: under the floating row, under the picture row, or off
   // the map. A journey's row holds sites outside the view, and the view box
@@ -765,23 +786,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     if (!map || desktop || lifted?.by !== 'strip' || selectedSiteId) return;
     const site = useStore.getState().sites.find((x) => x.id === lifted.id);
     if (!site) return;
-    const pan = () => {
-      const container = map.getContainer();
-      const float = container.parentElement?.querySelector<HTMLElement>('.float-finder');
-      const top = float
-        ? Math.max(0, float.getBoundingClientRect().bottom - container.getBoundingClientRect().top)
-        : 0;
-      const bottom = useStore.getState().coveredInsets.bottom;
-      const at = map.latLngToContainerPoint([site.lat, site.lng]);
-      if (pinInSight(at, map.getSize(), { top, bottom })) return;
-      holdViewRef.current = true;
-      const pad = 2 * PIN_MARGIN;
-      map.panInside([site.lat, site.lng], {
-        paddingTopLeft: [pad, top + pad],
-        paddingBottomRight: [pad, bottom + pad],
-      });
-    };
-    const timer = window.setTimeout(pan, LIFT_REST);
+    const timer = window.setTimeout(() => panIntoSight(map, [site.lat, site.lng]), LIFT_REST);
     return () => window.clearTimeout(timer);
     // Keyed on the lift alone, as the keyboard's pan above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1040,13 +1045,15 @@ export function MapView({ desktop }: { desktop: boolean }) {
       let target = L.point(size.x / 2, size.y / 2);
       const m = container.getBoundingClientRect();
       if (!sidePanel) {
+        // At the low height the picture row's card is the site (issue #111).
+        // A pin tap or a swipe must not drag the map about: the smallest pan,
+        // and only when the pin is out of sight, as for a lift.
+        if (useStore.getState().sheet === 'low') {
+          panIntoSight(map, latlng);
+          return;
+        }
         const top = float ? Math.max(0, float.getBoundingClientRect().bottom - m.top) : 0;
         const bottom = useStore.getState().coveredInsets.bottom;
-        // At the low height the picture row's card is the site (issue #111).
-        // A pin tap or a swipe must not drag the map about: it pans only
-        // when the pin is out of sight.
-        const at = map.latLngToContainerPoint(latlng);
-        if (useStore.getState().sheet === 'low' && pinInSight(at, size, { top, bottom })) return;
         const centre = openCentre(size, { ...NO_INSETS, top, bottom });
         target = L.point(centre.x, centre.y);
       } else if (card) {
@@ -1078,7 +1085,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
       ro.observe(card);
       stop = () => ro.disconnect();
     } else if (!sidePanel) {
-      // The peek resizes the map, and the middle height covers more of it.
+      // The sheet's heights cover the map by different amounts, and the
+      // picture row covers its bottom at the low height.
       const unsubscribe = useStore.subscribe((s, prev) => {
         if (s.coveredInsets.bottom !== prev.coveredInsets.bottom) pan();
       });

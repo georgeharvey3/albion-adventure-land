@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  closeSite,
+  afterClose,
   coveredBottom,
   dragIntent,
   listHeight,
   listInPlace,
   opensInSheet,
+  raiseClears,
   sameStops,
   sheetStops,
   showOnMap,
@@ -127,31 +128,34 @@ test('a selection off the low height opens the site in the sheet', () => {
 });
 
 test('a site opened from the row closes back to the row, still selected', () => {
-  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'mid', listSheet: 'low' }), {
-    keep: true,
+  assert.deepEqual(afterClose({ siteOpen: true, sheet: 'mid', listSheet: 'low' }), {
+    keepSelected: true,
     sheet: 'low',
   });
-  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'full', listSheet: 'low' }), {
-    keep: true,
+  assert.deepEqual(afterClose({ siteOpen: true, sheet: 'full', listSheet: 'low' }), {
+    keepSelected: true,
     sheet: 'low',
   });
 });
 
 test('a site opened from the list closes back to the list', () => {
-  assert.deepEqual(closeSite({ siteInSheet: true, sheet: 'full', listSheet: 'mid' }), {
-    keep: false,
+  assert.deepEqual(afterClose({ siteOpen: true, sheet: 'full', listSheet: 'mid' }), {
+    keepSelected: false,
     sheet: 'mid',
   });
 });
 
 test('closing a card at the low height clears it and keeps the height', () => {
-  assert.deepEqual(closeSite({ siteInSheet: false, sheet: 'low', listSheet: 'low' }), {
-    keep: false,
+  assert.deepEqual(afterClose({ siteOpen: false, sheet: 'low', listSheet: 'low' }), {
+    keepSelected: false,
     sheet: 'low',
   });
-  // Selected at the low height, then the list raised by hand.
-  assert.deepEqual(closeSite({ siteInSheet: false, sheet: 'mid', listSheet: 'low' }), {
-    keep: false,
-    sheet: 'mid',
-  });
+});
+
+test('a raise by hand off the low height clears the card', () => {
+  assert.equal(raiseClears('low', 'mid'), true);
+  assert.equal(raiseClears('low', 'full'), true);
+  assert.equal(raiseClears('low', 'low'), false);
+  assert.equal(raiseClears('mid', 'full'), false);
+  assert.equal(raiseClears('full', 'mid'), false);
 });

@@ -439,13 +439,17 @@ owner chose this design from a prototype (variant C, the branch
   tap on the name raises the sheet one height, as the handle does.
 - At the low height, a pin tap, a swipe or a map search only selects: the
   site's card comes to the middle of the picture row. A tap on the card opens
-  the site at the middle height (`openSite` in the store). `siteInSheet` in
-  the store says whether the sheet shows the site, and the low height clears
-  it. So the handle, a drag or a tab raises the sheet to the list. A site
-  saved from the last session opens at the middle height.
+  the site at the middle height (`openSite` in the store). A site picked in
+  the journey search opens the same way.
+- The sheet shows a site exactly when a site is selected off the low height.
+  This is derived, not stored. A raise by hand — the handle, a drag or a
+  tab — clears the card first (`raiseClears` in `src/state/sheet.ts`), so it
+  shows the list.
+- Only an open site is saved for the next session, and it opens at the
+  middle height. A card at the low height is not saved.
 - The body is the card layout without its header (`SiteSheetBody`). So
   `siteBodyLayout.ts` has no phone layout.
-- × or `Esc` closes the site (`closeSite` in `src/state/sheet.ts`). A site
+- × or `Esc` closes the site (`afterClose` in `src/state/sheet.ts`). A site
   opened from the picture row goes back to the low height, still selected,
   with its card in the middle. A site opened from the list goes back to the
   list at the height it was at (`listSheet` in the store), and at its old

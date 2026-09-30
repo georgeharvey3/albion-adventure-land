@@ -74,23 +74,34 @@ export function listInPlace(s: {
 
 /** Whether a selection at this height opens the site in the sheet. At the
  *  low height the picture row's middle card is the site (issue #111), so a
- *  selection there opens nothing: a card tap opens the site. */
+ *  selection there opens nothing: a card tap opens the site. On a phone the
+ *  site shows in the sheet exactly when a site is selected off the low
+ *  height; a raise by hand clears the card first (`raiseClears`). */
 export function opensInSheet(height: SheetHeight): boolean {
   return height !== 'low';
 }
 
-/** × or `Esc` on a phone. A site opened from the picture row goes back to the
- *  row, still selected, with its card in the middle. A site opened from the
- *  list goes back to the list at its height. A card with no site open in the
- *  sheet is cleared, and the height stays. */
-export function closeSite(s: {
-  siteInSheet: boolean;
+/** × or `Esc` on a phone. `siteOpen` is a selection off the low height. A
+ *  site opened from the picture row goes back to the row, still selected,
+ *  with its card in the middle. A site opened from the list goes back to the
+ *  list at its height. A card at the low height is cleared. */
+export function afterClose(s: {
+  siteOpen: boolean;
   sheet: SheetHeight;
   listSheet: SheetHeight;
-}): { keep: boolean; sheet: SheetHeight } {
-  if (!s.siteInSheet) return { keep: false, sheet: s.sheet };
-  if (s.listSheet === 'low') return { keep: true, sheet: 'low' };
-  return { keep: false, sheet: s.listSheet };
+}): { keepSelected: boolean; sheet: SheetHeight } {
+  if (!s.siteOpen) return { keepSelected: false, sheet: s.sheet };
+  if (s.listSheet === 'low') return { keepSelected: true, sheet: 'low' };
+  return { keepSelected: false, sheet: s.listSheet };
+}
+
+/** Whether a raise by hand (the handle, a drag, a tab) clears the selection.
+ *  At the low height the selection is the picture row's card, and a raise by
+ *  hand shows the list, so the card goes. Only a tap on the card opens its
+ *  site at the middle height. A selection off the low height is the open
+ *  site, and a raise keeps it. */
+export function raiseClears(from: SheetHeight, to: SheetHeight): boolean {
+  return from === 'low' && to !== 'low';
 }
 
 /** The height the list comes back at when the open site closes: the height

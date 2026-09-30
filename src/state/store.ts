@@ -40,7 +40,7 @@ import { loadViewState, saveViewState } from "./viewState";
 import type { JourneyEnd, SearchResult, SearchTarget } from "../search/types";
 import { NO_INSETS, sameInsets, type CoveredInsets } from "../map/insets";
 import type { Viewport } from "./strip";
-import { closeSite as closeRule, listHeight, opensInSheet, type SheetHeight } from "./sheet";
+import { afterClose, listHeight, opensInSheet, type SheetHeight } from "./sheet";
 import { copy } from "../copy";
 
 export interface Position {
@@ -211,11 +211,6 @@ interface AppState {
   // UI (issue #112): the height the list was at when the open site opened.
   // Closing the site on a phone brings the list back at this height.
   listSheet: SheetHeight;
-  // UI (issue #111): whether the phone sheet shows the selected site. At the
-  // low height the picture row's middle card is the site, so a selection
-  // there does not set this, and the low height clears it. A card tap
-  // (`openSite`) and a selection off the low height set it.
-  siteInSheet: boolean;
   // UI (issue #88): the site the mouse or the keyboard is on, and what put it
   // there. A lifted site marks its pin and its list row together, and a pin or
   // a key lift shows the peek over the map. A row lift shows no peek: the row
@@ -516,7 +511,6 @@ export const useStore = create<AppState>((set, get) => ({
   selectedSiteId: loadViewState().selectedSiteId,
   sheet: "mid",
   listSheet: "mid",
-  siteInSheet: !!loadViewState().selectedSiteId,
   lifted: null,
   finderWanted: false,
   coveredInsets: NO_INSETS,
@@ -1003,35 +997,33 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => {
-    saveViewState({ selectedSiteId });
-    const { sheet, listSheet, siteInSheet } = get();
-    set({
-      selectedSiteId,
-      siteInSheet: selectedSiteId !== null && opensInSheet(sheet),
-      listSheet: listHeight({ siteOpen: siteInSheet, sheet, listSheet }),
-    });
+    const { sheet, listSheet, selectedSiteId: open } = get();
+    // A session reopens on the site that was open. A card at the phone's low
+    // height (issue #111) is not an open site, so it is not kept.
+    saveViewState({ selectedSiteId: opensInSheet(sheet) ? selectedSiteId : null });
+    set({ selectedSiteId, listSheet: listHeight({ siteOpen: !!open, sheet, listSheet }) });
   },
   openSite: (selectedSiteId) => {
     saveViewState({ selectedSiteId });
-    const { sheet, listSheet, siteInSheet } = get();
+    const { sheet, listSheet, selectedSiteId: open } = get();
     set({
       selectedSiteId,
-      siteInSheet: true,
       sheet: "mid",
-      listSheet: listHeight({ siteOpen: siteInSheet, sheet, listSheet }),
+      listSheet: listHeight({ siteOpen: !!open, sheet, listSheet }),
     });
   },
   closeSite: () => {
-    const to = closeRule(get());
-    if (!to.keep) saveViewState({ selectedSiteId: null });
-    set({
-      sheet: to.sheet,
-      siteInSheet: false,
-      ...(to.keep ? {} : { selectedSiteId: null }),
-    });
+    const { selectedSiteId, sheet, listSheet } = get();
+    const to = afterClose({ siteOpen: !!selectedSiteId && opensInSheet(sheet), sheet, listSheet });
+    saveViewState({ selectedSiteId: null });
+    set({ sheet: to.sheet, ...(to.keepSelected ? {} : { selectedSiteId: null }) });
   },
-  // The low height shows the picture row, where the card is the site.
-  setSheet: (sheet) => set(sheet === "low" ? { sheet, siteInSheet: false } : { sheet }),
+  setSheet: (sheet) => {
+    // A site lowered to the phone's low height is a card, not an open site,
+    // so it is not kept for the next session (issue #111).
+    if (!opensInSheet(sheet)) saveViewState({ selectedSiteId: null });
+    set({ sheet });
+  },
   setLifted: (lifted) => set({ lifted }),
   dropLifted: (siteId) => {
     if (get().lifted?.id === siteId) set({ lifted: null });
@@ -1153,11 +1145,13 @@ export const useStore = create<AppState>((set, get) => ({
       if (result.siteId) {
         get().revealSite(result.siteId);
         get().setSelected(result.siteId);
+        // The sheet goes to the low height, where the site is the picture
+        // row's card, not an open site (issue #111).
+        saveViewState({ selectedSiteId: null });
       }
       set({
         searchTarget: null,
         sheet: "low",
-        siteInSheet: false,
         focus: {
           lat: result.lat,
           lng: result.lng,
@@ -1191,7 +1185,10 @@ export const useStore = create<AppState>((set, get) => ({
 
     // A site result sets the end AND opens its card: one tap, both intents, and
     // the only way to look a site up by name without the box needing a mode.
-    if (result.siteId) get().setSelected(result.siteId);
+    // On a phone the journey search opens from the low height, where a plain
+    // selection is only the picture row's card (issue #111), so it opens the
+    // site. The desktop ignores the sheet height.
+    if (result.siteId) get().openSite(result.siteId);
 
     set({
       searchTarget: null,

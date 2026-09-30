@@ -21,10 +21,13 @@ import { KEY_RANK, onEscape } from '../state/keys';
 import {
   coveredBottom,
   listInPlace,
+  opensInSheet,
+  raiseClears,
   sameStops,
   sheetStops,
   stepSheet,
   tapTab,
+  type SheetHeight,
   type SheetStops,
 } from '../state/sheet';
 import { rowShown } from '../state/phoneStrip';
@@ -58,12 +61,24 @@ export function App() {
   const sidePanel = useSidePanel();
   // On a phone the open site takes the list's place in the sheet (issue #112).
   // At the low height the picture row's middle card is the selected site
-  // (issue #111), and the sheet shows the site only once it is opened.
+  // (issue #111): the sheet shows a site only off the low height.
   const phone = !desktop && !sidePanel;
-  const siteInSheet = useStore((s) => s.siteInSheet);
   const closeSite = useStore((s) => s.closeSite);
-  const openSite =
-    phone && siteInSheet && selectedSiteId ? sites.find((x) => x.id === selectedSiteId) : undefined;
+  const sheetSite =
+    phone && selectedSiteId && opensInSheet(sheet)
+      ? sites.find((x) => x.id === selectedSiteId)
+      : undefined;
+  // A raise by hand — the handle, a drag, a tab — shows the list. On a phone
+  // it clears the card at the low height first; only a card tap opens its
+  // site (`openSite`). Read live, because the drag calls it from a listener.
+  const raiseSheet = useCallback(
+    (to: SheetHeight) => {
+      const { sheet: from, selectedSiteId: card } = useStore.getState();
+      if (phone && card && raiseClears(from, to)) setSelected(null);
+      setSheet(to);
+    },
+    [phone, setSelected, setSheet],
+  );
   // Reopen on the tab that was open when the app was last closed.
   // A first visit opens on Nearby: "what is close to me now" is the question
   // the app exists to answer.
@@ -76,7 +91,7 @@ export function App() {
   const selectTab = (next: SheetTab) => {
     const to = tapTab({ tab, height: sheet }, next);
     setTab(to.tab);
-    setSheet(to.height);
+    raiseSheet(to.height);
   };
 
   // The three heights in px (issue #110). The low height is the sheet head —
@@ -109,7 +124,7 @@ export function App() {
   const { dragPx, handleProps } = useSheetDrag({
     enabled: !sidePanel,
     sheet,
-    setSheet,
+    setSheet: raiseSheet,
     stops,
     head: sheetHead,
     body: sheetBody,
@@ -130,9 +145,9 @@ export function App() {
       hadSite.current = false;
       return;
     }
-    if (openSite && !hadSite.current) restoreScroll.current = true;
-    hadSite.current = !!openSite;
-  }, [phone, openSite]);
+    if (sheetSite && !hadSite.current) restoreScroll.current = true;
+    hadSite.current = !!sheetSite;
+  }, [phone, sheetSite]);
   // Stable, so React calls it only when the list mounts and unmounts.
   const listBodyRef = useCallback((el: HTMLDivElement | null) => {
     setSheetBody(el);
@@ -173,7 +188,7 @@ export function App() {
   useEffect(() => {
     if (!destination || desktop) return;
     setTab('near');
-    if (sheet === 'low') setSheet('mid');
+    if (sheet === 'low') raiseSheet('mid');
     // Only a new destination moves the sheet, not a change of shell.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination]);
@@ -250,7 +265,7 @@ export function App() {
         <>
         <div
           ref={sheetRef}
-          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}${openSite ? ' site-open' : ''}`}
+          className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}${sheetSite ? ' site-open' : ''}`}
           style={{ ['--sheet-h' as string]: sheetPx !== null ? `${sheetPx}px` : undefined }}
         >
           {/* The head is the low height, so it shows at every height. The
@@ -267,8 +282,8 @@ export function App() {
               <span className="sheet-grip" aria-hidden="true" />
             </button>
             <JourneyBar />
-            {openSite ? (
-              <SitePeek site={openSite} />
+            {sheetSite ? (
+              <SitePeek site={sheetSite} />
             ) : (
             <nav className="tabs">
               {TABS.map((id) => (
@@ -289,10 +304,10 @@ export function App() {
           {/* Mounted while a drag lifts the sheet off the low height, so the
               list rises with the finger. */}
           {(sheet !== 'low' || dragging) &&
-            (openSite ? (
+            (sheetSite ? (
               // A new site starts at its top.
-              <div className="sheet-body" ref={setSheetBody} key={openSite.id}>
-                <SiteSheetBody site={openSite} />
+              <div className="sheet-body" ref={setSheetBody} key={sheetSite.id}>
+                <SiteSheetBody site={sheetSite} />
               </div>
             ) : (
               <div
