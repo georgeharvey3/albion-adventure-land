@@ -334,6 +334,9 @@ keeps the floating card.
   named parts, and `src/ui/siteBodyLayout.ts` lists where each layout puts
   them. A new part must go in the card layout and the spread layout.
   `tests/siteBody.test.ts` fails until it does.
+- The pictures are the lead of the spread: a carousel across the top of the
+  page, one picture at a time. A swipe, the ‹ › buttons and the thumbs move
+  it. The arrow keys do not, because in the spread they step between sites.
 - One CSS grid cannot make the two columns. A grid shares its row heights
   between the columns, so a long write-up moved the buttons apart.
 - The spread is the covered inset on the right. The map pans the site to the

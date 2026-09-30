@@ -1,6 +1,6 @@
 // The named parts of `SiteBody` (SiteDetail.tsx), and where each layout puts
 // them (issue #90). The card and the browse row stack every part in one
-// column. The spread reads the write-up in a main column and puts the actions
+// column. The spread shows the pictures across its top, and reads the write-up in a main column and puts the actions
 // and the facts in a side column, and a container query folds the two into one
 // column when the spread is narrow.
 //
@@ -30,13 +30,18 @@ export type SiteBodyPart = (typeof SITE_BODY_PARTS)[number];
 
 export const SITE_BODY_LAYOUT: {
   card: readonly SiteBodyPart[];
-  spread: { main: readonly SiteBodyPart[]; side: readonly SiteBodyPart[] };
+  spread: {
+    lead: readonly SiteBodyPart[];
+    main: readonly SiteBodyPart[];
+    side: readonly SiteBodyPart[];
+  };
 } = {
   card: SITE_BODY_PARTS,
-  // The spread lifts the first picture out as the lead. The gallery in the
-  // main column holds the rest.
+  // The spread shows its pictures as the lead, across the top of the page:
+  // one at a time, full size, in a carousel.
   spread: {
-    main: ['header', 'writeUp', 'source', 'listing', 'gallery'],
+    lead: ['gallery'],
+    main: ['header', 'writeUp', 'source', 'listing'],
     side: ['actions', 'badges', 'grade', 'partOf', 'walkTime', 'access', 'hours'],
   },
 };

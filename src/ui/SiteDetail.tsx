@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
 import {
   PARENT_CATEGORY_LABELS,
@@ -131,17 +131,23 @@ function SiteGallery({ images }: { images: SiteImage[] }) {
   );
 }
 
-/** The spread's lead: the first picture, the width of the page. A picture too
- *  small to fill it sits whole on a dark ground rather than blown up. With no
- *  picture, or one that fails to load, a wash in the site's colour names the
- *  kind of site, as in the strip. A click opens the viewer on every picture. */
-function LeadPicture({ site }: { site: Site }) {
-  const [broken, setBroken] = useState(false);
-  const [opened, setOpened] = useState(false);
-  useEffect(() => setBroken(false), [site.id]);
-  const images = site.images ?? [];
-  const image = images[0];
-  if (!image || broken) {
+/** The spread's lead (issue #90): every picture of the site, the width of the
+ *  page, one at a time. A swipe or a trackpad scroll moves along them, and so
+ *  do the ‹ › buttons and the thumbs, which also show the one in view. The
+ *  arrow keys stay with the spread and step between sites.
+ *
+ *  A picture too small to fill the page sits whole on a dark ground rather
+ *  than blown up. With no picture, or none that loads, a wash in the site's
+ *  colour names the kind of site, as in the strip. A click opens the viewer
+ *  at the picture in view. */
+function LeadCarousel({ site }: { site: Site }) {
+  const [broken, setBroken] = useState<Set<string>>(new Set());
+  const [index, setIndex] = useState(0);
+  const [opened, setOpened] = useState<number | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const shown = (site.images ?? []).filter((img) => !broken.has(img.url));
+
+  if (!shown.length) {
     return (
       <div
         className="spread-lead painted"
@@ -151,25 +157,78 @@ function LeadPicture({ site }: { site: Site }) {
       </div>
     );
   }
-  const small = !!image.width && image.width < 600;
+
+  const go = (i: number) => {
+    const row = rowRef.current;
+    if (row) row.scrollTo({ left: i * row.clientWidth, behavior: 'smooth' });
+  };
+  // The snap point in view. A scroll, not a click, is the one truth: a
+  // swipe moves the row without any button.
+  const onScroll = () => {
+    const row = rowRef.current;
+    if (row?.clientWidth) setIndex(Math.round(row.scrollLeft / row.clientWidth));
+  };
+  const multi = shown.length > 1;
+  const at = Math.min(index, shown.length - 1);
+
   return (
-    <div className="spread-lead">
-      <button
-        className="shot-open"
-        onClick={() => setOpened(true)}
-        aria-label={image.caption ? copy.site.enlarge(image.caption) : copy.site.enlargePicture}
-      >
-        <img
-          key={image.url}
-          className={small ? 'small' : undefined}
-          src={`${import.meta.env.BASE_URL}${image.url}`}
-          alt={image.caption ?? ''}
-          decoding="async"
-          onError={() => setBroken(true)}
-        />
-      </button>
-      {image.caption && <p className="spread-caption">{image.caption}</p>}
-      {opened && <Lightbox images={images} startIndex={0} onClose={() => setOpened(false)} />}
+    <div className={multi ? 'spread-lead multi' : 'spread-lead'}>
+      <div className="lead-row" ref={rowRef} onScroll={onScroll}>
+        {shown.map((img, i) => (
+          <figure className="lead-slide" key={img.url}>
+            <button
+              className="shot-open"
+              onClick={() => setOpened(i)}
+              aria-label={img.caption ? copy.site.enlarge(img.caption) : copy.site.enlargePicture}
+            >
+              <img
+                className={img.width && img.width < 600 ? 'small' : undefined}
+                src={`${import.meta.env.BASE_URL}${img.url}`}
+                alt={img.caption ?? ''}
+                loading={i ? 'lazy' : undefined}
+                decoding="async"
+                onError={() => setBroken((b) => new Set(b).add(img.url))}
+              />
+            </button>
+            {img.caption && <figcaption className="spread-caption">{img.caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+      {multi && (
+        <>
+          <button
+            className="lead-step prev"
+            onClick={() => go(at - 1)}
+            disabled={at === 0}
+            aria-label={copy.lightbox.previous}
+          >
+            ‹
+          </button>
+          <button
+            className="lead-step next"
+            onClick={() => go(at + 1)}
+            disabled={at === shown.length - 1}
+            aria-label={copy.lightbox.next}
+          >
+            ›
+          </button>
+          <div className="lead-thumbs">
+            {shown.map((img, i) => (
+              <button
+                key={img.url}
+                onClick={() => go(i)}
+                aria-current={i === at}
+                aria-label={copy.site.picture(i + 1)}
+              >
+                <img src={`${import.meta.env.BASE_URL}${img.url}`} alt="" loading="lazy" decoding="async" />
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {opened !== null && (
+        <Lightbox images={shown} startIndex={opened} onClose={() => setOpened(null)} />
+      )}
     </div>
   );
 }
@@ -188,8 +247,8 @@ interface SiteBodyProps {
    *  protect and opening the row was already the request to read, so it
    *  starts expanded. */
   collapseDescription?: boolean;
-  /** The desktop spread (issue #90) lifts the first picture out as the lead,
-   *  and lays the parts out in two columns. See siteBodyLayout.ts. */
+  /** The desktop spread (issue #90) shows the pictures as a carousel across
+   *  the top, and lays the parts out in two columns. See siteBodyLayout.ts. */
   variant?: 'card' | 'spread';
 }
 
@@ -240,9 +299,7 @@ export function SiteBody({
   }, [site.id, writeUp, collapseDescription]);
 
   const distance = position ? haversine(position, site) : null;
-  // The spread shows the first picture as its lead, so its gallery is the rest.
   const images = site.images ?? [];
-  const gallery = variant === 'spread' ? images.slice(1) : images;
 
   // Listing links (derived data). A sub-feature points back to its listing's main
   // write-up; a main point lists the features grouped under it.
@@ -308,7 +365,14 @@ export function SiteBody({
     ),
     access: site.access && <p className="card-meta">{copy.site.access(site.access)}</p>,
     hours: <OpeningTimes site={site} />,
-    gallery: gallery.length > 0 && <SiteGallery images={gallery} />,
+    // In the spread the pictures are the lead, and a site with none still
+    // gets the painted one.
+    gallery:
+      variant === 'spread' ? (
+        <LeadCarousel site={site} />
+      ) : (
+        images.length > 0 && <SiteGallery images={images} />
+      ),
     writeUp: (
       <>
         {site.entries ? (
@@ -442,10 +506,10 @@ export function SiteBody({
     names.map((name) => <Fragment key={name}>{parts[name]}</Fragment>);
 
   if (variant === 'card') return <>{place(SITE_BODY_LAYOUT.card)}</>;
-  const { main, side } = SITE_BODY_LAYOUT.spread;
+  const { lead, main, side } = SITE_BODY_LAYOUT.spread;
   return (
     <>
-      <LeadPicture site={site} />
+      {place(lead)}
       <div className="spread-body">
         <div className="spread-main">{place(main)}</div>
         <div className="spread-side">{place(side)}</div>

@@ -3287,28 +3287,45 @@ body,
 }
 
 .spread-lead {
+  position: relative;
   aspect-ratio: 16 / 9;
   background: var(--color-ink);
 }
-.spread-lead .shot-open {
+/* One picture per snap point. A swipe or a trackpad moves along the row. The
+   row has no scrollbar, because the thumbs show where it is. */
+.lead-row {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.lead-row::-webkit-scrollbar {
+  display: none;
+}
+.lead-slide {
+  position: relative;
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: start;
+}
+.lead-slide .shot-open {
   height: 100%;
 }
-.spread-lead img {
+.lead-slide img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 /* A picture too small for the page sits whole, not blown up. */
-.spread-lead img.small {
+.lead-slide img.small {
   object-fit: contain;
   background: color-mix(in oklch, var(--color-ink) 90%, var(--color-paper));
 }
 /* The caption sits on the foot of the picture, as it sits under it in the
-   card. */
-.spread-lead {
-  position: relative;
-}
+   card. With thumbs, it sits above them. */
 .spread-caption {
   position: absolute;
   left: var(--space-sm);
@@ -3322,6 +3339,60 @@ body,
   font-size: var(--text-2xs);
   color: var(--color-paper-2);
   pointer-events: none;
+}
+.spread-lead.multi .spread-caption {
+  bottom: calc(var(--space-sm) + 48px);
+}
+.lead-step {
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-paper-2) 90%, transparent);
+  box-shadow: 0 2px 8px var(--ink-shadow);
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.lead-step.prev {
+  left: var(--space-sm);
+}
+.lead-step.next {
+  right: var(--space-sm);
+}
+.lead-step:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+.lead-thumbs {
+  position: absolute;
+  left: var(--space-md);
+  bottom: var(--space-sm);
+  display: flex;
+  gap: var(--space-2xs);
+}
+.lead-thumbs button {
+  width: 56px;
+  height: 40px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid color-mix(in oklch, var(--color-paper-2) 50%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--color-ink);
+  cursor: pointer;
+}
+.lead-thumbs button[aria-current="true"] {
+  border-color: var(--color-paper-2);
+}
+.lead-thumbs img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .spread-lead.painted {
   display: grid;
@@ -3375,9 +3446,6 @@ body,
   font-size: 3.3em;
   line-height: 0.85;
   color: var(--color-accent);
-}
-.spread-main .card-gallery {
-  margin-top: var(--space-md);
 }
 .spread-side {
   display: grid;

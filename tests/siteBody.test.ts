@@ -11,9 +11,13 @@ test('the card shows every part once', () => {
   assert.deepEqual(sorted(SITE_BODY_LAYOUT.card), sorted(SITE_BODY_PARTS));
 });
 
-test('the spread shows every part once, across its two columns', () => {
-  const { main, side } = SITE_BODY_LAYOUT.spread;
-  assert.deepEqual(sorted([...main, ...side]), sorted(SITE_BODY_PARTS));
+test('the spread shows every part once, across its lead and its two columns', () => {
+  const { lead, main, side } = SITE_BODY_LAYOUT.spread;
+  assert.deepEqual(sorted([...lead, ...main, ...side]), sorted(SITE_BODY_PARTS));
+});
+
+test('the spread shows its pictures in the lead', () => {
+  assert.deepEqual(SITE_BODY_LAYOUT.spread.lead, ['gallery']);
 });
 
 test('the spread reads the write-up in the main column and acts from the side', () => {
