@@ -2639,6 +2639,9 @@ body,
   padding: 0 var(--space-sm) var(--space-xs);
 }
 .search-shortcuts button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
   border: var(--rule-hairline) solid var(--color-edge);
   background: var(--color-paper-2);
   color: var(--color-accent);
