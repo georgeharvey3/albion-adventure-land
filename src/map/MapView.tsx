@@ -955,7 +955,11 @@ export function MapView({ desktop }: { desktop: boolean }) {
         const best = strips.reduce((a, b) => (b.area > a.area ? b : a));
         if (best.area > 0) target = best.at;
       }
-      map.panBy(map.latLngToContainerPoint(latlng).subtract(target));
+      // panTo, not panBy: panTo goes through setView, which holds the new
+      // centre inside the plate fence first. A panBy ran past the edge of the
+      // plate for a site near the coast, then sprang back on `moveend`.
+      const offset = map.latLngToContainerPoint(latlng).subtract(target);
+      map.panTo(map.containerPointToLatLng(size.divideBy(2).add(offset)));
     };
 
     pan();
