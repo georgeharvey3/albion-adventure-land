@@ -3037,11 +3037,13 @@ body,
   box-shadow: none;
 }
 
-/* The strip: one row of frames floating on the bottom of the map. The paper
-   comes up from the bottom edge and fades out above the frames, so the map
-   shows through behind the heading and never ends in a hard band. It sits
-   under Leaflet's controls (z-index 1000), so the collapsed credits rest in
-   its right corner, in the band the padding keeps free under the frames. */
+/* The strip: one row of frames floating on the bottom of the map. A light
+   wash of paper comes up from the bottom edge and eases out behind the
+   frames, so the map still reads through it and never ends in a hard band.
+   The frames carry their own paper, so the wash only has to settle the
+   heading, and a paper halo on the heading does the rest. It sits under
+   Leaflet's controls (z-index 1000), so the collapsed credits rest in its
+   right corner, in the band the padding keeps free under the frames. */
 .strip {
   position: absolute;
   left: 0;
@@ -3051,7 +3053,9 @@ body,
   padding: var(--space-xl) var(--space-md) var(--space-lg);
   background: linear-gradient(
     to top,
-    color-mix(in oklch, var(--color-paper) 96%, transparent) 60%,
+    color-mix(in oklch, var(--color-paper) 86%, transparent),
+    color-mix(in oklch, var(--color-paper) 55%, transparent) 30%,
+    color-mix(in oklch, var(--color-paper) 18%, transparent) 60%,
     color-mix(in oklch, var(--color-paper) 0%, transparent)
   );
   pointer-events: none;
@@ -3066,6 +3070,9 @@ body,
   font-style: italic;
   font-size: var(--text-md);
   color: var(--color-ink);
+  text-shadow:
+    0 0 6px var(--color-paper),
+    0 0 12px var(--color-paper);
 }
 .strip-head.empty {
   padding: var(--space-md) 0;
@@ -3080,7 +3087,49 @@ body,
   list-style: none;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
+}
+/* The bar is the only sign on a mouse that the row goes on past the edge,
+   so it always shows: a slim ink pill on a faint groove, with no arrows. It
+   darkens under the pointer and while dragged. It is not tied to a hover on
+   the row: Chrome does not repaint a custom scrollbar when the row's hover
+   state changes, so such a bar showed only once the pointer was on it. The
+   transparent border gives a 10 px target round a 6 px pill. Chrome ignores
+   the ::-webkit-scrollbar rules once `scrollbar-color` is set, and its
+   standard bar has arrows, so the standard properties are for the browsers
+   without the pseudo-elements. */
+.strip-row::-webkit-scrollbar {
+  height: 10px;
+}
+.strip-row::-webkit-scrollbar-button {
+  display: none;
+}
+.strip-row::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.strip-row::-webkit-scrollbar-track,
+.strip-row::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: padding-box;
+}
+.strip-row::-webkit-scrollbar-track {
+  background-color: color-mix(in oklch, var(--color-ink) 8%, transparent);
+}
+.strip-row::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklch, var(--color-ink) 26%, transparent);
+}
+.strip-row::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklch, var(--color-ink) 42%, transparent);
+}
+.strip-row::-webkit-scrollbar-thumb:active {
+  background-color: color-mix(in oklch, var(--color-ink) 55%, transparent);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .strip-row {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--color-ink) 26%, transparent)
+      color-mix(in oklch, var(--color-ink) 8%, transparent);
+  }
 }
 .frame {
   display: flex;
