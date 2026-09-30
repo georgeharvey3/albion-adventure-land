@@ -63,7 +63,7 @@ export interface Position {
 /** A lifted site (issue #88), and what lifted it. */
 export interface Lift {
   id: string;
-  by: 'pin' | 'row' | 'key';
+  by: 'pin' | 'row' | 'key' | 'strip'; // PROTOTYPE #111: 'strip'
 }
 
 // Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps

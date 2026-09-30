@@ -12,6 +12,7 @@
     "refresh:camra": "tsx scripts/refresh-camra-status.ts",
     "scrape:ukc": "tsx scripts/scrape-ukc.ts",
     "dev": "vite",
+    "prototype:111": "vite --host --port 5211",
     "build": "npm run ingest && tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",

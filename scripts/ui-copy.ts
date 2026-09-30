@@ -34,6 +34,7 @@ const EXEMPT: { path: RegExp; why: string }[] = [
   { path: /^src\/map\/basemaps\.ts$/, why: 'tile attributions are data; the layer names are in copy' },
   { path: /^src\/geo\/osrm\.ts$/, why: 'the OSRM attribution is data' },
   { path: /^src\/search\/places\.ts$/, why: 'country names are gazetteer data' },
+  { path: /\.prototype\.tsx$/, why: 'PROTOTYPE — throwaway switcher labels' },
   { path: /^src\/links\//, why: 'developer errors for a bad call, never shown' },
 ];
 

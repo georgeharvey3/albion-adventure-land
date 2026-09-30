@@ -20,6 +20,7 @@ import { PinPeek } from './pinPeek';
 import { registerKeyLayer } from '../ui/useKeyLayer';
 import { copy } from '../copy';
 import { useSidePanel } from '../ui/useWideScreen';
+import { stripIds, stripOn } from '../ui/PhoneStrip.prototype';
 
 // Leaflet map (spec §6 F2): pins coloured by type, live location dot + accuracy
 // ring, and a "drop pin" fallback when geolocation is unavailable. Uses Leaflet
@@ -204,7 +205,18 @@ export function MapView({ desktop }: { desktop: boolean }) {
   // through a ref.
   const sidePanel = useSidePanel();
   const pickPin = useRef((_id: string) => {});
-  pickPin.current = (id: string) => setSelected(id);
+  pickPin.current = (id: string) => {
+    // PROTOTYPE #111: at the low height a pin tap lifts its frame in the row;
+    // a second tap on the lifted pin opens the site.
+    const st = useStore.getState();
+    if (stripOn && !desktop && !sidePanel && st.sheet === 'low' && !st.selectedSiteId && stripIds.has(id)) {
+      if (st.lifted?.id !== id) {
+        st.setLifted({ id, by: 'strip' });
+        return;
+      }
+    }
+    setSelected(id);
+  };
   const setPosition = useStore((s) => s.setPosition);
   const sites = useStore((s) => s.sites);
   const outing = useStore((s) => s.outing);
@@ -644,7 +656,10 @@ export function MapView({ desktop }: { desktop: boolean }) {
       marker.on('mouseover', () => {
         if (canHover()) setLifted({ id: site.id, by: 'pin' });
       });
-      marker.on('mouseout', () => dropLifted(site.id));
+      // PROTOTYPE #111: a touch tap ends in a mouseout; keep the row's lift.
+      marker.on('mouseout', () => {
+        if (useStore.getState().lifted?.by !== 'strip') dropLifted(site.id);
+      });
       marker.addTo(layer);
       markersRef.current.set(site.id, { marker, view });
     }
@@ -691,7 +706,7 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const peek = peekRef.current;
     if (!map || !peek) return;
     const entry =
-      lifted && lifted.by !== 'row' && lifted.id !== selectedSiteId
+      lifted && lifted.by !== 'row' && lifted.by !== 'strip' && lifted.id !== selectedSiteId
         ? markersRef.current.get(lifted.id)
         : undefined;
     if (!entry) {
@@ -733,6 +748,30 @@ export function MapView({ desktop }: { desktop: boolean }) {
       // Clear of the covered insets too, or the pin lands under the strip.
       map.panInside(entry.marker.getLatLng(), fitPadding(80));
     }
+  }, [lifted]);
+
+  // PROTOTYPE #111: a lift from the phone row pans only when the pin is out of
+  // sight, between the floating row and the bottom inset. The pan holds the
+  // row's view, so the row does not re-sort under the finger.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || desktop || lifted?.by !== 'strip') return;
+    const site = useStore.getState().sites.find((x) => x.id === lifted.id);
+    if (!site) return;
+    const size = map.getSize();
+    const float = map.getContainer().parentElement?.querySelector<HTMLElement>('.float-finder');
+    const m = map.getContainer().getBoundingClientRect();
+    const top = float ? float.getBoundingClientRect().bottom - m.top : 0;
+    const bottom = useStore.getState().coveredInsets.bottom;
+    const at = map.latLngToContainerPoint([site.lat, site.lng]);
+    const pad = 24;
+    if (at.x >= pad && at.x <= size.x - pad && at.y >= top + pad && at.y <= size.y - bottom - pad) return;
+    holdViewRef.current = true;
+    map.panInside([site.lat, site.lng], {
+      paddingTopLeft: [pad * 2, top + pad * 2],
+      paddingBottomRight: [pad * 2, bottom + pad * 2],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lifted]);
 
   // Resize the pins once a zoom settles (issue #74). Not on every frame of a

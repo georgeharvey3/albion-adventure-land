@@ -29,6 +29,7 @@ import {
 import { NO_INSETS } from '../map/insets';
 import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
+import { PhoneStrip, StripSwitcher, stripFloats, stripOn, stripVariant } from './PhoneStrip.prototype';
 
 const TABS: SheetTab[] = ['near', 'filters', 'outing', 'stats'];
 
@@ -139,7 +140,11 @@ export function App() {
   // a pin brought into view keeps clear of it, as on the desktop (map/insets.ts).
   // Set when the sheet rests, never during a drag. The desktop shell sets its
   // own insets, and the side panel keeps none, as before.
-  const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) : 0;
+  // PROTOTYPE #111: the row shows at the low height, with no site open.
+  const stripShown = stripOn && phone && sheet === 'low' && !dragging && !openSite;
+  const [stripPx, setStripPx] = useState(0);
+  const floatRow = stripFloats && stripShown ? stripPx : 0;
+  const covered = !desktop && !sidePanel && stops ? coveredBottom(stops, sheet) + floatRow : 0;
   useEffect(() => {
     if (desktop) return;
     setCoveredInsets({ ...NO_INSETS, bottom: covered });
@@ -211,6 +216,7 @@ export function App() {
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder />}
+        {phone && stripFloats && <PhoneStrip shown={stripShown} onHeight={setStripPx} />}
         {/* A phone opens the site in the sheet, and a desktop in the spread
             (DesktopShell.tsx). The side panel keeps the floating card. */}
         {selectedSiteId && sidePanel && !desktop && !inPlace && <SiteDetail />}
@@ -247,6 +253,8 @@ export function App() {
             >
               <span className="sheet-grip" aria-hidden="true" />
             </button>
+            {/* PROTOTYPE #111: C stays in the head through a drag off the low height. */}
+            {phone && stripVariant === 'C' && sheet === 'low' && !openSite && <PhoneStrip shown />}
             <JourneyBar />
             {openSite ? (
               <SitePeek site={openSite} />
@@ -292,6 +300,7 @@ export function App() {
         {/* A panel over the sheet's own footprint, not a full screen: you are
             naming one end of a journey you can still see. */}
         <SearchOverlay />
+        {phone && <StripSwitcher />}
         </>
       )}
     </div>

@@ -3715,3 +3715,202 @@ body,
 .desk-card .finder-field:has(input:placeholder-shown) .finder-close {
   display: none;
 }
+
+/* --- PROTOTYPE #111 — throwaway (src/ui/PhoneStrip.prototype.tsx) ---------- */
+.pstrip {
+  --fw: 150px;
+  --ph: 90px;
+}
+.pstrip-A,
+.pstrip-B {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-float);
+  padding: var(--space-md) 0 var(--space-xs);
+  background: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--color-paper) 80%, transparent),
+    color-mix(in oklch, var(--color-paper) 0%, transparent)
+  );
+  pointer-events: none;
+}
+.pstrip-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+.pstrip > * {
+  pointer-events: auto;
+}
+.pstrip-empty {
+  margin: 0 auto;
+  width: max-content;
+  padding: var(--space-3xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-2);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.pstrip-row {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-2xs) calc(50% - var(--fw) / 2);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+.pstrip-row::-webkit-scrollbar {
+  display: none;
+}
+.pstrip-row > li {
+  flex: 0 0 var(--fw);
+  min-width: 0;
+  scroll-snap-align: center;
+}
+/* The map's bottom controls sit above a floating row. */
+.map-area:has(.pstrip-A:not(.pstrip-hidden), .pstrip-B:not(.pstrip-hidden)) .leaflet-bottom {
+  bottom: var(--covered-bottom);
+}
+.pframe {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-paper-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px var(--ink-shadow);
+  color: var(--color-ink);
+  text-align: left;
+  transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+}
+.pframe .strip-plate {
+  height: var(--ph);
+}
+.pframe-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs) var(--space-xs);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: var(--leading-display);
+}
+.pframe-name .dot {
+  flex: 0 0 auto;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--radius-pill);
+}
+.pframe-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pframe.lifted {
+  box-shadow: 0 0 0 2px var(--color-ink), 0 6px 18px var(--ink-shadow);
+}
+
+/* A — Carousel: one wide frame, the neighbours peek. */
+.pstrip-A {
+  --fw: 72vw;
+  --ph: 132px;
+}
+.pstrip-A .pframe:not(.lifted) {
+  transform: scale(0.92);
+}
+
+/* B — Filmstrip: small squares, name under, the middle one ringed. */
+.pstrip-B {
+  --fw: 84px;
+  --ph: 84px;
+}
+.pstrip-B .pstrip-row {
+  gap: var(--space-2xs);
+}
+.pstrip-B .pframe-name {
+  padding: var(--space-3xs) var(--space-2xs);
+  font-size: 0.75rem;
+}
+.pstrip-B .pframe-name .dot {
+  display: none;
+}
+.pstrip-B .strip-badge {
+  font-size: 0.65rem;
+}
+
+/* C — Docked in the sheet head: landscape frames, the name on the picture. */
+.pstrip-C {
+  --fw: 136px;
+  --ph: 88px;
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.pstrip-C .pstrip-row {
+  padding-top: 0;
+  padding-bottom: var(--space-xs);
+}
+.pstrip-C .pframe {
+  position: relative;
+}
+.pstrip-C .pframe-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: var(--space-2xs) var(--space-xs) var(--space-md);
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent);
+  color: #fff;
+  font-size: 0.85rem;
+}
+.pstrip-C .strip-plate.painted i {
+  padding-top: 1.2em;
+}
+
+.proto-switcher {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-lightbox);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px var(--space-xs);
+  max-width: calc(100vw - 16px);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: 14px;
+  background: #111;
+  color: #fff;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  white-space: nowrap;
+}
+.proto-switcher button {
+  border: none;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 18px;
+  padding: 0 var(--space-2xs);
+  cursor: pointer;
+}
+.proto-switcher .proto-lift {
+  font-size: 12px;
+  border: 1px solid #666;
+  border-radius: 8px;
+  padding: 1px 6px;
+}
+.proto-measure {
+  flex-basis: 100%;
+  text-align: center;
+  font-weight: 400;
+  opacity: 0.8;
+}
