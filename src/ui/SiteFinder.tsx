@@ -104,6 +104,26 @@ export function useFinderResults(query: string): FinderResult[] {
   }, [query, sites, hidden, visited, wishlist, lat, lng]);
 }
 
+/**
+ * Take a site from the finder, in either shell. `revealSite` first: a site
+ * the filters exclude has no pin, so selecting it before revealing it would
+ * open a card for nothing on the map. The map then flies to the site, and
+ * `done` resets the finder: after a pick, the answer is what the user wants
+ * to look at, not the search that found it.
+ */
+export function useFinderPick(done: () => void): (site: Site) => void {
+  const revealSite = useStore((s) => s.revealSite);
+  const setSelected = useStore((s) => s.setSelected);
+  return (site) => {
+    revealSite(site.id);
+    setSelected(site.id);
+    useStore.setState({
+      focus: { lat: site.lat, lng: site.lng, zoom: 13, nonce: Date.now() },
+    });
+    done();
+  };
+}
+
 export function SiteFinderField({
   query,
   onQuery,

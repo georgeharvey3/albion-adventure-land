@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { KEY_RANK, onEscape } from '../state/keys';
-import type { Site } from '../data/types';
 import { useKeyLayer } from './useKeyLayer';
 import { LayerChips } from './LayerChips';
-import { SiteFinderField, SiteFinderResults, useFinderResults } from './SiteFinder';
+import { SiteFinderField, SiteFinderResults, useFinderPick, useFinderResults } from './SiteFinder';
 
 // The phone's floating finder (issue #109): a pill at the top of the map, and
 // one row of layer chips under it. The desktop has both in its card, so on a
@@ -18,8 +17,6 @@ import { SiteFinderField, SiteFinderResults, useFinderResults } from './SiteFind
 // card covers it on a first visit.
 
 export function PhoneFinder() {
-  const revealSite = useStore((s) => s.revealSite);
-  const setSelected = useStore((s) => s.setSelected);
   const finderWanted = useStore((s) => s.finderWanted);
   const takeFinderRequest = useStore((s) => s.takeFinderRequest);
 
@@ -34,12 +31,7 @@ export function PhoneFinder() {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   };
 
-  const pickFound = (site: Site) => {
-    revealSite(site.id);
-    setSelected(site.id);
-    useStore.setState({ focus: { lat: site.lat, lng: site.lng, zoom: 13, nonce: Date.now() } });
-    close();
-  };
+  const pickFound = useFinderPick(close);
 
   // `/` asks for the finder (App.tsx), which ends browse mode first so the
   // pill is on screen to take the cursor.

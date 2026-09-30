@@ -978,10 +978,10 @@ export function MapView({ desktop }: { desktop: boolean }) {
         const top = c.top - m.top;
         const left = c.left - m.left;
         const right = c.right - m.left;
-        const ceil = float ? Math.max(0, Math.min(top, float.getBoundingClientRect().bottom - m.top)) : 0;
+        const floatBottom = float ? Math.max(0, Math.min(top, float.getBoundingClientRect().bottom - m.top)) : 0;
         // The free strips above, left of and right of the card; take the biggest.
         const strips = [
-          { area: (top - ceil) * size.x, at: L.point(size.x / 2, (ceil + top) / 2) },
+          { area: (top - floatBottom) * size.x, at: L.point(size.x / 2, (floatBottom + top) / 2) },
           { area: left * size.y, at: L.point(left / 2, size.y / 2) },
           { area: (size.x - right) * size.y, at: L.point((size.x + right) / 2, size.y / 2) },
         ];

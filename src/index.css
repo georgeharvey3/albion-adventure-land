@@ -2318,10 +2318,13 @@ body,
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-float);
 }
-/* The zoom and the basemap controls sit under the pill and the chips.
-   PhoneFinder.tsx sets --float-h on the map area. */
+/* The zoom and the basemap controls and the map hint sit under the pill and
+   the chips. PhoneFinder.tsx sets --float-h on the map area. */
 .app:not(.desk) .leaflet-top.leaflet-right {
   top: var(--float-h, 0px);
+}
+.app:not(.desk) .map-hint {
+  top: calc(var(--float-h, 0px) + var(--space-xs));
 }
 @media (min-width: 760px) {
   /* The side panel lies over the map's right 380px. */

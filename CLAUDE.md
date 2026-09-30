@@ -263,6 +263,7 @@ It says what the app is, and nothing else.
 - `src/ui/LogoMark.tsx` draws the logo inline, so the triskele can turn alone.
   It copies `public/favicon.svg`, which stays the source for the PWA icons.
   Change both together.
+- The card shows no site counts.
 
 ## Painted plate
 

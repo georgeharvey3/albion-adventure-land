@@ -154,7 +154,6 @@ export const copy = {
   },
 
   finder: {
-    open: 'Find a site',
     close: 'Close site search',
     field: 'Find a site by name',
     none: 'No site by that name.',

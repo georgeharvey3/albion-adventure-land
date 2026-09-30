@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import type { Site } from '../data/types';
 import { DRAWER_TABS, loadViewState, saveViewState, type DrawerTab } from '../state/viewState';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
@@ -9,7 +8,7 @@ import { Filters } from './Filters';
 import { Outing } from './Outing';
 import { Stats } from './Stats';
 import { SearchOverlay } from './SearchOverlay';
-import { SiteFinderField, SiteFinderResults, useFinderResults } from './SiteFinder';
+import { SiteFinderField, SiteFinderResults, useFinderPick, useFinderResults } from './SiteFinder';
 import { LogoMark } from './LogoMark';
 import { LayerChips } from './LayerChips';
 import { Strip } from './Strip';
@@ -33,7 +32,6 @@ const SPREAD_AND_DRAWER = 1200;
 export function DesktopShell() {
   const searchTarget = useStore((s) => s.searchTarget);
   const tripCount = useStore((s) => s.outing?.stopIds.length ?? 0);
-  const revealSite = useStore((s) => s.revealSite);
   const setSelected = useStore((s) => s.setSelected);
   const finderWanted = useStore((s) => s.finderWanted);
   const takeFinderRequest = useStore((s) => s.takeFinderRequest);
@@ -53,12 +51,7 @@ export function DesktopShell() {
   const finding = !!query.trim();
   const drawerOpen = !!searchTarget || finding || drawer !== null;
 
-  const pickFound = (site: Site) => {
-    revealSite(site.id);
-    setSelected(site.id);
-    useStore.setState({ focus: { lat: site.lat, lng: site.lng, zoom: 13, nonce: Date.now() } });
-    setQuery('');
-  };
+  const pickFound = useFinderPick(() => setQuery(''));
 
   // From 1024 px to 1199 px the drawer and the spread do not fit together, so
   // a spread closes the drawer (issue #87, Q5).

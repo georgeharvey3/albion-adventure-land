@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../state/store';
-import { siteLayers } from '../state/layers';
+import { layerState, siteLayers } from '../state/layers';
 import {
   SITE_TYPE_COLORS,
   SITE_TYPE_LABELS,
@@ -91,8 +91,9 @@ export function Filters() {
 
       {layers.map(({ parent, leaves, count: groupCount }) => {
         const activeCount = leaves.filter((t) => activeTypes.has(t)).length;
-        const allOn = activeCount === leaves.length;
-        const noneOn = activeCount === 0;
+        const state = layerState(leaves, activeTypes);
+        const allOn = state === 'on';
+        const noneOn = state === 'off';
         // A single-leaf parent (e.g. Historic pubs) has no finer subcategories.
         const hasSubs = !(leaves.length === 1 && (leaves[0] as string) === parent);
         // Commonest tags first — the long tail is behind "Show all". A layer
