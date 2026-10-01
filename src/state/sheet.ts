@@ -63,46 +63,12 @@ export function listInPlace(s: {
 }
 
 // On a phone a site opens in the sheet, in place of the list (issue #112).
-// The tabs hide, and the journey bar stays. The peek heads the site: one row
-// with a thumbnail, the name, the type and distance, and ×. The middle height
-// adds the hero picture, and the full height is the whole page. At the low
-// height there is no peek: the picture row's middle card is the selected
-// site (issue #111), and a tap on the card opens it at the middle height. A
-// selection off the low height opens the site at the height the sheet is at,
-// from a pin or from a row. The side panel keeps the floating card and the
-// rows that open in place.
-
-/** Whether a selection at this height opens the site in the sheet. At the
- *  low height the picture row's middle card is the site (issue #111), so a
- *  selection there opens nothing: a card tap opens the site. On a phone the
- *  site shows in the sheet exactly when a site is selected off the low
- *  height; a raise by hand clears the card first (`raiseClears`). */
-export function opensInSheet(height: SheetHeight): boolean {
-  return height !== 'low';
-}
-
-/** × or `Esc` on a phone. `siteOpen` is a selection off the low height. A
- *  site opened from the picture row goes back to the row, still selected,
- *  with its card in the middle. A site opened from the list goes back to the
- *  list at its height. A card at the low height is cleared. */
-export function afterClose(s: {
-  siteOpen: boolean;
-  sheet: SheetHeight;
-  listSheet: SheetHeight;
-}): { keepSelected: boolean; sheet: SheetHeight } {
-  if (!s.siteOpen) return { keepSelected: false, sheet: s.sheet };
-  if (s.listSheet === 'low') return { keepSelected: true, sheet: 'low' };
-  return { keepSelected: false, sheet: s.listSheet };
-}
-
-/** Whether a raise by hand (the handle, a drag, a tab) clears the selection.
- *  At the low height the selection is the picture row's card, and a raise by
- *  hand shows the list, so the card goes. Only a tap on the card opens its
- *  site at the middle height. A selection off the low height is the open
- *  site, and a raise keeps it. */
-export function raiseClears(from: SheetHeight, to: SheetHeight): boolean {
-  return from === 'low' && to !== 'low';
-}
+// The tabs hide, and the journey bar stays. At the low height the sheet is
+// the peek: one row with a thumbnail, the name, the type and distance,
+// and ×, and the pin stays in view above it. The middle height adds
+// the hero picture, and the full height is the whole page. A site opens at
+// the height the sheet is at, from a pin or from a row. The side panel keeps
+// the floating card and the rows that open in place.
 
 /** The height the list comes back at when the open site closes: the height
  *  when the site opened. A step to another site keeps it. */
@@ -114,9 +80,8 @@ export function listHeight(s: {
   return s.siteOpen ? s.listSheet : s.sheet;
 }
 
-/** "Show on map" in an open site: the low height on a phone, where the site
- *  stays selected as the picture row's card, and on the side panel the
- *  highest height that shows the card. */
+/** "Show on map" in an open site: the peek on a phone, and on the side panel
+ *  the highest height that shows the card. */
 export function showOnMap(sidePanel: boolean): SheetHeight {
   return sidePanel ? 'mid' : 'low';
 }
@@ -139,12 +104,16 @@ export function snapSheet(stops: SheetStops, px: number, velocity: number): Shee
 }
 
 /** Whether a vertical drag on the list moves the sheet or scrolls the list.
- *  `dy` is positive for a finger that moves down. A drag up always scrolls:
- *  only the sheet head raises the sheet, so a swipe on the list or an open
- *  site at the middle height reads it. A drag down lowers the sheet only when
- *  the list is at its top, so the list scrolls back first. */
-export function dragIntent(drag: { dy: number; scrollTop: number }): 'sheet' | 'scroll' {
-  return drag.dy > 0 && drag.scrollTop <= 0 ? 'sheet' : 'scroll';
+ *  `dy` is positive for a finger that moves down. A drag up raises the sheet
+ *  until it is full. A drag down lowers it only when the list is at its top,
+ *  so the list scrolls back first. */
+export function dragIntent(drag: {
+  dy: number;
+  scrollTop: number;
+  height: SheetHeight;
+}): 'sheet' | 'scroll' {
+  if (drag.dy < 0) return drag.height === 'full' ? 'scroll' : 'sheet';
+  return drag.scrollTop <= 0 ? 'sheet' : 'scroll';
 }
 
 /** One height up (1) or down (-1), stopping at both ends. `Esc` steps down. */

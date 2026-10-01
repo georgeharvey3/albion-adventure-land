@@ -15,8 +15,7 @@ import {
 // and the tabs — never scrolls, so any vertical drag on it moves the sheet,
 // after DRAG_SLOP px so a tap on a tab stays a tap. The list shares the touch
 // with its scroll: `dragIntent` gives the touch to the sheet or leaves it to
-// the list for the rest of the gesture. A drag up on the list always scrolls,
-// so only the head raises the sheet. The list decides on the first move,
+// the list for the rest of the gesture. The list decides on the first move,
 // because iOS starts its own scroll on that move and ignores a later
 // `preventDefault`. A sideways touch stays with the list, so the picture
 // carousel in an open row still swipes. A mouse or a pen drags the handle.
@@ -181,7 +180,7 @@ export function useSheetDrag({
         if (kind === 'head' && !moved) return;
         if (Math.abs(dx) > Math.abs(dy)) mode = 'scroll';
         else if (kind === 'head') mode = 'sheet';
-        else mode = dragIntent({ dy, scrollTop: el.scrollTop });
+        else mode = dragIntent({ dy, scrollTop: el.scrollTop, height: live.current.sheet });
         // The browser has already taken the touch for its own scroll.
         if (mode === 'sheet' && (!e.cancelable || !begin(start.y))) mode = 'scroll';
       }

@@ -7,18 +7,15 @@ import { SiteBody } from './SiteDetail';
 import { copy } from '../copy';
 
 // The site in the phone sheet (issue #112). The owner chose this design from a
-// prototype (variant C, the branch `prototype/110-site-sheet`).
+// prototype (variant C): a pin tap opens a peek, and a drag up opens the site.
 //
-// The peek heads an open site at the middle and full heights. It sits in the
+// The peek is the low height of the sheet while a site is open. It sits in the
 // sheet head under the journey bar, in place of the tabs, so a drag on it
 // moves the sheet as a drag on the tabs does. It holds one row: a thumbnail,
 // the name, the type and distance, and ×. Directions is in the body. It shows
 // no number but the distance. The body under it is the card's order without
 // its header: the hero picture shows at the middle height, and the full
 // height is the page.
-//
-// At the low height there is no peek. The picture row's middle card is the
-// selected site (issue #111), so one site never shows twice.
 
 /** The peek row. A tap on the name raises the sheet one height, as the handle
  *  does. */
@@ -26,7 +23,7 @@ export function SitePeek({ site }: { site: Site }) {
   const position = useStore((s) => s.position);
   const sheet = useStore((s) => s.sheet);
   const setSheet = useStore((s) => s.setSheet);
-  const closeSite = useStore((s) => s.closeSite);
+  const setSelected = useStore((s) => s.setSelected);
   const distance = position ? haversine(position, site) : null;
 
   return (
@@ -40,7 +37,7 @@ export function SitePeek({ site }: { site: Site }) {
           {distance !== null && <span className="site-peek-away">{copy.site.away(formatDistance(distance))}</span>}
         </span>
       </button>
-      <button className="site-peek-close" onClick={closeSite} aria-label={copy.site.close}>
+      <button className="site-peek-close" onClick={() => setSelected(null)} aria-label={copy.site.close}>
         ×
       </button>
     </div>
