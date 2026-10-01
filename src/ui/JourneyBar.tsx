@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useStore } from '../state/store';
+import { journeyBarMode } from '../state/journey';
+import { FlagIcon, MapPinIcon } from './icons';
 import { DETOUR_BUDGETS } from '../geo/corridor';
 import { formatDuration } from '../geo/route';
 import { formatDistance, haversine } from '../geo/haversine';
@@ -46,12 +49,16 @@ import { copy } from '../copy';
 // journey bar said so, so the two ends looked like they had different powers.
 // They share one armed state now (`picking`), which is why an armed origin
 // reads exactly like an armed destination here.
+//
+// ON A PHONE THE BAR SHOWS BY STATE (issue #126, src/state/journey.ts). With
+// nothing set it is gone, and the floating row's route button opens the
+// destination search. A set journey is one line that opens the full bar.
 
 function budgetLabel(metres: number): string {
   return metres < 1000 ? copy.units.m(metres) : copy.units.km(Math.round(metres / 1000));
 }
 
-export function JourneyBar() {
+export function JourneyBar({ phone = false }: { phone?: boolean }) {
   const position = useStore((s) => s.position);
   const destination = useStore((s) => s.destination);
   const detourBudget = useStore((s) => s.detourBudget);
@@ -78,6 +85,19 @@ export function JourneyBar() {
   // drop-pin control is gone. Live GPS itself has nothing to reset to.
   const overriddenOrigin = !!position && (!!position.label || !!position.manual);
 
+  // The phone's compact line opens the full bar. A change to either end, or
+  // the end of an armed tap, folds it back: the edit it was opened for is done.
+  const [expanded, setExpanded] = useState(false);
+  const originKey = overriddenOrigin ? `${position?.lat},${position?.lng}` : '';
+  useEffect(() => {
+    setExpanded(false);
+  }, [originKey, destination, picking]);
+  const mode = journeyBarMode(
+    { overriddenOrigin, hasDestination: !!destination, picking: !!picking },
+    phone,
+    expanded,
+  );
+
   // The journey's own number. With a road route it is the road distance and the
   // driving time; without one it is the straight-line distance, and it says so.
   //
@@ -97,8 +117,38 @@ export function JourneyBar() {
       ? copy.journey.picking
       : copy.journey.optional;
 
+  if (mode === 'none') return null;
+
+  if (mode === 'compact') {
+    return (
+      <button
+        className="journey-bar journey-compact"
+        onClick={() => setExpanded(true)}
+        aria-label={copy.journey.edit}
+        title={copy.journey.edit}
+      >
+        <MapPinIcon />
+        <span className="journey-compact-place">{originLabel}</span>
+        {destination && (
+          <>
+            <span className="journey-arrow" aria-hidden="true">
+              →
+            </span>
+            <FlagIcon />
+            <span className="journey-compact-place">{destination.label}</span>
+          </>
+        )}
+        {journeySummary && <span className="journey-length">{journeySummary}</span>}
+      </button>
+    );
+  }
+
+  // On a phone the full bar folds back to its line, except while the map
+  // waits for a tap: then the bar is the cancel, and stays.
+  const canFold = phone && !picking;
+
   return (
-    <div className="journey-bar">
+    <div className={canFold ? 'journey-bar can-fold' : 'journey-bar'}>
       <div className="journey-ends">
         <div
           className={
@@ -182,6 +232,17 @@ export function JourneyBar() {
             </button>
           )}
         </div>
+
+        {canFold && (
+          <button
+            className="journey-fold"
+            onClick={() => setExpanded(false)}
+            aria-label={copy.journey.fold}
+            title={copy.journey.fold}
+          >
+            ⌃
+          </button>
+        )}
       </div>
 
       {destination && (

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../state/store';
 import { LayerChips } from './LayerChips';
-import { SearchIcon } from './icons';
+import { FlagIcon, SearchIcon } from './icons';
+import { journeyActive } from '../state/journey';
 import { copy } from '../copy';
 
 // The phone's floating row (issue #109): a magnifier and the layer chips, at
@@ -16,11 +17,24 @@ import { copy } from '../copy';
 // postcodes, grid references and sites in one box, and a pick moves the map
 // or opens the site. It fills no end of the journey.
 //
+// On a phone, a route button follows the magnifier while no journey is set
+// (issue #126). The journey bar is gone from the sheet then, and the button
+// opens the destination search, so a town can still be the destination. Once
+// a journey is set, the bar's own line takes over, and the button goes.
+//
 // It sits in .map-area, so the full sheet covers it, and the title
 // card covers it on a first visit.
 
-export function PhoneFinder() {
+export function PhoneFinder({ phone }: { phone: boolean }) {
   const openSearch = useStore((s) => s.openSearch);
+  const idle = useStore(
+    (s) =>
+      !journeyActive({
+        overriddenOrigin: !!s.position && (!!s.position.label || !!s.position.manual),
+        hasDestination: !!s.destination,
+        picking: !!s.picking,
+      }),
+  );
 
   // The zoom and basemap controls sit under the row. The map area carries its
   // height as --float-h, and the CSS moves the top right corner down by it.
@@ -52,6 +66,16 @@ export function PhoneFinder() {
       >
         <SearchIcon />
       </button>
+      {phone && idle && (
+        <button
+          className="float-search"
+          onClick={() => openSearch('destination')}
+          aria-label={copy.journey.destinationTitle}
+          title={copy.journey.destinationTitle}
+        >
+          <FlagIcon />
+        </button>
+      )}
       <LayerChips className="float-chips" />
     </div>
   );

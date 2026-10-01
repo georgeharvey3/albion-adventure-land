@@ -1824,6 +1824,53 @@ body,
   color: var(--color-muted);
 }
 
+/* The phone's fold (issue #126): a set journey shows as one line, and the
+   full bar folds back to it. */
+.journey-bar.can-fold .journey-ends {
+  grid-template-columns: 1fr auto 1fr auto;
+}
+.journey-fold {
+  align-self: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+}
+.journey-compact {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  color: var(--color-muted);
+  text-align: left;
+  cursor: pointer;
+}
+.journey-compact svg {
+  flex: 0 0 auto;
+}
+.journey-compact-place {
+  min-width: 0;
+  flex: 0 1 auto;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Route-mode near-me list */
 .route-head {
   display: flex;

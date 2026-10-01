@@ -79,6 +79,8 @@ export const copy = {
     detour: 'detour ≤',
     detourBudget: 'Detour budget',
     destinationHint: 'Tap where you\'re heading, or open a site and choose “Set as destination”.',
+    edit: 'Change journey',
+    fold: 'Hide journey',
     originHint: 'Tap where you are, or where you\'ll be setting out from.',
   },
 
