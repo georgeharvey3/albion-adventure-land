@@ -47,18 +47,13 @@ test('a flick goes on to the next height in its direction', () => {
 });
 
 test('a drag down moves the sheet only when the list is at its top', () => {
-  assert.equal(dragIntent({ dy: 12, scrollTop: 0, height: 'full' }), 'sheet');
-  assert.equal(dragIntent({ dy: 12, scrollTop: 40, height: 'full' }), 'scroll');
-  assert.equal(dragIntent({ dy: 12, scrollTop: 0, height: 'mid' }), 'sheet');
+  assert.equal(dragIntent({ dy: 12, scrollTop: 0 }), 'sheet');
+  assert.equal(dragIntent({ dy: 12, scrollTop: 40 }), 'scroll');
 });
 
-test('a drag up raises the sheet until it is full, then scrolls', () => {
-  assert.equal(dragIntent({ dy: -12, scrollTop: 0, height: 'mid' }), 'sheet');
-  assert.equal(dragIntent({ dy: -12, scrollTop: 0, height: 'full' }), 'scroll');
-});
-
-test('a drag up from the middle moves the sheet even mid-list', () => {
-  assert.equal(dragIntent({ dy: -12, scrollTop: 200, height: 'mid' }), 'sheet');
+test('a drag up on the list scrolls it and never raises the sheet', () => {
+  assert.equal(dragIntent({ dy: -12, scrollTop: 0 }), 'scroll');
+  assert.equal(dragIntent({ dy: -12, scrollTop: 200 }), 'scroll');
 });
 
 test('Esc lowers the sheet one height per press', () => {

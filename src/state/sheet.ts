@@ -139,16 +139,12 @@ export function snapSheet(stops: SheetStops, px: number, velocity: number): Shee
 }
 
 /** Whether a vertical drag on the list moves the sheet or scrolls the list.
- *  `dy` is positive for a finger that moves down. A drag up raises the sheet
- *  until it is full. A drag down lowers it only when the list is at its top,
- *  so the list scrolls back first. */
-export function dragIntent(drag: {
-  dy: number;
-  scrollTop: number;
-  height: SheetHeight;
-}): 'sheet' | 'scroll' {
-  if (drag.dy < 0) return drag.height === 'full' ? 'scroll' : 'sheet';
-  return drag.scrollTop <= 0 ? 'sheet' : 'scroll';
+ *  `dy` is positive for a finger that moves down. A drag up always scrolls:
+ *  only the sheet head raises the sheet, so a swipe on the list or an open
+ *  site at the middle height reads it. A drag down lowers the sheet only when
+ *  the list is at its top, so the list scrolls back first. */
+export function dragIntent(drag: { dy: number; scrollTop: number }): 'sheet' | 'scroll' {
+  return drag.dy > 0 && drag.scrollTop <= 0 ? 'sheet' : 'scroll';
 }
 
 /** One height up (1) or down (-1), stopping at both ends. `Esc` steps down. */
