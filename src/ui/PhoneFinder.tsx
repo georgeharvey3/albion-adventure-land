@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../state/store';
 import { LayerChips } from './LayerChips';
-import { SearchIcon } from './icons';
+import { RouteIcon, SearchIcon } from './icons';
+import { journeyActive } from '../state/journey';
 import { copy } from '../copy';
 
 // The phone's floating row (issue #109): a magnifier and the layer chips, at
@@ -16,11 +17,26 @@ import { copy } from '../copy';
 // postcodes, grid references and sites in one box, and a pick moves the map
 // or opens the site. It fills no end of the journey.
 //
+// On a phone, a route button follows the magnifier while no journey is set
+// (issue #126). The journey bar is gone from the sheet then, and the button
+// opens it, so either end can be searched for or picked on the map. While the
+// bar is open, or once a journey is set, the button goes.
+//
 // It sits in .map-area, so the full sheet covers it, and the title
 // card covers it on a first visit.
 
-export function PhoneFinder() {
+export function PhoneFinder({ phone }: { phone: boolean }) {
   const openSearch = useStore((s) => s.openSearch);
+  const setJourneyOpen = useStore((s) => s.setJourneyOpen);
+  const idle = useStore(
+    (s) =>
+      !s.journeyOpen &&
+      !journeyActive({
+        overriddenOrigin: !!s.position && (!!s.position.label || !!s.position.manual),
+        hasDestination: !!s.destination,
+        picking: !!s.picking,
+      }),
+  );
 
   // The zoom and basemap controls sit under the row. The map area carries its
   // height as --float-h, and the CSS moves the top right corner down by it.
@@ -52,6 +68,16 @@ export function PhoneFinder() {
       >
         <SearchIcon />
       </button>
+      {phone && idle && (
+        <button
+          className="float-search"
+          onClick={() => setJourneyOpen(true)}
+          aria-label={copy.journey.open}
+          title={copy.journey.open}
+        >
+          <RouteIcon />
+        </button>
+      )}
       <LayerChips className="float-chips" />
     </div>
   );

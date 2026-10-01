@@ -451,6 +451,24 @@ owner chose this design from a prototype (variant C, the branch
 - The side panel (760 px to 1023 px) keeps the floating card and the rows
   that open in place, because #107 Q3 is still open.
 
+## Phone journey bar (issue #126)
+
+On a phone, the journey bar shows by state, with no collapse toggle. The rule
+is pure and lives in `src/state/journey.ts`.
+
+- With live GPS, no destination and no armed map tap, the sheet head has no
+  bar. A route button follows the magnifier in the floating row and opens
+  the full bar, so either end can be searched for or picked on the map. It
+  opens the bar, not a search, because a button that went straight to the
+  destination search left no way to set the origin. `journeyOpen` in the
+  store holds the open bar.
+- A destination, or an origin that is not live GPS, shows one line. A tap
+  opens the full bar, and ⌃ or a change to either end folds it back.
+- An origin that is not live GPS never hides. The near-me list sorts from
+  it, so a forgotten dropped pin would make the list quietly wrong.
+- An armed map tap shows the full bar, because the bar is the cancel.
+- The side panel and the desktop always show the full bar.
+
 ## UI copy
 
 The screen carries labels, not explanations. A string earns its place only

@@ -210,7 +210,7 @@ export function App() {
       <div className="map-area">
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
-        {!desktop && <PhoneFinder />}
+        {!desktop && <PhoneFinder phone={phone} />}
         {/* A phone opens the site in the sheet, and a desktop in the spread
             (DesktopShell.tsx). The side panel keeps the floating card. */}
         {selectedSiteId && sidePanel && !desktop && !inPlace && <SiteDetail />}
@@ -247,7 +247,7 @@ export function App() {
             >
               <span className="sheet-grip" aria-hidden="true" />
             </button>
-            <JourneyBar />
+            <JourneyBar phone={phone} />
             {openSite ? (
               <SitePeek site={openSite} />
             ) : (
