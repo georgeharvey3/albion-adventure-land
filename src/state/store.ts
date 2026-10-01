@@ -40,7 +40,7 @@ import { loadViewState, saveViewState } from "./viewState";
 import type { JourneyEnd, SearchResult, SearchTarget } from "../search/types";
 import { NO_INSETS, sameInsets, type CoveredInsets } from "../map/insets";
 import type { Viewport } from "./strip";
-import { listHeight, type SheetHeight } from "./sheet";
+import { afterClose, listHeight, opensInSheet, type SheetHeight } from "./sheet";
 import { copy } from "../copy";
 
 export interface Position {
@@ -60,10 +60,12 @@ export interface Position {
   label?: string;
 }
 
-/** A lifted site (issue #88), and what lifted it. */
+/** A lifted site (issue #88), and what lifted it. `strip` is the phone's
+ *  picture row (issue #111): the frame in its middle, or a pin tap that
+ *  brought a frame there. */
 export interface Lift {
   id: string;
-  by: 'pin' | 'row' | 'key';
+  by: 'pin' | 'row' | 'key' | 'strip';
 }
 
 // Journey anchor, part 2 (issue #14). `position` is the FROM end and keeps
@@ -229,6 +231,11 @@ interface AppState {
   // Actions.
   init: () => Promise<void>;
   setSelected: (siteId: string | null) => void;
+  /** Select a site and open it in the phone sheet at the middle height: a tap
+   *  on a card in the picture row (issue #111). */
+  openSite: (siteId: string) => void;
+  /** × or `Esc` on a phone: `closeSite` in state/sheet.ts. */
+  closeSite: () => void;
   setLifted: (lift: Lift | null) => void;
   /** Clear the lift only if it is still on this site. A late mouseout from one
    *  pin must not clear the lift that a move to the next pin just set. */
@@ -990,11 +997,33 @@ export const useStore = create<AppState>((set, get) => ({
   },
   setGeoError: (geoError) => set({ geoError }),
   setSelected: (selectedSiteId) => {
-    saveViewState({ selectedSiteId });
     const { sheet, listSheet, selectedSiteId: open } = get();
+    // A session reopens on the site that was open. A card at the phone's low
+    // height (issue #111) is not an open site, so it is not kept.
+    saveViewState({ selectedSiteId: opensInSheet(sheet) ? selectedSiteId : null });
     set({ selectedSiteId, listSheet: listHeight({ siteOpen: !!open, sheet, listSheet }) });
   },
-  setSheet: (sheet) => set({ sheet }),
+  openSite: (selectedSiteId) => {
+    saveViewState({ selectedSiteId });
+    const { sheet, listSheet, selectedSiteId: open } = get();
+    set({
+      selectedSiteId,
+      sheet: "mid",
+      listSheet: listHeight({ siteOpen: !!open, sheet, listSheet }),
+    });
+  },
+  closeSite: () => {
+    const { selectedSiteId, sheet, listSheet } = get();
+    const to = afterClose({ siteOpen: !!selectedSiteId && opensInSheet(sheet), sheet, listSheet });
+    saveViewState({ selectedSiteId: null });
+    set({ sheet: to.sheet, ...(to.keepSelected ? {} : { selectedSiteId: null }) });
+  },
+  setSheet: (sheet) => {
+    // A site lowered to the phone's low height is a card, not an open site,
+    // so it is not kept for the next session (issue #111).
+    if (!opensInSheet(sheet)) saveViewState({ selectedSiteId: null });
+    set({ sheet });
+  },
   setLifted: (lifted) => set({ lifted }),
   dropLifted: (siteId) => {
     if (get().lifted?.id === siteId) set({ lifted: null });
@@ -1116,6 +1145,9 @@ export const useStore = create<AppState>((set, get) => ({
       if (result.siteId) {
         get().revealSite(result.siteId);
         get().setSelected(result.siteId);
+        // The sheet goes to the low height, where the site is the picture
+        // row's card, not an open site (issue #111).
+        saveViewState({ selectedSiteId: null });
       }
       set({
         searchTarget: null,
@@ -1153,7 +1185,10 @@ export const useStore = create<AppState>((set, get) => ({
 
     // A site result sets the end AND opens its card: one tap, both intents, and
     // the only way to look a site up by name without the box needing a mode.
-    if (result.siteId) get().setSelected(result.siteId);
+    // On a phone the journey search opens from the low height, where a plain
+    // selection is only the picture row's card (issue #111), so it opens the
+    // site. The desktop ignores the sheet height.
+    if (result.siteId) get().openSite(result.siteId);
 
     set({
       searchTarget: null,

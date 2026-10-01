@@ -395,8 +395,9 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   finger. Do not add a gesture library.
 - The sheet head takes any vertical touch drag: the handle, the journey bar
   and the tabs. A mouse drags the handle only. The list shares a touch drag
-  with its scroll (`dragIntent`). A drag up raises the sheet until it is
-  full. A drag down lowers it only when the list is at its top. A sideways
+  with its scroll (`dragIntent`). A drag up on the list always scrolls it,
+  so only the head raises the sheet. A drag down lowers the sheet only when
+  the list is at its top. A sideways
   touch stays with the list, so the picture carousel still swipes.
 - The list decides on the first touch move. iOS starts its own scroll on that
   move and then ignores `preventDefault`, so a later decision lets the list
@@ -408,7 +409,8 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   as the bottom covered inset (`coveredBottom`). A fitted journey or a pin
   brought into view then stays clear of the sheet.
 - On a phone an open site replaces the list in the sheet. See **Phone site
-  sheet** below.
+  sheet** below. At the low height a row of pictures floats over the map. See
+  **Phone picture row** below.
 - A tab opens the sheet at the middle height. The open tab lowers it. `Esc`
   lowers it one height per press.
 - A session opens at the middle height, so the nearest sites show at once.
@@ -427,28 +429,77 @@ owner chose this design from a prototype (variant C, the branch
 
 - While a site is open, the tabs hide and the journey bar stays. The peek
   (`SitePeek` in `src/ui/SiteSheet.tsx`) takes the place of the tabs in the
-  sheet head. So the peek is the low height, and a drag on it moves the sheet.
+  sheet head, and a drag on it moves the sheet. There is no peek at the low
+  height: the picture row's card is the site there (issue #111).
 - The peek is one row: a thumbnail, the name, the type and distance,
   and ×. It shows no number except the distance. Directions is in the
   actions of the body, as on the card.
-- A site opens at the height that the sheet is at. A pin tap from the low
-  height opens the peek. A pin tap from the middle height keeps the middle
-  height, where the hero picture shows under the peek. The full height shows
-  the whole page. A tap on the name raises the sheet one height, as the
-  handle does.
-- A row tap follows the same rule. A site found by the map search opens at
-  the peek, because the search lowers the sheet to show the map. A site saved
-  from the last session opens at the middle height.
+- Off the low height, a site opens at the height that the sheet is at. A pin
+  tap or a row tap at the middle height keeps the middle height, where the
+  hero picture shows under the peek. The full height shows the whole page. A
+  tap on the name raises the sheet one height, as the handle does.
+- At the low height, a pin tap, a swipe or a map search only selects: the
+  site's card comes to the middle of the picture row. A tap on the card opens
+  the site at the middle height (`openSite` in the store). A site picked in
+  the journey search opens the same way.
+- The sheet shows a site exactly when a site is selected off the low height.
+  This is derived, not stored. A raise by hand — the handle, a drag or a
+  tab — clears the card first (`raiseClears` in `src/state/sheet.ts`), so it
+  shows the list.
+- Only an open site is saved for the next session, and it opens at the
+  middle height. A card at the low height is not saved.
 - The body is the card layout without its header (`SiteSheetBody`). So
   `siteBodyLayout.ts` has no phone layout.
-- × or `Esc` closes the site. The list comes back at the height it was at
-  when the site opened (`listSheet` in the store, `listHeight` in
-  `src/state/sheet.ts`), and at its old scroll position.
+- × or `Esc` closes the site (`afterClose` in `src/state/sheet.ts`). A site
+  opened from the picture row goes back to the low height, still selected,
+  with its card in the middle. A site opened from the list goes back to the
+  list at the height it was at (`listSheet` in the store), and at its old
+  scroll position. `Esc` at the low height clears the card's selection.
 - The map pans the pin to the centre of the map between the floating row and
   the sheet. It follows the sheet between its heights until the user moves
-  the map.
+  the map. At the low height it pans only when the pin is out of sight.
 - The side panel (760 px to 1023 px) keeps the floating card and the rows
   that open in place, because #107 Q3 is still open.
+
+## Phone picture row (issue #111)
+
+On a phone, at the low height of the sheet, one row of picture frames floats
+over the bottom of the map (`src/ui/PhoneStrip.tsx`). The owner chose this
+layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
+
+- The row holds what the desktop strip holds. It calls `useStrip` and
+  `FramePlate` from `src/ui/Strip.tsx`, so it obeys `matchesFilter` and reads
+  the view from the last `moveend`. The frame shows the distance, or the
+  detour on a journey. It shows no counts.
+- One wide frame sits in the middle, and its neighbours show at the edges.
+  The frame in the middle lifts its pin (`by: 'strip'`). The lift follows the
+  swipe, not only the frame where the swipe stops.
+- The card is the peek. At the low height the row's middle card is the
+  selected site, and there is no other peek. The owner chose this from a
+  second prototype (variant N, the branch `prototype/111-no-peek`): a peek
+  under the row showed one site twice, and a row that hid for an open site
+  seemed to vanish for no reason.
+- A swipe that comes to rest selects the middle card, as Prev and Next do in
+  the desktop spread. A pin tap or a map search selects, and the row brings
+  the card to the middle. A tap on a card opens the site at the middle
+  height, where its hero picture shows. × brings back the low height, with
+  that card still selected in the middle.
+- While a site is selected on a phone, the map holds the view, as the
+  desktop does for the spread. The pan to each site then does not re-sort
+  the row. A drag, a zoom or a search move by the user ends the hold.
+- A selection or a lift from the row pans the map only when the pin is out
+  of sight: under the floating row, under the picture row, or off the map on
+  a journey. A lift pans only when it rests, so a fast swipe pans once.
+- The rules are pure and live in `src/state/phoneStrip.ts`.
+- The row is the bottom covered inset while it shows, so the view box and the
+  pans keep clear of it. The rose, the scale and the credits stand on top of it.
+- The row hides at the middle and full heights. A hidden row lifts nothing.
+  It stays through a drag, under the rising sheet, so the covered inset
+  changes only when the sheet rests.
+- With no site selected, a new view lifts the first frame, so the nearest pin
+  is marked before any swipe. At national zoom the row is empty, as the strip is.
+- The row is outside the Leaflet container, so a swipe on it never pans the
+  map, and a map pan never moves the row.
 
 ## UI copy
 
