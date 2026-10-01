@@ -492,7 +492,7 @@ layout from a prototype (variant A, the branch `prototype/111-phone-strip`).
   a journey. A lift pans only when it rests, so a fast swipe pans once.
 - The rules are pure and live in `src/state/phoneStrip.ts`.
 - The row is the bottom covered inset while it shows, so the view box and the
-  pans keep clear of it. The rose, the scale and the credits stand on top of it.
+  pans keep clear of it. The rose and the scale stand on top of it.
 - The row hides at the middle and full heights. A hidden row lifts nothing.
   It stays through a drag, under the rising sheet, so the covered inset
   changes only when the sheet rests.
