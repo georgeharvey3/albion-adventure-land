@@ -6,7 +6,6 @@ import { useStore } from '../state/store';
 import { useFilteredSites, type FilteredSiteView } from '../state/selectors';
 import { shapeMarker, type MarkerShape, type ShapeMarkerOptions } from './shapeMarker';
 import { corridorEllipse } from '../geo/corridor';
-import { OSRM_ATTRIBUTION } from '../geo/osrm';
 import { loadViewState, saveViewState } from '../state/viewState';
 import { BASEMAP_IDS, basemapLabel, createBasemap, type BasemapId } from './basemaps';
 import { iconMarkup } from '../ui/icons';
@@ -252,6 +251,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
     // at its edge instead of springing back.
     const map = L.map(containerRef.current, {
       zoomControl: true,
+      // The tile and routing credits are cited elsewhere, not on the map.
+      attributionControl: false,
       preferCanvas: true,
       minZoom: PLATE_MIN_ZOOM,
       maxBoundsViscosity: 1,
@@ -557,37 +558,8 @@ export function MapView({ desktop }: { desktop: boolean }) {
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(containerRef.current);
 
-    // On a phone the full credits run to three lines of the map. They rest as
-    // one line that ends in an ellipsis, and a tap opens them (index.css). The
-    // height still changes — open or shut, and with the routing credit — so it
-    // is measured, and index.css lifts the bottom-left corner by it.
-    const credits = map.attributionControl.getContainer();
-    const creditsRo = new ResizeObserver(() =>
-      map.getContainer().style.setProperty('--credits-h', `${credits?.offsetHeight ?? 0}px`),
-    );
-    if (credits) {
-      creditsRo.observe(credits);
-      credits.setAttribute('role', 'button');
-      credits.tabIndex = 0;
-      credits.setAttribute('aria-expanded', 'false');
-      const toggle = (e: Event) => {
-        // A link inside the credits goes where it says; only the text toggles.
-        if ((e.target as HTMLElement).closest('a')) return;
-        const open = credits.classList.toggle('is-open');
-        credits.setAttribute('aria-expanded', String(open));
-      };
-      L.DomEvent.on(credits, 'click', toggle);
-      L.DomEvent.on(credits, 'keydown', (e) => {
-        if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
-          e.preventDefault();
-          toggle(e);
-        }
-      });
-    }
-
     return () => {
       ro.disconnect();
-      creditsRo.disconnect();
       window.removeEventListener('pagehide', persist);
       map.off('moveend', persist);
       map.off('moveend', reportView);
@@ -942,18 +914,6 @@ export function MapView({ desktop }: { desktop: boolean }) {
       map.fitBounds(bounds, fitPadding(60));
     }
   }, [position, destination, detourBudget, route]);
-
-  // Routing attribution (issue #29), required by the terms of the OSRM demo
-  // server. It appears only while a road route is on the map: the basemap's own
-  // credit already covers the OpenStreetMap data underneath.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !route) return;
-    map.attributionControl.addAttribution(OSRM_ATTRIBUTION);
-    return () => {
-      map.attributionControl.removeAttribution(OSRM_ATTRIBUTION);
-    };
-  }, [route]);
 
   // Crosshair while either end is armed. One flag, one cursor: the state that
   // says a tap is spoken for is the same state that draws it.

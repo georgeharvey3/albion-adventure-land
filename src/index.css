@@ -405,12 +405,10 @@ body,
   color: var(--color-ink);
 }
 
-/* The scale bar and the credits take the app's small uppercase label (see
-   design.md, "The UI face has two roles") instead of Leaflet's 11px Helvetica
-   on a white box. The paper behind them is translucent, so the credits still
-   read over satellite imagery. */
-.leaflet-control-scale-line,
-.leaflet-control-attribution {
+/* The scale bar takes the app's small uppercase label (see design.md, "The UI
+   face has two roles") instead of Leaflet's 11px Helvetica on a white box. The
+   paper behind it is translucent, so it still reads over satellite imagery. */
+.leaflet-control-scale-line {
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);
@@ -425,33 +423,6 @@ body,
   padding: 0 var(--space-2xs);
   font-variant-numeric: tabular-nums;
 }
-.leaflet-container .leaflet-control-attribution {
-  padding: 0 var(--space-2xs);
-}
-.leaflet-control-attribution a {
-  color: inherit;
-}
-
-/* On a phone the credits span the bottom edge; the rose and the scale bar
-   stand on top of them (--credits-h is measured in MapView.tsx). On a wide
-   screen the credits keep to the right and the corner stays on the floor. */
-@media (max-width: 759px) {
-  .leaflet-bottom.leaflet-left {
-    bottom: var(--credits-h, 0px);
-  }
-  /* Shut, the credits are one line that ends in an ellipsis; a tap opens
-     them in full (MapView.tsx). */
-  .leaflet-control-attribution {
-    cursor: pointer;
-  }
-  .leaflet-control-attribution:not(.is-open) {
-    max-width: calc(100vw - var(--space-md));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
 /* Leaflet hard-sets `font: bold 18px 'Lucida Console', Monaco, monospace` on
    its own zoom buttons, which puts a face on the page that this system never
    chose. The `+` and the `−` take the UI face like every other control. */
@@ -2115,7 +2086,7 @@ body,
 /* --- Picture viewer --------------------------------------------------------
    Above the card, the sheet and — the one that is easy to miss — Leaflet's own
    controls, which it places at z-index 1000 (`.leaflet-top`/`.leaflet-bottom`).
-   Below that, the zoom buttons and the attribution punch through the backdrop. */
+   Below that, the zoom buttons punch through the backdrop. */
 .lightbox {
   position: fixed;
   inset: 0;
@@ -3142,8 +3113,7 @@ body,
    frames, so the map still reads through it and never ends in a hard band.
    The frames carry their own paper, so the wash only has to settle the
    heading, and a paper halo on the heading does the rest. It sits under
-   Leaflet's controls (z-index 1000), so the collapsed credits rest in its
-   right corner, in the band the padding keeps free under the frames. */
+   Leaflet's controls (z-index 1000). */
 .strip {
   position: absolute;
   left: 0;
@@ -3343,21 +3313,6 @@ body,
   left: auto;
   right: calc(100% + var(--space-2xs));
 }
-/* The credits rest as one line in the strip's corner, as on a phone, and a
-   click opens them (MapView.tsx). */
-.app.desk .leaflet-control-attribution {
-  cursor: pointer;
-}
-.app.desk .leaflet-control-attribution:not(.is-open) {
-  max-width: 16rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.app.desk .leaflet-control-attribution.is-open {
-  max-width: min(40rem, 60vw);
-}
-
 /* The strip stops at the spread's edge, so no frame hides under it. */
 .app.desk .strip {
   right: var(--covered-right);
@@ -3822,10 +3777,10 @@ body,
   vertical-align: -0.1em;
   margin-right: var(--space-3xs);
 }
-/* The rose, the scale and the credits stand on top of the row. */
+/* The rose and the scale stand on top of the row. */
 .map-area.strip-up .leaflet-bottom.leaflet-right {
   bottom: var(--covered-bottom);
 }
 .map-area.strip-up .leaflet-bottom.leaflet-left {
-  bottom: calc(var(--covered-bottom) + var(--credits-h, 0px));
+  bottom: var(--covered-bottom);
 }
