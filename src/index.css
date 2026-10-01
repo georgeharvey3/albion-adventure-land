@@ -1230,6 +1230,13 @@ body,
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+/* Leaflet puts its corners at z-index 1000, over the card (issue #117). The
+   card covers the bottom of the map, so the compass, the scale bar and the
+   locate button go while it is open. Raising the card instead would put a
+   long write-up over the zoom buttons, which stay. */
+.map-area:has(> .card) .leaflet-bottom {
+  visibility: hidden;
+}
 .card-close {
   position: absolute;
   top: var(--space-xs);
