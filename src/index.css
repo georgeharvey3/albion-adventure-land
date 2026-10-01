@@ -3228,9 +3228,6 @@ body,
 .strip-plate {
   position: relative;
   display: block;
-  /* The frame is a flex column inside a <button>, and iOS WebKit (every iOS browser) does not
-     stretch its items there: a painted plate shrank to its word. */
-  width: 100%;
   height: 74px;
   background: var(--color-paper-3);
 }
