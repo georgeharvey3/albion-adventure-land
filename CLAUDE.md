@@ -395,8 +395,9 @@ Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
   finger. Do not add a gesture library.
 - The sheet head takes any vertical touch drag: the handle, the journey bar
   and the tabs. A mouse drags the handle only. The list shares a touch drag
-  with its scroll (`dragIntent`). A drag up raises the sheet until it is
-  full. A drag down lowers it only when the list is at its top. A sideways
+  with its scroll (`dragIntent`). A drag up on the list always scrolls it,
+  so only the head raises the sheet. A drag down lowers the sheet only when
+  the list is at its top. A sideways
   touch stays with the list, so the picture carousel still swipes.
 - The list decides on the first touch move. iOS starts its own scroll on that
   move and then ignores `preventDefault`, so a later decision lets the list
