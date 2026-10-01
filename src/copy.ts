@@ -51,6 +51,7 @@ export const copy = {
 
   map: {
     layers: 'Map layers',
+    siteLayers: 'Site layers',
     north: 'N',
     basemaps: { street: 'Street', atlas: 'Atlas', satellite: 'Satellite' },
     zoomToMe: 'Zoom to my location',
@@ -103,6 +104,7 @@ export const copy = {
     travelTo: 'Travel to',
     findOnMap: 'Find on the map',
     open: 'Search',
+    here: 'Search here',
     close: 'Close search',
     placeholder: 'Town, site, postcode or grid ref',
     originField: 'Search for a place to start from',

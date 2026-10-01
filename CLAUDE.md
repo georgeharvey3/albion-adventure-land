@@ -356,8 +356,10 @@ opens it in the sheet (issue #112).
 
 ## Phone finder (issue #109)
 
-On a phone, one row floats at the top of the map (`src/ui/PhoneFinder.tsx`):
-a round magnifier, then the layer chips. The desktop card holds a site finder
+On a phone, one row floats at the top of the map (`src/ui/PhoneFinder.tsx`).
+Since #126 the phone's row is the journey pill and a layers button (see
+**Phone journey pill**). The side panel keeps a round magnifier, then the
+layer chips. The desktop card holds a site finder
 and the same chips. No tab must open to search or to turn a layer on or off.
 
 - The chips get the room, not the search. A user turns layers on and off in
@@ -386,15 +388,15 @@ and the same chips. No tab must open to search or to turn a layer on or off.
 ## Phone sheet (issue #110)
 
 On a phone, one sheet has three heights. The low height shows the map with
-the journey bar and the tabs. The middle height shows the list over the lower
+the tabs (the journey is in the pill at the top since #126). The middle height shows the list over the lower
 half of the map. The full height shows the list over the whole screen. The
 Browse and Map toggle is gone, and `sheet` in the store replaces `browse`.
 
 - The rules are pure and live in `src/state/sheet.ts`: the heights, the snap,
   the drag rule and the steps. `src/ui/useSheetDrag.ts` only feeds them the
   finger. Do not add a gesture library.
-- The sheet head takes any vertical touch drag: the handle, the journey bar
-  and the tabs. A mouse drags the handle only. The list shares a touch drag
+- The sheet head takes any vertical touch drag: the handle and the tabs, or
+  the peek. A mouse drags the handle only. The list shares a touch drag
   with its scroll (`dragIntent`). A drag up on the list always scrolls it,
   so only the head raises the sheet. A drag down lowers the sheet only when
   the list is at its top. A sideways
@@ -426,7 +428,7 @@ floating card and the rows that open in place are gone on the phone. The
 owner chose this design from a prototype (variant C, the branch
 `prototype/110-site-sheet`).
 
-- While a site is open, the tabs hide and the journey bar stays. The peek
+- While a site is open, the tabs hide. The peek
   (`SitePeek` in `src/ui/SiteSheet.tsx`) takes the place of the tabs in the
   sheet head. So the peek is the low height, and a drag on it moves the sheet.
 - The peek is one row: a thumbnail, the name, the type and distance,
@@ -451,23 +453,31 @@ owner chose this design from a prototype (variant C, the branch
 - The side panel (760 px to 1023 px) keeps the floating card and the rows
   that open in place, because #107 Q3 is still open.
 
-## Phone journey bar (issue #126)
+## Phone journey pill (issue #126)
 
-On a phone, the journey bar shows by state, with no collapse toggle. The rule
-is pure and lives in `src/state/journey.ts`.
+On a phone the journey is a pill at the top of the map, in place of the
+layer chips. The sheet head is only the handle and the tabs. The owner chose
+this design (variant E) from the prototypes on #126.
 
-- With live GPS, no destination and no armed map tap, the sheet head has no
-  bar. A route button follows the magnifier in the floating row and opens
-  the full bar, so either end can be searched for or picked on the map. It
-  opens the bar, not a search, because a button that went straight to the
-  destination search left no way to set the origin. `journeyOpen` in the
-  store holds the open bar.
-- A destination, or an origin that is not live GPS, shows one line. A tap
-  opens the full bar, and ⌃ or a change to either end folds it back.
-- An origin that is not live GPS never hides. The near-me list sorts from
-  it, so a forgotten dropped pin would make the list quietly wrong.
-- An armed map tap shows the full bar, because the bar is the cancel.
-- The side panel and the desktop always show the full bar.
+- The pill shows by state. The rule is pure and lives in
+  `src/state/journey.ts`. With live GPS and no destination it reads "Search
+  here", which opens the map search. A route button sits at its right end.
+- A set journey replaces the search text with one line, and a magnifier
+  stays on the left. The line leaves out a live-GPS origin, so the
+  destination gets the room. An origin that is not live GPS always shows,
+  because the near-me list sorts from it.
+- The route button and the line open the full bar inside the pill, where
+  they were tapped. The route button never moves: it opens and closes the
+  bar, and cancels an armed map tap. A change to either end folds the bar.
+  `journeyOpen` in the store holds the open bar.
+- On a phone every search opens at the top, next to the pill
+  (`SearchOverlay`).
+- The layers sit behind one round button at the end of the row
+  (`LayersButton` in `src/ui/PhoneFinder.tsx`). It opens the layer chips as
+  a list. A chip tap keeps the list open. A tap outside, the button or `Esc`
+  closes it.
+- The side panel (760 px to 1023 px) keeps the magnifier, the chips and its
+  journey bar in the panel. The desktop is unchanged.
 
 ## UI copy
 

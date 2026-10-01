@@ -1,18 +1,20 @@
-// How much of the journey bar a phone shows (issue #126).
+// How much of the journey a phone's pill shows (issue #126).
 //
-// On a phone the bar sits in the sheet head at every height. Most of the time
-// it said "My location → Optional", two lines that told the user nothing. So
-// the phone shows the bar by state, with no collapse toggle to manage:
+// The bar used to sit in the sheet head at every height, and most of the time
+// it said "My location → Optional", two lines that told the user nothing. On a
+// phone it is now the pill at the top of the map, in place of the layer
+// chips, and it shows by state:
 //
-// - none:    live GPS, no destination, no armed map tap. The sheet head has no
-//            bar. A route button in the floating row opens the full bar, so
+// - none:    live GPS, no destination, no armed map tap. The pill reads
+//            "Search here", and its route button opens the full bar, so
 //            either end can still be searched for or picked on the map.
 // - compact: a destination, or an origin that is not live GPS. One line that
 //            opens the full bar. An overridden origin must never hide: the
 //            near-me list sorts from it, and a forgotten dropped pin would
 //            make the list quietly wrong in the field.
 // - full:    an armed map tap (the bar is its own cancel), or the user opened
-//            the bar with the route button or the compact line.
+//            the bar with the route button or the compact line. The bar
+//            opens inside the pill, where it was tapped.
 //
 // The side panel and the desktop have room, and always show the full bar.
 

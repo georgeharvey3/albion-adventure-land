@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
 import { LayerChips } from './LayerChips';
-import { RouteIcon, SearchIcon } from './icons';
-import { journeyActive } from '../state/journey';
+import { JourneyBar } from './JourneyBar';
+import { ListFilterIcon, SearchIcon } from './icons';
+import { KEY_RANK, onEscape } from '../state/keys';
+import { useKeyLayer } from './useKeyLayer';
 import { copy } from '../copy';
 
-// The phone's floating row (issue #109): a magnifier and the layer chips, at
+// The floating row (issue #109): a magnifier and the layer chips, at
 // the top of the map. The desktop has both in its card, so on a phone they
 // float over the map in the same way, and neither needs a tab.
 //
@@ -17,26 +19,18 @@ import { copy } from '../copy';
 // postcodes, grid references and sites in one box, and a pick moves the map
 // or opens the site. It fills no end of the journey.
 //
-// On a phone, a route button follows the magnifier while no journey is set
-// (issue #126). The journey bar is gone from the sheet then, and the button
-// opens it, so either end can be searched for or picked on the map. While the
-// bar is open, or once a journey is set, the button goes.
+// ON A PHONE THE ROW IS THE JOURNEY (issue #126). The chips are gone. The
+// journey pill (JourneyBar.tsx) takes the row: "Search here" and a route
+// button, and the journey itself once one is set. The layers moved behind one
+// round button at the end of the row, which opens them as a list under it, so
+// a layer is still one tap plus one tap away, with no tab to open. The side
+// panel keeps the magnifier and the chips, and its journey bar in the panel.
 //
 // It sits in .map-area, so the full sheet covers it, and the title
 // card covers it on a first visit.
 
 export function PhoneFinder({ phone }: { phone: boolean }) {
   const openSearch = useStore((s) => s.openSearch);
-  const setJourneyOpen = useStore((s) => s.setJourneyOpen);
-  const idle = useStore(
-    (s) =>
-      !s.journeyOpen &&
-      !journeyActive({
-        overriddenOrigin: !!s.position && (!!s.position.label || !!s.position.manual),
-        hasDestination: !!s.destination,
-        picking: !!s.picking,
-      }),
-  );
 
   // The zoom and basemap controls sit under the row. The map area carries its
   // height as --float-h, and the CSS moves the top right corner down by it.
@@ -58,6 +52,15 @@ export function PhoneFinder({ phone }: { phone: boolean }) {
     return () => ro.disconnect();
   }, []);
 
+  if (phone) {
+    return (
+      <div ref={ref} className="float-finder">
+        <JourneyBar phone />
+        <LayersButton />
+      </div>
+    );
+  }
+
   return (
     <div ref={ref} className="float-finder">
       <button
@@ -68,17 +71,38 @@ export function PhoneFinder({ phone }: { phone: boolean }) {
       >
         <SearchIcon />
       </button>
-      {phone && idle && (
-        <button
-          className="float-search"
-          onClick={() => setJourneyOpen(true)}
-          aria-label={copy.journey.open}
-          title={copy.journey.open}
-        >
-          <RouteIcon />
-        </button>
-      )}
       <LayerChips className="float-chips" />
+    </div>
+  );
+}
+
+/** The phone's layers: one round button, and the layer chips as a list under
+ *  it. A chip tap keeps the list open, so several layers can change in one
+ *  visit. A tap outside, the button again, or Esc closes it. */
+function LayersButton() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useKeyLayer(open, KEY_RANK.menu, onEscape(() => setOpen(false)));
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
+  return (
+    <div className="float-layers" ref={ref}>
+      <button
+        className={open ? 'float-search on' : 'float-search'}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-label={copy.map.siteLayers}
+        title={copy.map.siteLayers}
+      >
+        <ListFilterIcon />
+      </button>
+      {open && <LayerChips className="layers-menu" />}
     </div>
   );
 }

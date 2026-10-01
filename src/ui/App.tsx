@@ -73,8 +73,7 @@ export function App() {
   };
 
   // The three heights in px (issue #110). The low height is the sheet head —
-  // the handle, the journey bar and the tabs — so it is measured, not set:
-  // the journey bar grows when a journey is set.
+  // the handle and the tabs, or the peek — so it is measured, not set.
   const appRef = useRef<HTMLDivElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   // The head and the list take the drag (useSheetDrag.ts), so they are held
@@ -235,9 +234,10 @@ export function App() {
           className={`sheet at-${sheet}${inPlace ? ' in-place' : ''}${dragging ? ' dragging' : ''}${openSite ? ' site-open' : ''}`}
           style={{ ['--sheet-h' as string]: sheetPx !== null ? `${sheetPx}px` : undefined }}
         >
-          {/* The head is the low height, so it shows at every height. The
-              journey anchor governs every tab, so it stays with the tabs. An
-              open site's peek takes the place of the tabs. */}
+          {/* The head is the low height, so it shows at every height. An
+              open site's peek takes the place of the tabs. The side panel
+              keeps the journey bar here; a phone has it in the pill at the
+              top of the map (issue #126). */}
           <div className="sheet-head" ref={setSheetHead}>
             <button
               className="sheet-handle"
@@ -247,7 +247,7 @@ export function App() {
             >
               <span className="sheet-grip" aria-hidden="true" />
             </button>
-            <JourneyBar phone={phone} />
+            {!phone && <JourneyBar />}
             {openSite ? (
               <SitePeek site={openSite} />
             ) : (

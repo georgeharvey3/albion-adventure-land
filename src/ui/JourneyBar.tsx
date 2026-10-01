@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useStore } from '../state/store';
 import { journeyBarMode } from '../state/journey';
-import { FlagIcon, MapPinIcon } from './icons';
+import { FlagIcon, MapPinIcon, RouteIcon, SearchIcon } from './icons';
 import { DETOUR_BUDGETS } from '../geo/corridor';
 import { formatDuration } from '../geo/route';
 import { formatDistance, haversine } from '../geo/haversine';
@@ -50,9 +50,12 @@ import { copy } from '../copy';
 // They share one armed state now (`picking`), which is why an armed origin
 // reads exactly like an armed destination here.
 //
-// ON A PHONE THE BAR SHOWS BY STATE (issue #126, src/state/journey.ts). With
-// nothing set it is gone, and the floating row's route button opens it. A set
-// journey is one line that opens the full bar.
+// ON A PHONE THE BAR IS A PILL AT THE TOP OF THE MAP (issue #126), in place of
+// the layer chips, and it shows by state (src/state/journey.ts). With nothing
+// set it reads "Search here", with a route button at its right end. A set
+// journey replaces the search text with one line, and the magnifier stays.
+// The route button and the line open the full bar inside the same pill, so
+// nothing opens anywhere but where it was tapped, and the button never moves.
 
 function budgetLabel(metres: number): string {
   return metres < 1000 ? copy.units.m(metres) : copy.units.km(Math.round(metres / 1000));
@@ -118,38 +121,79 @@ export function JourneyBar({ phone = false }: { phone?: boolean }) {
       ? copy.journey.picking
       : copy.journey.optional;
 
-  if (mode === 'none') return null;
+  // The pill's route button. It stays in one place in every mode: it opens
+  // the bar, and closes it. While the map waits for a tap, it is a cancel.
+  const routeButton = (
+    <button
+      className={mode === 'none' ? 'journey-route' : 'journey-route on'}
+      onClick={() => {
+        if (picking) setPicking(null);
+        setExpanded(mode !== 'full');
+      }}
+      aria-pressed={mode === 'full'}
+      aria-label={mode === 'full' ? copy.journey.fold : copy.journey.open}
+      title={mode === 'full' ? copy.journey.fold : copy.journey.open}
+    >
+      <RouteIcon />
+    </button>
+  );
 
-  if (mode === 'compact') {
+  if (mode === 'none') {
     return (
-      <button
-        className="journey-bar journey-compact"
-        onClick={() => setExpanded(true)}
-        aria-label={copy.journey.edit}
-        title={copy.journey.edit}
-      >
-        <MapPinIcon />
-        <span className="journey-compact-place">{originLabel}</span>
-        {destination && (
-          <>
-            <span className="journey-arrow" aria-hidden="true">
-              →
-            </span>
-            <FlagIcon />
-            <span className="journey-compact-place">{destination.label}</span>
-          </>
-        )}
-        {journeySummary && <span className="journey-length">{journeySummary}</span>}
-      </button>
+      <div className="journey-pill">
+        <button className="journey-search" onClick={() => openSearch('map')}>
+          <SearchIcon />
+          <span>{copy.search.here}</span>
+        </button>
+        {routeButton}
+      </div>
     );
   }
 
-  // On a phone the full bar folds back to its line, except while the map
-  // waits for a tap: then the bar is the cancel, and stays.
-  const canFold = phone && !picking;
+  if (mode === 'compact') {
+    return (
+      <div className="journey-pill">
+        <button
+          className="journey-search icon"
+          onClick={() => openSearch('map')}
+          aria-label={copy.search.open}
+          title={copy.search.open}
+        >
+          <SearchIcon />
+        </button>
+        <button
+          className="journey-compact"
+          onClick={() => setExpanded(true)}
+          aria-label={copy.journey.edit}
+          title={copy.journey.edit}
+        >
+          {/* Live GPS is the default end, so the line leaves it out and the
+              destination gets the room. A changed origin always shows. */}
+          {overriddenOrigin && (
+            <>
+              <MapPinIcon />
+              <span className="journey-compact-place">{originLabel}</span>
+            </>
+          )}
+          {destination && (
+            <>
+              {overriddenOrigin && (
+                <span className="journey-arrow" aria-hidden="true">
+                  →
+                </span>
+              )}
+              <FlagIcon />
+              <span className="journey-compact-place">{destination.label}</span>
+            </>
+          )}
+        </button>
+        {routeButton}
+      </div>
+    );
+  }
 
-  return (
-    <div className={canFold ? 'journey-bar can-fold' : 'journey-bar'}>
+  const bar = (
+    <div className={phone ? 'journey-bar in-pill' : 'journey-bar'}>
       <div className="journey-ends">
         <div
           className={
@@ -234,16 +278,7 @@ export function JourneyBar({ phone = false }: { phone?: boolean }) {
           )}
         </div>
 
-        {canFold && (
-          <button
-            className="journey-fold"
-            onClick={() => setExpanded(false)}
-            aria-label={copy.journey.fold}
-            title={copy.journey.fold}
-          >
-            ⌃
-          </button>
-        )}
+        {phone && routeButton}
       </div>
 
       {destination && (
@@ -274,4 +309,5 @@ export function JourneyBar({ phone = false }: { phone?: boolean }) {
       )}
     </div>
   );
+  return phone ? <div className="journey-pill open">{bar}</div> : bar;
 }
