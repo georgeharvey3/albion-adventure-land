@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useStore } from '../state/store';
 import { journeyBarMode } from '../state/journey';
 import { FlagIcon, MapPinIcon } from './icons';
@@ -51,8 +51,8 @@ import { copy } from '../copy';
 // reads exactly like an armed destination here.
 //
 // ON A PHONE THE BAR SHOWS BY STATE (issue #126, src/state/journey.ts). With
-// nothing set it is gone, and the floating row's route button opens the
-// destination search. A set journey is one line that opens the full bar.
+// nothing set it is gone, and the floating row's route button opens it. A set
+// journey is one line that opens the full bar.
 
 function budgetLabel(metres: number): string {
   return metres < 1000 ? copy.units.m(metres) : copy.units.km(Math.round(metres / 1000));
@@ -85,13 +85,14 @@ export function JourneyBar({ phone = false }: { phone?: boolean }) {
   // drop-pin control is gone. Live GPS itself has nothing to reset to.
   const overriddenOrigin = !!position && (!!position.label || !!position.manual);
 
-  // The phone's compact line opens the full bar. A change to either end, or
-  // the end of an armed tap, folds it back: the edit it was opened for is done.
-  const [expanded, setExpanded] = useState(false);
+  // A change to either end, or the end of an armed tap, folds the phone's bar
+  // back: the edit it was opened for is done.
+  const expanded = useStore((s) => s.journeyOpen);
+  const setExpanded = useStore((s) => s.setJourneyOpen);
   const originKey = overriddenOrigin ? `${position?.lat},${position?.lng}` : '';
   useEffect(() => {
     setExpanded(false);
-  }, [originKey, destination, picking]);
+  }, [originKey, destination, picking, setExpanded]);
   const mode = journeyBarMode(
     { overriddenOrigin, hasDestination: !!destination, picking: !!picking },
     phone,

@@ -81,6 +81,7 @@ export const copy = {
     destinationHint: 'Tap where you\'re heading, or open a site and choose “Set as destination”.',
     edit: 'Change journey',
     fold: 'Hide journey',
+    open: 'Plan a journey',
     originHint: 'Tap where you are, or where you\'ll be setting out from.',
   },
 

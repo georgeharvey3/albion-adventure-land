@@ -186,6 +186,10 @@ interface AppState {
   // remember to disarm the other. `picking` can only name one end at a time,
   // so a tap can only ever mean one thing.
   picking: JourneyEnd | null;
+  // The phone's full journey bar is open (issue #126, state/journey.ts). The
+  // floating row's route button and the bar's own line both open it, so it
+  // lives here rather than in either.
+  journeyOpen: boolean;
 
   // Location search (issue #28). Non-null means the search overlay is open and
   // filling THAT end of the journey — which is why picking a result needs no
@@ -273,6 +277,7 @@ interface AppState {
   // render, and a failure simply leaves `route` null.
   syncRoute: () => void;
   setPicking: (target: JourneyEnd | null) => void;
+  setJourneyOpen: (open: boolean) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
   applySearchResult: (result: SearchResult) => void;
@@ -493,6 +498,7 @@ export const useStore = create<AppState>((set, get) => ({
   routeSort: "progress",
   route: null,
   picking: null,
+  journeyOpen: false,
 
   searchTarget: null,
   focus: null,
@@ -1096,6 +1102,7 @@ export const useStore = create<AppState>((set, get) => ({
     });
   },
   setPicking: (picking) => set({ picking }),
+  setJourneyOpen: (journeyOpen) => set({ journeyOpen }),
 
   // Opening search disarms the map picker: they are two ways of answering the
   // same question, and leaving the map in crosshair mode behind the search

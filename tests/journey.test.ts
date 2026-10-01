@@ -4,9 +4,10 @@ import { journeyActive, journeyBarMode } from '../src/state/journey';
 
 const idle = { overriddenOrigin: false, hasDestination: false, picking: false };
 
-test('a phone with no journey shows no bar', () => {
+test('a phone with no journey shows no bar until the route button opens it', () => {
   assert.equal(journeyActive(idle), false);
   assert.equal(journeyBarMode(idle, true, false), 'none');
+  assert.equal(journeyBarMode(idle, true, true), 'full');
 });
 
 test('a destination shows one line, and the line opens the bar', () => {

@@ -5,14 +5,14 @@
 // the phone shows the bar by state, with no collapse toggle to manage:
 //
 // - none:    live GPS, no destination, no armed map tap. The sheet head has no
-//            bar. A route button in the floating row opens the destination
-//            search, so a town can still be the destination in one tap.
+//            bar. A route button in the floating row opens the full bar, so
+//            either end can still be searched for or picked on the map.
 // - compact: a destination, or an origin that is not live GPS. One line that
 //            opens the full bar. An overridden origin must never hide: the
 //            near-me list sorts from it, and a forgotten dropped pin would
 //            make the list quietly wrong in the field.
 // - full:    an armed map tap (the bar is its own cancel), or the user opened
-//            the compact line.
+//            the bar with the route button or the compact line.
 //
 // The side panel and the desktop have room, and always show the full bar.
 
@@ -37,6 +37,6 @@ export function journeyBarMode(
   expanded: boolean,
 ): JourneyBarMode {
   if (!phone || s.picking) return 'full';
-  if (!journeyActive(s)) return 'none';
-  return expanded ? 'full' : 'compact';
+  if (expanded) return 'full';
+  return journeyActive(s) ? 'compact' : 'none';
 }

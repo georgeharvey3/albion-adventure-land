@@ -457,8 +457,11 @@ On a phone, the journey bar shows by state, with no collapse toggle. The rule
 is pure and lives in `src/state/journey.ts`.
 
 - With live GPS, no destination and no armed map tap, the sheet head has no
-  bar. A flag button follows the magnifier in the floating row and opens the
-  destination search, so a town can still be the destination in one tap.
+  bar. A route button follows the magnifier in the floating row and opens
+  the full bar, so either end can be searched for or picked on the map. It
+  opens the bar, not a search, because a button that went straight to the
+  destination search left no way to set the origin. `journeyOpen` in the
+  store holds the open bar.
 - A destination, or an origin that is not live GPS, shows one line. A tap
   opens the full bar, and ⌃ or a change to either end folds it back.
 - An origin that is not live GPS never hides. The near-me list sorts from

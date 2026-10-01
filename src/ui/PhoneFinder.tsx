@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../state/store';
 import { LayerChips } from './LayerChips';
-import { FlagIcon, SearchIcon } from './icons';
+import { RouteIcon, SearchIcon } from './icons';
 import { journeyActive } from '../state/journey';
 import { copy } from '../copy';
 
@@ -19,16 +19,18 @@ import { copy } from '../copy';
 //
 // On a phone, a route button follows the magnifier while no journey is set
 // (issue #126). The journey bar is gone from the sheet then, and the button
-// opens the destination search, so a town can still be the destination. Once
-// a journey is set, the bar's own line takes over, and the button goes.
+// opens it, so either end can be searched for or picked on the map. While the
+// bar is open, or once a journey is set, the button goes.
 //
 // It sits in .map-area, so the full sheet covers it, and the title
 // card covers it on a first visit.
 
 export function PhoneFinder({ phone }: { phone: boolean }) {
   const openSearch = useStore((s) => s.openSearch);
+  const setJourneyOpen = useStore((s) => s.setJourneyOpen);
   const idle = useStore(
     (s) =>
+      !s.journeyOpen &&
       !journeyActive({
         overriddenOrigin: !!s.position && (!!s.position.label || !!s.position.manual),
         hasDestination: !!s.destination,
@@ -69,11 +71,11 @@ export function PhoneFinder({ phone }: { phone: boolean }) {
       {phone && idle && (
         <button
           className="float-search"
-          onClick={() => openSearch('destination')}
-          aria-label={copy.journey.destinationTitle}
-          title={copy.journey.destinationTitle}
+          onClick={() => setJourneyOpen(true)}
+          aria-label={copy.journey.open}
+          title={copy.journey.open}
         >
-          <FlagIcon />
+          <RouteIcon />
         </button>
       )}
       <LayerChips className="float-chips" />
