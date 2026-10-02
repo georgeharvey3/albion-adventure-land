@@ -366,14 +366,16 @@ and the same chips. No tab must open to search or to turn a layer on or off.
   the field all the time. A visit starts from "what is near here", so a
   search by name is rare, and a pill across the map costs too much.
 - One `LayerChips` component (`src/ui/LayerChips.tsx`) serves both shells.
-  On a phone, the chips are one row that scrolls sideways.
+  In the side panel's row, the chips are one row that scrolls sideways. On
+  a phone they are a list under the layers button.
 - The magnifier opens `SearchOverlay` with the target `'map'`. It finds
   places, postcodes, grid references and sites in one box. A pick moves the
   map, or selects the site and opens its card. It fills no journey end, so
   the overlay shows no shortcuts in this mode.
 - A search panel opens next to the control that opened it. The map search
-  opens at the top, under the magnifier (`.search-overlay.at-top`). The
-  journey searches open at the bottom, at the journey bar. The top panel
+  opens at the top, under the magnifier (`.search-overlay.at-top`). On a
+  phone the journey searches open at the top too, next to the pill. In the
+  side panel they open at its journey bar. The top panel
   stops at the keyboard: `SearchOverlay` writes `--vv-top` and `--vv-h` from
   the visual viewport.
 - The phone has no name-only site finder. `SiteFinder.tsx` serves the desktop
