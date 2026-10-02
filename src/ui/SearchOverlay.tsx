@@ -7,6 +7,7 @@ import { parsePostcode } from '../search/postcode';
 import { canonical, matchScore } from '../search/normalize';
 import type { SearchResult } from '../search/types';
 import { formatDistance } from '../geo/haversine';
+import { useSidePanel } from './useWideScreen';
 import { FlagIcon, LocateFixedIcon, MapIcon, MapPinIcon, SearchIcon } from './icons';
 import { KEY_RANK, onEscape } from '../state/keys';
 import { useKeyLayer } from './useKeyLayer';
@@ -48,6 +49,10 @@ const PINNED: SearchResult['kind'][] = ['coords', 'postcode'];
 
 export function SearchOverlay() {
   const target = useStore((s) => s.searchTarget);
+  // On a phone the journey is in the pill at the top of the map (issue #126),
+  // so every search opens at the top. The side panel and the desktop drawer
+  // place the panel with their own CSS.
+  const phone = !useSidePanel();
   const sites = useStore((s) => s.sites);
   const hidden = useStore((s) => s.hidden);
   const position = useStore((s) => s.position);
@@ -199,10 +204,11 @@ export function SearchOverlay() {
     <>
       {/* Tapping past the panel is "never mind" — the same thing the ✕ does. */}
       <div className="search-scrim" onClick={closeSearch} aria-hidden="true" />
-      {/* The map search opens at the top, where its magnifier is. A journey
-          search opens at the bottom, where the journey bar is. */}
+      {/* A search opens next to the control that opened it. The map search
+          and, on a phone, both journey ends open at the top. The side panel's
+          journey search opens at its journey bar. */}
       <div
-        className={forMap ? 'search-overlay at-top' : 'search-overlay'}
+        className={forMap || phone ? 'search-overlay at-top' : 'search-overlay'}
         role="dialog"
         aria-modal="true"
         aria-label={copy.search.dialog}

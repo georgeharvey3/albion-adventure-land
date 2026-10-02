@@ -42,6 +42,9 @@ const PATHS = {
   layers:
     '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
   star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+  /* Three bars narrowing: the phone's site layers button. Not `layers`, which
+     the basemap control already wears. */
+  listFilter: '<path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/>',
   /* Two ends joined by a road: the phone's journey button. */
   route:
     '<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
@@ -98,6 +101,7 @@ export const MapIcon = (p: IconProps) => <Icon name="map" {...p} />;
 export const CheckIcon = (p: IconProps) => <Icon name="check" {...p} />;
 export const StarIcon = (p: IconProps) => <Icon name="star" {...p} />;
 export const LayersIcon = (p: IconProps) => <Icon name="layers" {...p} />;
+export const ListFilterIcon = (p: IconProps) => <Icon name="listFilter" {...p} />;
 export const RouteIcon = (p: IconProps) => <Icon name="route" {...p} />;
 export const SearchIcon = (p: IconProps) => <Icon name="search" {...p} />;
 export const LocateFixedIcon = (p: IconProps) => <Icon name="locateFixed" {...p} />;
