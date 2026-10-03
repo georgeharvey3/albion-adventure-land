@@ -13,6 +13,7 @@ import { TitleCard } from './TitleCard';
 import { DesktopShell } from './DesktopShell';
 import { PhoneFinder } from './PhoneFinder';
 import { SitePeek, SiteSheetBody } from './SiteSheet';
+import { SiteSwipe } from './SiteSwipe';
 import { useSidePanel, useWideScreen } from './useWideScreen';
 import { useSheetDrag } from './useSheetDrag';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
@@ -110,6 +111,12 @@ export function App() {
   const sheetPx = dragPx ?? stops?.[sheet] ?? null;
   const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
 
+  // A swipe on the open site steps to the next or the previous one in the
+  // Nearby list (issue #113). The site it goes to slides in from that side.
+  const [stepped, setStepped] = useState<{ id: string; dir: 1 | -1 } | null>(null);
+  const slideIn =
+    openSite && stepped?.id === openSite.id ? (stepped.dir === 1 ? ' step-next' : ' step-prev') : '';
+
   // Closing the site on a phone (× or Esc) brings the list back at the height
   // it was at when the site opened, and at the place it was scrolled to. The
   // list unmounts while the site is open, so its scroll is kept here.
@@ -122,7 +129,10 @@ export function App() {
       return;
     }
     if (openSite && !hadSite.current) restoreScroll.current = true;
-    if (!openSite && hadSite.current) setSheet(useStore.getState().listSheet);
+    if (!openSite && hadSite.current) {
+      setSheet(useStore.getState().listSheet);
+      setStepped(null);
+    }
     hadSite.current = !!openSite;
   }, [phone, openSite, setSheet]);
   // Stable, so React calls it only when the list mounts and unmounts.
@@ -249,7 +259,7 @@ export function App() {
             </button>
             {!phone && <JourneyBar />}
             {openSite ? (
-              <SitePeek site={openSite} />
+              <SitePeek key={openSite.id} site={openSite} slideIn={slideIn} />
             ) : (
             <nav className="tabs">
               {TABS.map((id) => (
@@ -272,7 +282,7 @@ export function App() {
           {(sheet !== 'low' || dragging) &&
             (openSite ? (
               // A new site starts at its top.
-              <div className="sheet-body" ref={setSheetBody} key={openSite.id}>
+              <div className={`sheet-body${slideIn}`} ref={setSheetBody} key={openSite.id}>
                 <SiteSheetBody site={openSite} />
               </div>
             ) : (
@@ -288,6 +298,13 @@ export function App() {
               </div>
             ))}
         </div>
+        {openSite && (
+          <SiteSwipe
+            sheetRef={sheetRef}
+            siteId={openSite.id}
+            onStep={(id, dir) => setStepped({ id, dir })}
+          />
+        )}
 
         {/* A panel over the sheet's own footprint, not a full screen: you are
             naming one end of a journey you can still see. */}

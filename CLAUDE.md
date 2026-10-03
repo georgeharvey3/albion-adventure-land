@@ -455,6 +455,24 @@ owner chose this design from a prototype (variant C, the branch
 - The side panel (760 px to 1023 px) keeps the floating card and the rows
   that open in place, because #107 Q3 is still open.
 
+## Phone site step (issue #113)
+
+On a phone, a sideways swipe on an open site steps to the next or the
+previous site. A swipe to the left goes to the next site. The owner chose to
+build it without a prototype.
+
+- A swipe on a picture moves the picture. A swipe on any other part of the
+  site steps, at every height: the peek and the body both take it. A field
+  and anything else that scrolls sideways also keep their own swipe.
+- The order is the Nearby list (`useVisibleSites`), not the strip: the phone
+  strip (#111) was reverted. The order is frozen when the site opens, so live
+  GPS does not re-sort it during the steps. A step skips a site that the
+  filter no longer shows. The steps stop at both ends.
+- The rules are pure, in `src/state/siteStep.ts`. `src/ui/SiteSwipe.tsx`
+  feeds them the finger. It renders nothing and mounts only while a site is
+  open, so the list sort on each GPS fix does not re-render the app.
+- There are no Prev and Next buttons on the phone.
+
 ## Phone journey pill (issue #126)
 
 On a phone the journey is a pill at the top of the map, in place of the

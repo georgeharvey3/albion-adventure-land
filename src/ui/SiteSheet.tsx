@@ -19,7 +19,7 @@ import { copy } from '../copy';
 
 /** The peek row. A tap on the name raises the sheet one height, as the handle
  *  does. */
-export function SitePeek({ site }: { site: Site }) {
+export function SitePeek({ site, slideIn = '' }: { site: Site; slideIn?: string }) {
   const position = useStore((s) => s.position);
   const sheet = useStore((s) => s.sheet);
   const setSheet = useStore((s) => s.setSheet);
@@ -27,7 +27,7 @@ export function SitePeek({ site }: { site: Site }) {
   const distance = position ? haversine(position, site) : null;
 
   return (
-    <div className="site-peek">
+    <div className={`site-peek${slideIn}`}>
       <RowThumb key={site.id} site={site} />
       <button className="site-peek-main" onClick={() => setSheet(stepSheet(sheet, 1))}>
         <span className="site-peek-name">{site.name}</span>

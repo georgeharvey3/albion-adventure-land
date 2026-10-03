@@ -637,6 +637,36 @@ body,
   padding: var(--space-2xs) var(--space-xs) var(--space-sm) var(--space-md);
   border-bottom: var(--rule-hairline) solid var(--color-rule);
 }
+/* A swipe steps to the next or the previous site (issue #113). The site it
+   goes to slides in from the side the finger came from. */
+.site-peek.step-next,
+.sheet-body.step-next {
+  animation: site-step-next var(--dur-short) var(--ease-out);
+}
+.site-peek.step-prev,
+.sheet-body.step-prev {
+  animation: site-step-prev var(--dur-short) var(--ease-out);
+}
+@keyframes site-step-next {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes site-step-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-peek.step-next,
+  .sheet-body.step-next,
+  .site-peek.step-prev,
+  .sheet-body.step-prev {
+    animation: none;
+  }
+}
 .site-peek-main {
   flex: 1;
   min-width: 0;
