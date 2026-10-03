@@ -16,7 +16,8 @@ import { copy } from '../copy';
 // The search overlay (issue #28). Opened from either end of the journey bar,
 // and it fills THAT end — which is why there is no "start or destination?"
 // question after picking a result. The phone's magnifier (issue #109) opens it
-// for the map alone: a pick moves the map or opens the site, and fills no end.
+// for the map: a site pick opens the site and fills no end, and a place pick
+// moves the map and becomes the origin.
 //
 // IT IS A PANEL OVER THE APP, NOT A SCREEN. It used to be full-height, and that
 // was wrong: naming a place is one step of a journey you are already looking at,

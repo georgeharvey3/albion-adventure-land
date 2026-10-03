@@ -1116,13 +1116,24 @@ export const useStore = create<AppState>((set, get) => ({
     const { searchTarget } = get();
     if (!searchTarget) return;
 
-    // The phone's magnifier (issue #109) fills no end: it only shows the
-    // answer on the map. A site is revealed before it is selected, as the
-    // site finder does, so a filtered-out site still gets its pin.
+    // The map search shows the answer on the map. A site is revealed before
+    // it is selected, as the site finder does, so a filtered-out site still
+    // gets its pin. A place also becomes the origin: a search for a town means
+    // "what is near there", and a map that moved while the list still sorted
+    // from the user read as a search that did nothing. A site fills no end,
+    // because a search for a stone circle is a look at that stone circle.
     if (searchTarget === "map") {
       if (result.siteId) {
         get().revealSite(result.siteId);
         get().setSelected(result.siteId);
+      } else {
+        get().setPosition({
+          lat: result.lat,
+          lng: result.lng,
+          accuracy: 0,
+          manual: true,
+          label: result.label,
+        });
       }
       set({
         searchTarget: null,
