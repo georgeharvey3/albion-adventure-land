@@ -14,6 +14,7 @@ import { DesktopShell } from './DesktopShell';
 import { PhoneFinder } from './PhoneFinder';
 import { SitePeek, SiteSheetBody } from './SiteSheet';
 import { SiteSwipe } from './SiteSwipe';
+import { SiteStepSwitcher } from './SiteStep.prototype';
 import { useSidePanel, useWideScreen } from './useWideScreen';
 import { useSheetDrag } from './useSheetDrag';
 import { loadViewState, saveViewState, type SheetTab } from '../state/viewState';
@@ -132,7 +133,7 @@ export function App() {
   };
   const slideIn =
     openSite && stepped?.id === openSite.id ? (stepped.dir === 1 ? ' step-next' : ' step-prev') : '';
-  const nameOf = (id: string | null) => (id ? sites.find((x) => x.id === id)?.name : undefined);
+  const siteOf = (id: string | null) => (id ? sites.find((x) => x.id === id) : undefined);
 
   // Closing the site on a phone (× or Esc) brings the list back at the height
   // it was at when the site opened, and at the place it was scrolled to. The
@@ -238,6 +239,7 @@ export function App() {
         <MapView desktop={desktop} />
         {/* On a desktop the finder and the chips are in the card. */}
         {!desktop && <PhoneFinder phone={phone} />}
+        {phone && <SiteStepSwitcher />}
         {/* A phone opens the site in the sheet, and a desktop in the spread
             (DesktopShell.tsx). The side panel keeps the floating card. */}
         {selectedSiteId && sidePanel && !desktop && !inPlace && <SiteDetail />}
@@ -281,8 +283,8 @@ export function App() {
                 key={openSite.id}
                 site={openSite}
                 slideIn={slideIn}
-                prevName={nameOf(neighbours.prev)}
-                nextName={nameOf(neighbours.next)}
+                prevSite={siteOf(neighbours.prev)}
+                nextSite={siteOf(neighbours.next)}
                 onStep={stepSite}
               />
             ) : (

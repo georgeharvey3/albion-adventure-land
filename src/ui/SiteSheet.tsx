@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useStore } from '../state/store';
 import { showOnMap, stepSheet } from '../state/sheet';
 import { SITE_TYPE_LABELS, hybridTitle, siteSwatch, type Site } from '../data/types';
 import { formatDistance, haversine } from '../geo/haversine';
 import { RowThumb } from './RowThumb';
 import { SiteBody } from './SiteDetail';
-import { ChevronLeftIcon, ChevronRightIcon } from './icons';
+import { Foot, Sliver, takeNudge, variant } from './SiteStep.prototype';
 import { copy } from '../copy';
 
 // The site in the phone sheet (issue #112). The owner chose this design from a
@@ -19,21 +20,20 @@ import { copy } from '../copy';
 // height is the page.
 
 /** The peek row. A tap on the name raises the sheet one height, as the handle
- *  does. The arrows either side step to the previous and the next site
- *  (issue #113), and show that a swipe does the same. An arrow hides at an
- *  end of the list, and keeps its room so the row does not move. */
+ *  does. PROTOTYPE (#113): the hint that a swipe steps comes from
+ *  SiteStep.prototype.tsx. */
 export function SitePeek({
   site,
   slideIn = '',
-  prevName,
-  nextName,
+  prevSite,
+  nextSite,
   onStep,
 }: {
   site: Site;
   slideIn?: string;
-  /** The name of the site a step goes to, or undefined at an end. */
-  prevName?: string;
-  nextName?: string;
+  /** The site a step goes to, or undefined at an end. */
+  prevSite?: Site;
+  nextSite?: Site;
   onStep: (dir: 1 | -1) => void;
 }) {
   const position = useStore((s) => s.position);
@@ -41,17 +41,12 @@ export function SitePeek({
   const setSheet = useStore((s) => s.setSheet);
   const setSelected = useStore((s) => s.setSelected);
   const distance = position ? haversine(position, site) : null;
+  const [nudge] = useState(() => !slideIn && !!nextSite && takeNudge());
 
   return (
-    <div className={`site-peek${slideIn}`}>
-      <button
-        className="site-peek-step"
-        onClick={() => onStep(-1)}
-        disabled={!prevName}
-        aria-label={prevName ? copy.near.previousSite(prevName) : undefined}
-      >
-        <ChevronLeftIcon size={24} />
-      </button>
+    <div className="proto-peek-wrap">
+    <div className={`site-peek proto-${variant}${slideIn}${nudge ? ' proto-nudge' : ''}`}>
+      <Sliver site={prevSite} side="prev" onStep={() => onStep(-1)} />
       <RowThumb key={site.id} site={site} />
       <button className="site-peek-main" onClick={() => setSheet(stepSheet(sheet, 1))}>
         <span className="site-peek-name">{site.name}</span>
@@ -61,17 +56,12 @@ export function SitePeek({
           {distance !== null && <span className="site-peek-away">{copy.site.away(formatDistance(distance))}</span>}
         </span>
       </button>
-      <button
-        className="site-peek-step"
-        onClick={() => onStep(1)}
-        disabled={!nextName}
-        aria-label={nextName ? copy.near.nextSite(nextName) : undefined}
-      >
-        <ChevronRightIcon size={24} />
-      </button>
       <button className="site-peek-close" onClick={() => setSelected(null)} aria-label={copy.site.close}>
         ×
       </button>
+      <Sliver site={nextSite} side="next" onStep={() => onStep(1)} />
+    </div>
+    <Foot prev={prevSite} next={nextSite} onStep={onStep} />
     </div>
   );
 }

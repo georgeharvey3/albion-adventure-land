@@ -35,6 +35,7 @@ const EXEMPT: { path: RegExp; why: string }[] = [
   { path: /^src\/geo\/osrm\.ts$/, why: 'the OSRM attribution is data' },
   { path: /^src\/search\/places\.ts$/, why: 'country names are gazetteer data' },
   { path: /^src\/links\//, why: 'developer errors for a bad call, never shown' },
+  { path: /\.prototype\.tsx$/, why: 'PROTOTYPE: dev-only variant names, never shipped' },
 ];
 
 // JSX attributes and object keys whose value a user reads or hears.
