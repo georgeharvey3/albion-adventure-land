@@ -2912,6 +2912,33 @@ body,
   color: var(--color-muted);
   white-space: nowrap;
 }
+.search-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: var(--rule-hairline) solid var(--color-rule);
+}
+.search-row .search-result {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+.search-end {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.search-end:hover,
+.search-end:focus-visible {
+  color: var(--color-ink);
+  background: var(--color-accent-soft);
+}
 .search-result-badge {
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-label);

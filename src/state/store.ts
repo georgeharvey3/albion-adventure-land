@@ -280,7 +280,8 @@ interface AppState {
   setJourneyOpen: (open: boolean) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
-  applySearchResult: (result: SearchResult) => void;
+  /** `end` fills that end of the journey from the map search's row buttons. */
+  applySearchResult: (result: SearchResult, end?: JourneyEnd) => void;
   useMyLocation: () => void;
 }
 
@@ -1112,28 +1113,21 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Apply a picked result to whichever end the search was opened for. The
   // target is what makes this unambiguous — there is no prompt after the fact.
-  applySearchResult: (result) => {
-    const { searchTarget } = get();
+  //
+  // The map search's rows carry two buttons, start here and go here, so its
+  // row can fill an end too. A tap on the row itself fills no end: a look at
+  // a place must never quietly move the start of the directions.
+  applySearchResult: (result, end) => {
+    const searchTarget = end ?? get().searchTarget;
     if (!searchTarget) return;
 
-    // The map search shows the answer on the map. A site is revealed before
-    // it is selected, as the site finder does, so a filtered-out site still
-    // gets its pin. A place also becomes the origin: a search for a town means
-    // "what is near there", and a map that moved while the list still sorted
-    // from the user read as a search that did nothing. A site fills no end,
-    // because a search for a stone circle is a look at that stone circle.
+    // The phone's magnifier (issue #109) fills no end: it only shows the
+    // answer on the map. A site is revealed before it is selected, as the
+    // site finder does, so a filtered-out site still gets its pin.
     if (searchTarget === "map") {
       if (result.siteId) {
         get().revealSite(result.siteId);
         get().setSelected(result.siteId);
-      } else {
-        get().setPosition({
-          lat: result.lat,
-          lng: result.lng,
-          accuracy: 0,
-          manual: true,
-          label: result.label,
-        });
       }
       set({
         searchTarget: null,
