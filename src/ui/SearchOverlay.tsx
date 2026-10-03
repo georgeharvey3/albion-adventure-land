@@ -16,7 +16,9 @@ import { copy } from '../copy';
 // The search overlay (issue #28). Opened from either end of the journey bar,
 // and it fills THAT end — which is why there is no "start or destination?"
 // question after picking a result. The phone's magnifier (issue #109) opens it
-// for the map alone: a pick moves the map or opens the site, and fills no end.
+// for the map alone: a row moves the map or opens the site, and fills no end.
+// Each of its rows also carries two buttons, start here and go here, so a
+// place found by looking can become an end without a second search.
 //
 // IT IS A PANEL OVER THE APP, NOT A SCREEN. It used to be full-height, and that
 // was wrong: naming a place is one step of a journey you are already looking at,
@@ -294,7 +296,7 @@ export function SearchOverlay() {
             <h3 className="search-section">{SECTION_TITLES[kind]}</h3>
             <ul className="search-list">
               {rows.map((r) => (
-                <li key={r.id}>
+                <li key={r.id} className={forMap ? 'search-row' : undefined}>
                   <button className="search-result" onClick={() => applySearchResult(r)}>
                     <span className="search-result-main">
                       <span className="search-result-label">{r.label}</span>
@@ -313,6 +315,28 @@ export function SearchOverlay() {
                       )}
                     </span>
                   </button>
+                  {/* Icons, not words: on a phone two worded buttons would
+                      squash the names. The icons match the journey bar's. */}
+                  {forMap && (
+                    <>
+                      <button
+                        className="search-end"
+                        onClick={() => applySearchResult(r, 'origin')}
+                        aria-label={copy.search.startHere(r.label)}
+                        title={copy.search.startHere(r.label)}
+                      >
+                        <MapPinIcon />
+                      </button>
+                      <button
+                        className="search-end"
+                        onClick={() => applySearchResult(r, 'destination')}
+                        aria-label={copy.search.goHere(r.label)}
+                        title={copy.search.goHere(r.label)}
+                      >
+                        <FlagIcon />
+                      </button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

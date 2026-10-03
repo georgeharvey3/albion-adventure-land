@@ -113,6 +113,8 @@ export const copy = {
     clear: 'Clear',
     useMyLocation: 'Use my location',
     pickOnMap: 'Pick on the map',
+    startHere: (place: string) => `Start from ${place}`,
+    goHere: (place: string) => `Go to ${place}`,
     savedTitle: 'Saved from an earlier search',
     saved: 'saved',
     searching: 'Looking for more…',

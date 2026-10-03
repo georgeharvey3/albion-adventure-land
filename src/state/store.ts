@@ -280,7 +280,8 @@ interface AppState {
   setJourneyOpen: (open: boolean) => void;
   openSearch: (target: SearchTarget) => void;
   closeSearch: () => void;
-  applySearchResult: (result: SearchResult) => void;
+  /** `end` fills that end of the journey from the map search's row buttons. */
+  applySearchResult: (result: SearchResult, end?: JourneyEnd) => void;
   useMyLocation: () => void;
 }
 
@@ -1112,8 +1113,12 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Apply a picked result to whichever end the search was opened for. The
   // target is what makes this unambiguous — there is no prompt after the fact.
-  applySearchResult: (result) => {
-    const { searchTarget } = get();
+  //
+  // The map search's rows carry two buttons, start here and go here, so its
+  // row can fill an end too. A tap on the row itself fills no end: a look at
+  // a place must never quietly move the start of the directions.
+  applySearchResult: (result, end) => {
+    const searchTarget = end ?? get().searchTarget;
     if (!searchTarget) return;
 
     // The phone's magnifier (issue #109) fills no end: it only shows the
