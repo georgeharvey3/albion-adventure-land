@@ -54,6 +54,9 @@ const PATHS = {
      draws this mark, so it needs no label to be read. */
   locateFixed:
     '<path d="M2 12h3"/><path d="M19 12h3"/><path d="M12 2v3"/><path d="M12 19v3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/>',
+  /* The steps to the previous and the next site in the phone peek. */
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
 } as const;
 
 type IconName = keyof typeof PATHS;
@@ -104,6 +107,8 @@ export const LayersIcon = (p: IconProps) => <Icon name="layers" {...p} />;
 export const ListFilterIcon = (p: IconProps) => <Icon name="listFilter" {...p} />;
 export const RouteIcon = (p: IconProps) => <Icon name="route" {...p} />;
 export const SearchIcon = (p: IconProps) => <Icon name="search" {...p} />;
+export const ChevronLeftIcon = (p: IconProps) => <Icon name="chevronLeft" {...p} />;
+export const ChevronRightIcon = (p: IconProps) => <Icon name="chevronRight" {...p} />;
 export const LocateFixedIcon = (p: IconProps) => <Icon name="locateFixed" {...p} />;
 
 /**

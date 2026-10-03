@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { useStore } from '../state/store';
 import { useVisibleSites } from '../state/selectors';
 import { siteStep, swipeStep } from '../state/siteStep';
 
-// The swipe that steps between open sites in the phone sheet (issue #113).
-// The rules are in state/siteStep.ts; this hook only feeds them the finger.
+// The step between open sites in the phone sheet (issue #113): a swipe, or
+// the arrows in the peek. The rules are in state/siteStep.ts. This component
+// holds the frozen order, tells the app the sites either side for the arrows,
+// and feeds the swipe rule the finger.
 //
 // It listens on the whole sheet, so the peek and the body both take the
 // swipe, at every height. It leaves a touch alone that starts on a picture,
@@ -36,14 +37,16 @@ function ownsSwipe(target: EventTarget | null, root: HTMLElement): boolean {
 export function SiteSwipe({
   sheetRef,
   siteId,
-  onStep,
+  onNeighbours,
+  onSwipe,
 }: {
   sheetRef: RefObject<HTMLElement | null>;
   siteId: string;
-  /** After a step, with the site it went to and its direction. */
-  onStep: (to: string, dir: 1 | -1) => void;
+  /** The sites a step goes to, for the arrows in the peek. Null at an end. */
+  onNeighbours: (prev: string | null, next: string | null) => void;
+  /** A swipe: 1 for the next site, -1 for the previous one. */
+  onSwipe: (dir: 1 | -1) => void;
 }): null {
-  const setSelected = useStore((s) => s.setSelected);
   const views = useVisibleSites();
   const shown = useMemo(() => new Set(views.map((v) => v.site.id)), [views]);
 
@@ -51,9 +54,13 @@ export function SiteSwipe({
   // never re-sorts under the user.
   const [order] = useState(() => views.map((v) => v.site.id));
 
-  // The listener is added once, so it reads these through a ref.
-  const live = useRef({ order, siteId, shown, setSelected, onStep });
-  live.current = { order, siteId, shown, setSelected, onStep };
+  const prev = siteStep(order, shown, siteId, -1);
+  const next = siteStep(order, shown, siteId, 1);
+  useEffect(() => onNeighbours(prev, next), [prev, next, onNeighbours]);
+
+  // The listener is added once, so it reads this through a ref.
+  const live = useRef(onSwipe);
+  live.current = onSwipe;
 
   useEffect(() => {
     const el = sheetRef.current;
@@ -74,14 +81,9 @@ export function SiteSwipe({
       const s = start;
       start = null;
       const t = e.changedTouches[0];
-      const { order, siteId, shown, setSelected, onStep } = live.current;
       if (!s || !t) return;
       const dir = swipeStep({ dx: t.clientX - s.x, dy: t.clientY - s.y, ms: performance.now() - s.t });
-      if (!dir) return;
-      const to = siteStep(order, shown, siteId, dir);
-      if (!to) return;
-      onStep(to, dir);
-      setSelected(to);
+      if (dir) live.current(dir);
     };
     const onCancel = () => {
       start = null;

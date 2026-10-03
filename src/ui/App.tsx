@@ -111,11 +111,28 @@ export function App() {
   const sheetPx = dragPx ?? stops?.[sheet] ?? null;
   const inPlace = listInPlace({ height: sheet, dragging, sidePanel });
 
-  // A swipe on the open site steps to the next or the previous one in the
-  // Nearby list (issue #113). The site it goes to slides in from that side.
+  // A swipe on the open site, or an arrow in its peek, steps to the next or
+  // the previous one in the Nearby list (issue #113). SiteSwipe holds the
+  // order and reports the sites either side. The site a step goes to slides
+  // in from that side.
+  const [neighbours, setNeighbours] = useState<{ prev: string | null; next: string | null }>({
+    prev: null,
+    next: null,
+  });
+  const onNeighbours = useCallback(
+    (prev: string | null, next: string | null) => setNeighbours({ prev, next }),
+    [],
+  );
   const [stepped, setStepped] = useState<{ id: string; dir: 1 | -1 } | null>(null);
+  const stepSite = (dir: 1 | -1) => {
+    const to = dir === 1 ? neighbours.next : neighbours.prev;
+    if (!to) return;
+    setStepped({ id: to, dir });
+    setSelected(to);
+  };
   const slideIn =
     openSite && stepped?.id === openSite.id ? (stepped.dir === 1 ? ' step-next' : ' step-prev') : '';
+  const nameOf = (id: string | null) => (id ? sites.find((x) => x.id === id)?.name : undefined);
 
   // Closing the site on a phone (× or Esc) brings the list back at the height
   // it was at when the site opened, and at the place it was scrolled to. The
@@ -132,6 +149,7 @@ export function App() {
     if (!openSite && hadSite.current) {
       setSheet(useStore.getState().listSheet);
       setStepped(null);
+      setNeighbours({ prev: null, next: null });
     }
     hadSite.current = !!openSite;
   }, [phone, openSite, setSheet]);
@@ -259,7 +277,14 @@ export function App() {
             </button>
             {!phone && <JourneyBar />}
             {openSite ? (
-              <SitePeek key={openSite.id} site={openSite} slideIn={slideIn} />
+              <SitePeek
+                key={openSite.id}
+                site={openSite}
+                slideIn={slideIn}
+                prevName={nameOf(neighbours.prev)}
+                nextName={nameOf(neighbours.next)}
+                onStep={stepSite}
+              />
             ) : (
             <nav className="tabs">
               {TABS.map((id) => (
@@ -302,7 +327,8 @@ export function App() {
           <SiteSwipe
             sheetRef={sheetRef}
             siteId={openSite.id}
-            onStep={(id, dir) => setStepped({ id, dir })}
+            onNeighbours={onNeighbours}
+            onSwipe={stepSite}
           />
         )}
 

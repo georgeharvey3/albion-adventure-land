@@ -634,7 +634,7 @@ body,
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-2xs) var(--space-xs) var(--space-sm) var(--space-md);
+  padding: var(--space-2xs) var(--space-xs) var(--space-sm) var(--space-2xs);
   border-bottom: var(--rule-hairline) solid var(--color-rule);
 }
 /* A swipe steps to the next or the previous site (issue #113). The site it
@@ -702,6 +702,24 @@ body,
 }
 .site-peek-away {
   flex: 0 0 auto;
+}
+/* The steps to the previous and the next site (issue #113). Narrow, so the
+   name keeps the room, and as tall as ×, so a finger finds them. At an end
+   the arrow hides but keeps its room, so the row does not move. */
+.site-peek-step {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--space-lg);
+  height: calc(2 * var(--space-md));
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.site-peek-step:disabled {
+  visibility: hidden;
 }
 .site-peek-close {
   flex: 0 0 auto;

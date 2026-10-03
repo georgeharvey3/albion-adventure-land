@@ -469,9 +469,13 @@ build it without a prototype.
   GPS does not re-sort it during the steps. A step skips a site that the
   filter no longer shows. The steps stop at both ends.
 - The rules are pure, in `src/state/siteStep.ts`. `src/ui/SiteSwipe.tsx`
-  feeds them the finger. It renders nothing and mounts only while a site is
+  holds the frozen order and feeds the rules the finger. It renders nothing and mounts only while a site is
   open, so the list sort on each GPS fix does not re-render the app.
-- There are no Prev and Next buttons on the phone.
+- A swipe alone gave no sign that it existed. So the peek has a chevron on
+  each side (`SitePeek`). A tap steps, as a swipe does. A chevron hides at an
+  end of the list but keeps its room, so the row does not move. `SiteSwipe`
+  reports the sites either side, so the chevrons and the swipe share one
+  order.
 
 ## Phone journey pill (issue #126)
 
